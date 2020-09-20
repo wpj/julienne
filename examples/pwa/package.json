@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "ts-node site.ts dev",
-    "prebuild": "npm run typecheck",
     "build": "ts-node site.ts build",
     "serve": "serve __julienne__/public",
-    "typecheck": "tsc --noEmit && svelte-check"
+    "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings"
   },
   "devDependencies": {
     "@tsconfig/svelte": "^1.0.10",

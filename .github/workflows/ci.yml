@@ -38,3 +38,13 @@ jobs:
       - run: node common/scripts/install-run-rush.js rebuild --verbose
         env:
           CI: true
+
+      - name: Check types
+        run: node common/scripts/install-run-rush.js typecheck --verbose
+        env:
+          CI: true
+
+      - name: Run tests
+        run: node common/scripts/install-run-rush.js test --verbose
+        env:
+          CI: true

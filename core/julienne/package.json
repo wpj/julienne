@@ -13,9 +13,8 @@
     "build-js": "rollup -c --silent",
     "build-types": "tsc --emitDeclarationOnly",
     "format": "prettier --write --plugin-search-dir=. \"**/*.{ts,js,svelte,css,md}\"",
-    "prebuild": "npm run typecheck && npm run test",
     "test": "uvu tests -r tests/setup/babel-register -i setup",
-    "typecheck": "tsc --noEmit && svelte-check",
+    "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings",
     "watch-js": "rollup -c --watch"
   },
   "exports": {
