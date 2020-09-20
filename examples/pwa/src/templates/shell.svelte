@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import { createJsonSlug } from '../helpers';
 
-  function importTemplate(template) {
+  async function importTemplate(template: string) {
     return import(`./${template}.svelte`).then(mod => mod.default)
   }
 
@@ -19,7 +19,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  let pageUrl;
+  let pageUrl: string;
 
   onMount(async () => {
     pageUrl = location.pathname;
