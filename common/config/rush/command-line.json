@@ -35,7 +35,7 @@
       "summary": "Run tests",
       "description": "Runs tests for each package.",
       "ignoreMissingScript": true,
-      "enableParallelism": false
+      "enableParallelism": true
     },
     {
       "name": "typecheck",
@@ -43,7 +43,7 @@
       "summary": "Check types",
       "description": "Check types for each package.",
       "ignoreMissingScript": true,
-      "enableParallelism": false
+      "enableParallelism": true
     }
     // {
     //   /**
