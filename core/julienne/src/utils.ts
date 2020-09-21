@@ -11,7 +11,7 @@ export function pathToName({
 }: {
   path: string;
   cwd: string;
-}) {
+}): string {
   const parsed = path.parse(rawPath);
 
   return path
@@ -24,7 +24,7 @@ export function pathToName({
 export function moduleMapTemplate(
   entryMap: { [exportName: string]: string },
   writeExports: boolean,
-) {
+): string {
   return Object.entries(entryMap)
     .map(([identifier, modulePath]) =>
       writeExports

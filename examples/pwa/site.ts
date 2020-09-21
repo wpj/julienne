@@ -1,6 +1,4 @@
-import { resolve as resolvePath } from 'path';
-
-import { Site } from 'julienne';
+import { Props, Site } from 'julienne';
 import sade from 'sade';
 import { generateSW, ManifestTransform } from 'workbox-build';
 
@@ -43,7 +41,7 @@ async function createSite() {
     {
       template,
       props,
-    }: { template: keyof Omit<typeof templates, 'shell'>; props: any },
+    }: { template: keyof Omit<typeof templates, 'shell'>; props: Props },
   ) {
     site.createPage(slug, () => ({ template, props }));
     site.createResource(createJsonSlug(slug), () =>

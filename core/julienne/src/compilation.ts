@@ -1,6 +1,6 @@
 import { join as pathJoin } from 'path';
 
-import { TemplateConfig } from './types';
+import type { TemplateConfig } from './types';
 
 export type CompilationWarnings = string[];
 

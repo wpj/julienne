@@ -1,5 +1,5 @@
 import { createWriteStream, promises as fs } from 'fs';
-import { Readable } from 'stream';
+import type { Readable } from 'stream';
 
 /**
  * A resource destined to be written to the output directory.
@@ -18,7 +18,10 @@ export type Resource =
       data: string | Buffer;
     };
 
-export function writeResource(resourcePath: string, resource: Resource) {
+export function writeResource(
+  resourcePath: string,
+  resource: Resource,
+): Promise<void> {
   if (resource.type === 'file') {
     return fs.copyFile(resource.from, resourcePath);
   } else if (resource.type === 'stream') {

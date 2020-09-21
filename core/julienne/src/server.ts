@@ -14,17 +14,19 @@ import webpackHotMiddleware from 'webpack-hot-middleware';
 
 import { ClientCompilation, Compilation } from './compilation';
 import { Svelte as SvelteRenderer } from './renderer';
-import { GetResource, GetPage, Output, TemplateConfig } from './types';
+import type { GetResource, GetPage, Output, TemplateConfig } from './types';
 
 /**
  * webpack-dev-middleware stores the compilation stats in the ServerResponse
  * object. For more info, see
  * https://github.com/webpack/webpack-dev-middleware#server-side-rendering.
  */
-function getDevWebpackStatsFromLocals(
-  locals: Record<string, any>,
-): WebpackStats {
-  return locals.webpackStats || locals.webpack?.devMiddleware?.stats;
+
+function getDevWebpackStatsFromLocals(locals: {
+  webpackStats?: WebpackStats;
+  webpack?: { devMiddleware: { stats: WebpackStats } };
+}): WebpackStats | undefined {
+  return locals.webpackStats || locals.webpack?.devMiddleware.stats;
 }
 
 export function startServer<Templates extends TemplateConfig>({
@@ -41,7 +43,7 @@ export function startServer<Templates extends TemplateConfig>({
   port: number;
   resources: Map<string, GetResource>;
   templates: Templates;
-}) {
+}): void {
   let api = polka();
 
   /**
@@ -51,8 +53,14 @@ export function startServer<Templates extends TemplateConfig>({
   api.get('/page', async (req, res) => {
     let { path } = req.query;
 
-    if (typeof path === 'string' && pages.has(path)) {
-      let getPage = pages.get(path)!;
+    if (typeof path !== 'string') {
+      sendType(res, 400, 'Invalid path param');
+      return;
+    }
+
+    let getPage = pages.get(path);
+
+    if (getPage !== undefined) {
       let page = await getPage();
       sendType(res, 200, page);
     } else {
@@ -114,12 +122,23 @@ export function startServer<Templates extends TemplateConfig>({
     }
 
     let stats = getDevWebpackStatsFromLocals(res.locals);
+
+    if (!stats) {
+      send(res, 500, 'Something went wrong with the webpack compilation.');
+      return;
+    }
+
     let info = stats.toJson();
+
+    if (info.assetsByChunkName === undefined) {
+      send(res, 500, 'Webpack compilation is missing asset information.');
+      return;
+    }
 
     let page = await getPage();
 
     let clientCompilation = new ClientCompilation<Templates>({
-      chunkAssets: info.assetsByChunkName!,
+      chunkAssets: info.assetsByChunkName,
       publicPath: output.publicPath,
       templates,
       warnings: info.warnings,

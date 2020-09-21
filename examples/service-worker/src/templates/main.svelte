@@ -5,7 +5,7 @@
 
   export let searchIndexPath: string;
 
-  function fetchSearchIndex(path: string) {
+  async function fetchSearchIndex(path: string) {
     return fetch(path).then(resp => resp.json());
   }
 

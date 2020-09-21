@@ -1,4 +1,4 @@
-import { Site } from 'julienne';
+import { Props, Site } from 'julienne';
 import sade from 'sade';
 
 import { createJsonSlug } from './src/helpers';
@@ -19,7 +19,7 @@ async function createSite() {
 
   function createPageAndPageJson(
     slug: string,
-    { template, props }: { template: keyof typeof templates; props: any },
+    { template, props }: { template: keyof typeof templates; props: Props },
   ) {
     site.createPage(slug, () => ({ template, props }));
     site.createResource(createJsonSlug(slug), () =>

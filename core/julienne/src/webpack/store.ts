@@ -1,4 +1,4 @@
-type Attributes = {};
+type Attributes = undefined;
 
 export class Store {
   data: Map<string, Attributes>;
@@ -7,7 +7,7 @@ export class Store {
     this.data = new Map();
   }
 
-  addModule(modulePath: string) {
-    this.data.set(modulePath, {});
+  addModule(modulePath: string): void {
+    this.data.set(modulePath, undefined);
   }
 }

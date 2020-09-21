@@ -1,11 +1,11 @@
-import { TemplateConfig } from '../types';
+import type { MaybePromise, Props, TemplateConfig } from '../types';
 
 export interface Renderer<Templates extends TemplateConfig> {
   render: ({
     props,
     template,
   }: {
-    props: any;
+    props: Props;
     template: keyof Templates;
-  }) => string | Promise<string>;
+  }) => MaybePromise<string>;
 }

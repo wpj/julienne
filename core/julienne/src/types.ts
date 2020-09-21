@@ -1,6 +1,6 @@
 import type { Readable } from 'stream';
 
-import { Resource } from './resource';
+import type { Resource } from './resource';
 
 /**
  * A mapping of template names to file paths.
@@ -17,9 +17,13 @@ export interface Output {
 
 export type Mode = 'development' | 'production';
 
+export type Props = {
+  [key: string]: unknown;
+};
+
 export interface Page<Template> {
   template: Template;
-  props: any;
+  props: Props;
   update?: PageUpdater<Template>;
 }
 

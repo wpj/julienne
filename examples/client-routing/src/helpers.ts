@@ -1,4 +1,4 @@
-export function createJsonSlug(pageSlug: string) {
+export function createJsonSlug(pageSlug: string): string {
   let slug: string;
   if (pageSlug.endsWith('.html')) {
     slug = pageSlug.replace('.hml', '.json');

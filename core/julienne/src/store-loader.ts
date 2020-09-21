@@ -6,7 +6,7 @@ import { isFlagged, Flag } from './webpack/shared';
 export default function loader(
   this: webpack.loader.LoaderContext,
   content: string,
-) {
+): string {
   let options = getLoaderOptions(this);
 
   let store: Store = (options.store as unknown) as Store;

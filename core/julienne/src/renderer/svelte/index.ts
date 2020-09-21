@@ -1,6 +1,8 @@
-import type { TemplateConfig } from '../../types';
+import type { SvelteComponent } from 'svelte';
+
+import type { Props, TemplateConfig } from '../../types';
 import type { Renderer } from '../types';
-import { Compilation } from '../../compilation';
+import type { Compilation } from '../../compilation';
 
 import DefaultDocument from './document.svelte';
 
@@ -22,18 +24,23 @@ export class Svelte<Templates extends TemplateConfig>
     this.compilation = compilation;
   }
 
-  async render({ template, props }: { template: keyof Templates; props: any }) {
+  async render({
+    template,
+    props,
+  }: {
+    template: keyof Templates;
+    props: Props;
+  }): Promise<string> {
     let { __experimentalIncludeStaticModules, compilation } = this;
 
-    let templateAssets = compilation.client.templateAssets![template];
+    let templateAssets = compilation.client.templateAssets[template];
     let scripts = templateAssets.filter((asset) => asset.endsWith('.js'));
     let links = templateAssets.filter((asset) => asset.endsWith('.css'));
 
     if (compilation.server === null) {
       return (
         DOCTYPE +
-        // @ts-ignore
-        DefaultDocument.render({
+        ((DefaultDocument as unknown) as SvelteComponent).render({
           body: null,
           head: null,
           links,
@@ -44,13 +51,12 @@ export class Svelte<Templates extends TemplateConfig>
     }
 
     let mod = await import(compilation.server.asset);
-    let Template = mod[template];
+    let Template = mod[template] as SvelteComponent;
     let { head, html } = Template.render(props);
 
     return (
       DOCTYPE +
-      // @ts-ignore
-      DefaultDocument.render({
+      ((DefaultDocument as unknown) as SvelteComponent).render({
         body: html,
         head,
         links,

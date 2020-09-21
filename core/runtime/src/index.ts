@@ -11,8 +11,8 @@ export type Runtime = ({
 const ROOT_SELECTOR = '#julienne-root';
 const PAGE_SELECTOR = '#julienne-data';
 
-export function getRoot() {
-  let root = document.querySelector(ROOT_SELECTOR);
+export function getRoot(): HTMLElement {
+  let root = document.querySelector<HTMLDivElement>(ROOT_SELECTOR);
   if (!root) {
     throw new Error(`${ROOT_SELECTOR} element not found.`);
   }
@@ -20,7 +20,10 @@ export function getRoot() {
   return root;
 }
 
-export function getPage() {
+export function getPage(): {
+  template: string;
+  props: { [key: string]: unknown };
+} {
   let pageDataElement = document.querySelector(PAGE_SELECTOR);
   if (!pageDataElement) {
     throw new Error(`${PAGE_SELECTOR} element not found.`);

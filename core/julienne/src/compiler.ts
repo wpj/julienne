@@ -24,11 +24,12 @@ function runWebpackCompiler(
   compiler: WebpackCompiler,
 ): Promise<{
   warnings: CompilationWarnings | null;
-  info: WebpackStats.ToJsonOutput;
-  stats: WebpackStats;
+  assetsByChunkName: NonNullable<
+    WebpackStats.ToJsonOutput['assetsByChunkName']
+  >;
 }> {
   return new Promise((resolve, reject) => {
-    compiler.run((err, stats) => {
+    compiler.run((err: Error, stats: WebpackStats) => {
       if (err) {
         reject(err);
       } else {
@@ -40,8 +41,7 @@ function runWebpackCompiler(
           reject(new CompilerError('Missing assets for chunks'));
         } else {
           resolve({
-            info,
-            stats,
+            assetsByChunkName: info.assetsByChunkName,
             warnings: stats.hasWarnings() ? info.warnings : null,
           });
         }
@@ -126,7 +126,7 @@ export class Compiler<Templates extends TemplateConfig> {
     };
   }
 
-  getWebpackCompiler() {
+  getWebpackCompiler(): { client: webpack.Compiler; server: webpack.Compiler } {
     return {
       client: webpack(this.client.webpackConfig),
       server: webpack(this.server.webpackConfig),
@@ -139,7 +139,7 @@ export class Compiler<Templates extends TemplateConfig> {
     let clientResult = await runWebpackCompiler(webpack(client.webpackConfig));
 
     let clientCompilation = new ClientCompilation({
-      chunkAssets: clientResult.info.assetsByChunkName!,
+      chunkAssets: clientResult.assetsByChunkName,
       publicPath: this.output.publicPath,
       templates: this.templates,
       warnings: clientResult.warnings,
@@ -152,7 +152,7 @@ export class Compiler<Templates extends TemplateConfig> {
       );
 
       serverCompilation = new ServerCompilation({
-        chunkAssets: serverResult.info.assetsByChunkName!,
+        chunkAssets: serverResult.assetsByChunkName,
         outputPath: this.output.server,
         warnings: serverResult.warnings,
       });

@@ -2,7 +2,7 @@ type FlagFunc = (source: string) => boolean;
 
 export type Flag = string | RegExp | Array<string | RegExp> | FlagFunc;
 
-export function isFlagged(source: string, flag: Flag) {
+export function isFlagged(source: string, flag: Flag): boolean {
   if (typeof flag === 'string') {
     return source.includes(flag);
   } else if (flag instanceof RegExp) {

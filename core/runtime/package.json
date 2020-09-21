@@ -7,6 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "microbundle build --format es,cjs",
+    "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
+    "lint": "npm run lint:ts",
     "typecheck": "tsc --noEmit"
   },
   "repository": {
@@ -20,6 +22,9 @@
   },
   "homepage": "https://github.com/wpj/julienne/core/runtime#readme",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "~4.1.1",
+    "@typescript-eslint/parser": "~4.1.1",
+    "eslint": "~7.9.0",
     "microbundle": "~0.12.3",
     "svelte": "^3.24.1",
     "typescript": "^4.0.2"

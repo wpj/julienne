@@ -2,6 +2,28 @@ import type * as webpack from 'webpack';
 import { SingleEntryPlugin } from 'webpack';
 import VirtualModules from 'webpack-virtual-modules';
 
+type ChildCompiler = webpack.Compiler & {
+  runAsChild(
+    callback: (
+      err: Error,
+      entries: webpack.Entry,
+      childCompilation: webpack.compilation.Compilation,
+    ) => void,
+  ): void;
+};
+
+declare module 'webpack' {
+  namespace compilation {
+    interface Compilation {
+      createChildCompiler(
+        id: string,
+        output?: webpack.Output,
+        plugins?: webpack.Plugin[],
+      ): ChildCompiler;
+    }
+  }
+}
+
 import { Store } from './store';
 import { internalDirName, moduleMapTemplate, pathToName } from '../utils';
 import type { Flag } from './shared';
@@ -66,7 +88,7 @@ export class FlaggedModulePlugin {
     this.flag = flag;
   }
 
-  apply(compiler: webpack.Compiler) {
+  apply(compiler: webpack.Compiler): void {
     let store = new Store();
 
     compiler.hooks.make.tap(PLUGIN_ID, (compilation) => {
@@ -81,8 +103,7 @@ export class FlaggedModulePlugin {
 
           let moduleMap = getModuleMapFromChunks(chunks, entryNames, store);
 
-          // @ts-ignore
-          let childCompiler: webpack.Compiler = compilation.createChildCompiler(
+          let childCompiler = compilation.createChildCompiler(
             PLUGIN_ID,
             childConfig.output,
             childConfig.plugins || [],
@@ -135,7 +156,6 @@ export class FlaggedModulePlugin {
           try {
             let childCompilation: webpack.compilation.Compilation = await new Promise(
               (resolve, reject) => {
-                // @ts-ignore
                 childCompiler.runAsChild(
                   (
                     err: Error,

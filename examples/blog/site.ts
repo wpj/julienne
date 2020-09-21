@@ -19,7 +19,7 @@ const templates = {
   postIndex: require.resolve('./src/templates/post-index.svelte'),
 };
 
-function extractFrontmatter(node: Root) {
+function extractFrontmatter<T>(node: Root) {
   let frontmatterNode =
     node.children[0].type === 'yaml'
       ? (node.children.shift() as YamlNode)
@@ -27,7 +27,7 @@ function extractFrontmatter(node: Root) {
 
   return (frontmatterNode !== null
     ? safeLoad(frontmatterNode.value)
-    : {}) as any;
+    : {}) as Partial<T>;
 }
 
 /*
@@ -54,7 +54,7 @@ async function getPost(site: Site<typeof templates>, postPath: string) {
     .use(remarkImages, { site, contentDirectory })
     .run(markdownAst)) as Root;
 
-  let frontmatter = extractFrontmatter(transformedMarkdown);
+  let frontmatter = extractFrontmatter<{ title: string }>(transformedMarkdown);
 
   let hast = await unified().use(remarkToRehype).run(markdownAst);
 

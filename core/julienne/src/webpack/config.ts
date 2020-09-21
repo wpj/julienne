@@ -262,22 +262,20 @@ export function createClientConfig({
       )
     : null;
 
-  let finalEntry;
-  if (__experimentalIncludeStaticModules) {
-    finalEntry = Object.fromEntries(
-      Object.keys(entry).map((entryName) => {
-        let entryChunks = [virtualEntryManifest![entryName].virtualPath];
+  let finalEntry =
+    virtualEntryManifest !== null
+      ? Object.fromEntries(
+          Object.entries(virtualEntryManifest).map(([entryName, entry]) => {
+            let entryChunks = [entry.virtualPath];
 
-        if (dev) {
-          entryChunks.push(hotMiddlewareEntry);
-        }
+            if (dev) {
+              entryChunks.push(hotMiddlewareEntry);
+            }
 
-        return [entryName, entryChunks];
-      }),
-    );
-  } else {
-    finalEntry = entry;
-  }
+            return [entryName, entryChunks];
+          }),
+        )
+      : entry;
 
   let rules: webpack.RuleSetRule[] = [
     getRules.js({ configureBabel }),
@@ -294,11 +292,11 @@ export function createClientConfig({
 
   let plugins = [];
 
-  if (__experimentalIncludeStaticModules) {
+  if (virtualEntryManifest !== null) {
     plugins.push(
       new VirtualModulesPlugin(
         Object.fromEntries(
-          Object.values(virtualEntryManifest!).map(
+          Object.values(virtualEntryManifest).map(
             ({ virtualPath, importPath }) => {
               return [
                 virtualPath,

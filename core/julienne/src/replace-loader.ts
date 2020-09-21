@@ -7,7 +7,7 @@ import { Flag, isFlagged } from './webpack/shared';
 export default function loader(
   this: webpack.loader.LoaderContext,
   content: string,
-) {
+): string {
   let options = getLoaderOptions(this);
   let flag = options.flag as Flag;
 

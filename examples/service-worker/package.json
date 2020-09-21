@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "ts-node site.ts dev",
     "build": "ts-node site.ts build",
+    "lint:svelte": "svelte-check",
+    "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
+    "lint": "npm run lint:ts && npm run lint:svelte",
     "serve": "serve __julienne__/public",
     "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings"
   },
@@ -13,6 +16,9 @@
     "@types/node": "^14.10.1",
     "@types/sade": "~1.7.2",
     "@types/workbox-build": "~5.0.0",
+    "@typescript-eslint/eslint-plugin": "~4.1.1",
+    "@typescript-eslint/parser": "~4.1.1",
+    "eslint": "~7.9.0",
     "julienne": "0.0.0",
     "rev-hash": "^3.0.0",
     "sade": "~1.7.3",

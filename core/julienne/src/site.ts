@@ -73,14 +73,14 @@ export class Site<Templates extends TemplateConfig> {
    * Creates a page using the given path and template configuration returned by
    * `getPage`.
    */
-  createPage(path: string, getPage: GetPage<keyof Templates>) {
+  createPage(path: string, getPage: GetPage<keyof Templates>): void {
     this.pages.set(path, getPage);
   }
 
   /**
    * Creates a resource in the site's output directory.
    */
-  createResource(path: string, getData: GetData) {
+  createResource(path: string, getData: GetData): void {
     let getResource: GetResource = async () => {
       let data = await getData();
 
@@ -97,11 +97,11 @@ export class Site<Templates extends TemplateConfig> {
   /**
    * Copies a resource to the site's output directory.
    */
-  copyResource(from: string, to: string) {
+  copyResource(from: string, to: string): void {
     this.resources.set(to, () => ({ type: 'file', from }));
   }
 
-  async build() {
+  async build(): Promise<void> {
     let {
       __experimentalIncludeStaticModules,
       cwd,
@@ -124,8 +124,8 @@ export class Site<Templates extends TemplateConfig> {
 
     let compilation = await compiler.compile();
 
-    if (compilation.server!.warnings) {
-      compilation.server!.warnings.forEach(console.warn.bind(console));
+    if (compilation.server?.warnings) {
+      compilation.server.warnings.forEach(console.warn.bind(console));
     }
 
     if (compilation.client.warnings) {
@@ -199,7 +199,7 @@ export class Site<Templates extends TemplateConfig> {
     );
   }
 
-  dev({ port = 3000 }: { port?: number } = {}) {
+  dev({ port = 3000 }: { port?: number } = {}): void {
     let {
       __experimentalIncludeStaticModules,
       cwd,

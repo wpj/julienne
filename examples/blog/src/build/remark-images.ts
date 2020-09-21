@@ -30,6 +30,7 @@ export const remarkImages: Plugin = ({
   site,
   contentDirectory,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   site: Site<any>;
   contentDirectory: string;
 }) => {

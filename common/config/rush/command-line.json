@@ -21,6 +21,15 @@
       "shellCommand": "pretty-quick --staged"
     },
     {
+      "name": "lint",
+      "commandKind": "bulk",
+      "summary": "Lint files",
+      "description": "Lint files in each package.",
+      "ignoreMissingScript": true,
+      "ignoreDependencyOrder": true,
+      "enableParallelism": true
+    },
+    {
       "name": "test",
       "commandKind": "bulk",
       "summary": "Run tests",
