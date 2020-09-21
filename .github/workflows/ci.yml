@@ -39,6 +39,11 @@ jobs:
         env:
           CI: true
 
+      - name: Lint files
+        run: node common/scripts/install-run-rush.js lint --verbose
+        env:
+          CI: true
+
       - name: Check types
         run: node common/scripts/install-run-rush.js typecheck --verbose
         env:
