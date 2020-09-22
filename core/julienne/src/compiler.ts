@@ -23,10 +23,11 @@ import { moduleMapTemplate } from './utils';
 function runWebpackCompiler(
   compiler: WebpackCompiler,
 ): Promise<{
-  warnings: CompilationWarnings | null;
   assetsByChunkName: NonNullable<
     WebpackStats.ToJsonOutput['assetsByChunkName']
   >;
+  hash: string;
+  warnings: CompilationWarnings | null;
 }> {
   return new Promise((resolve, reject) => {
     compiler.run((err: Error, stats: WebpackStats) => {
@@ -39,9 +40,12 @@ function runWebpackCompiler(
           reject(new CompilerError(info.errors));
         } else if (info.assetsByChunkName === undefined) {
           reject(new CompilerError('Missing assets for chunks'));
+        } else if (info.hash === undefined) {
+          reject(new CompilerError('Missing build hash'));
         } else {
           resolve({
             assetsByChunkName: info.assetsByChunkName,
+            hash: info.hash,
             warnings: stats.hasWarnings() ? info.warnings : null,
           });
         }
