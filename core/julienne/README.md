@@ -52,7 +52,24 @@ __julienne__
 └── server
 ```
 
-#### runtimeModule (optional)
+#### render
+
+Function to use when rendering components on the server. The function must
+conform to the following signature:
+
+```typescript
+type Render = (options: {
+  props: { [key: string]: unknown };
+  scripts: string[];
+  stylesheets: string[];
+  template: {
+    name: string;
+    component: null | unknown;
+  };
+}) => string | Promise<string>;
+```
+
+#### runtime
 
 Type: `string`
 
@@ -67,9 +84,6 @@ The runtime function should handle mounting the `template` component to the
 `#julienne-root` element.
 
 If creating a custom runtime, see [@julienne/runtime](../runtime) documentation.
-
-If no custom runtime is provided,
-[@julienne/default-runtime](../default-runtime) is used by default.
 
 #### templates
 

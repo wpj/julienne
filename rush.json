@@ -377,16 +377,32 @@
       "projectFolder": "core/julienne"
     },
     {
-      "packageName": "@julienne/default-runtime",
-      "projectFolder": "core/default-runtime"
+      "packageName": "@julienne/react-render",
+      "projectFolder": "core/react-render"
+    },
+    {
+      "packageName": "@julienne/react-runtime",
+      "projectFolder": "core/react-runtime"
     },
     {
       "packageName": "@julienne/runtime",
       "projectFolder": "core/runtime"
     },
     {
+      "packageName": "@julienne/svelte-render",
+      "projectFolder": "core/svelte-render"
+    },
+    {
+      "packageName": "@julienne/svelte-runtime",
+      "projectFolder": "core/svelte-runtime"
+    },
+    {
       "packageName": "example-blog",
       "projectFolder": "examples/blog"
+    },
+    {
+      "packageName": "example-react",
+      "projectFolder": "examples/react"
     },
     {
       "packageName": "example-client-routing",

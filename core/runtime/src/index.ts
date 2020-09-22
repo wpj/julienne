@@ -1,11 +1,7 @@
-import type { SvelteComponent } from 'svelte';
-
-export type Runtime = ({
-  dev,
-  template,
-}: {
+export type Runtime = (options: {
   dev: boolean;
-  template: typeof SvelteComponent;
+  hydrate: boolean;
+  template: unknown;
 }) => void | Promise<void>;
 
 const ROOT_SELECTOR = '#julienne-root';

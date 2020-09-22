@@ -85,7 +85,7 @@ export class Compiler<Templates extends TemplateConfig> {
     compileServer,
     mode = defaultMode,
     output,
-    runtimeModule = require.resolve('@julienne/default-runtime'),
+    runtime,
     templates,
   }: {
     __experimentalIncludeStaticModules?: boolean;
@@ -93,7 +93,7 @@ export class Compiler<Templates extends TemplateConfig> {
     compileServer: boolean;
     mode?: Mode;
     output: Output;
-    runtimeModule?: string;
+    runtime: string;
     templates: Templates;
   }) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
@@ -110,7 +110,7 @@ export class Compiler<Templates extends TemplateConfig> {
         mode,
         outputPath: output.client,
         publicPath: output.publicPath,
-        runtimeModule,
+        runtime,
       }),
     };
 

@@ -1,3 +1,4 @@
+import { render } from '@julienne/svelte-render';
 import { Site } from 'julienne';
 import revHash from 'rev-hash';
 import sade from 'sade';
@@ -5,7 +6,8 @@ import { generateSW } from 'workbox-build';
 
 async function createSite() {
   let site = new Site({
-    runtimeModule: require.resolve('./src/runtime.ts'),
+    render,
+    runtime: require.resolve('./src/runtime.ts'),
     templates: {
       alt: require.resolve('./src/templates/alt.svelte'),
       main: require.resolve('./src/templates/main.svelte'),

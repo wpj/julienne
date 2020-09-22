@@ -13,8 +13,9 @@ import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 
 import { ClientCompilation, Compilation } from './compilation';
-import { Svelte as SvelteRenderer } from './renderer';
+import type { Render } from './render';
 import type { GetResource, GetPage, Output, TemplateConfig } from './types';
+import { getAssets } from './utils';
 
 /**
  * webpack-dev-middleware stores the compilation stats in the ServerResponse
@@ -34,6 +35,7 @@ export function startServer<Templates extends TemplateConfig>({
   output,
   pages,
   port,
+  render,
   resources,
   templates,
 }: {
@@ -41,6 +43,7 @@ export function startServer<Templates extends TemplateConfig>({
   output: Output;
   pages: Map<string, GetPage<keyof Templates>>;
   port: number;
+  render: Render;
   resources: Map<string, GetResource>;
   templates: Templates;
 }): void {
@@ -149,14 +152,18 @@ export function startServer<Templates extends TemplateConfig>({
       server: null,
     });
 
-    let renderer = new SvelteRenderer<Templates>({
-      __experimentalIncludeStaticModules: true,
-      compilation,
-    });
+    let templateAssets = compilation.client.templateAssets[page.template];
 
-    let renderedPage = await renderer.render({
-      template: page.template,
+    let { scripts, stylesheets } = getAssets(templateAssets);
+
+    let renderedPage = await render({
       props: page.props,
+      scripts,
+      stylesheets,
+      template: {
+        name: page.template as string,
+        component: null,
+      },
     });
 
     send(res, 200, renderedPage, {

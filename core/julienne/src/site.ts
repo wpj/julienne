@@ -12,9 +12,10 @@ import type {
   Output,
   TemplateConfig,
 } from './types';
+import type { Render } from './render';
 import { writeResource } from './resource';
-import { Svelte as SvelteRenderer } from './renderer';
 import { startServer } from './server';
+import { getAssets } from './utils';
 
 interface OutputConfig {
   path: string;
@@ -42,8 +43,9 @@ export class Site<Templates extends TemplateConfig> {
   cwd: string;
   output: Output;
   pages: Map<string, GetPage<keyof Templates>> = new Map();
+  render: Render;
   resources: Map<string, GetResource> = new Map();
-  runtimeModule: string | undefined;
+  runtime: string;
   templates: Templates;
 
   constructor({
@@ -53,19 +55,22 @@ export class Site<Templates extends TemplateConfig> {
       path: outputPath = pathJoin(cwd, '__julienne__'),
       publicPath = '/',
     } = {},
-    runtimeModule,
+    render,
+    runtime,
     templates,
   }: {
     __experimentalIncludeStaticModules?: boolean;
     cwd?: string;
     output?: Partial<OutputConfig>;
-    runtimeModule?: string;
+    render: Render;
+    runtime: string;
     templates: Templates;
   }) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.cwd = cwd;
     this.output = getOutput({ path: outputPath, publicPath });
-    this.runtimeModule = runtimeModule;
+    this.render = render;
+    this.runtime = runtime;
     this.templates = templates;
   }
 
@@ -107,8 +112,9 @@ export class Site<Templates extends TemplateConfig> {
       cwd,
       output,
       pages,
+      render,
       resources,
-      runtimeModule,
+      runtime,
       templates,
     } = this;
 
@@ -118,7 +124,7 @@ export class Site<Templates extends TemplateConfig> {
       compileServer: true,
       mode: 'production',
       output,
-      runtimeModule,
+      runtime,
       templates,
     });
 
@@ -132,10 +138,11 @@ export class Site<Templates extends TemplateConfig> {
       compilation.client.warnings.forEach(console.warn.bind(console));
     }
 
-    let renderer = new SvelteRenderer<Templates>({
-      __experimentalIncludeStaticModules,
-      compilation,
-    });
+    if (!compilation.server?.asset) {
+      throw new Error('Server module not found');
+    }
+
+    let serverModule = await import(compilation.server.asset);
 
     // Pages need to be rendered first so that any resources created during the
     // page creation process are ready to be processed.
@@ -156,9 +163,18 @@ export class Site<Templates extends TemplateConfig> {
           throw new Error(`Template error: ${page.template} does not exist.`);
         }
 
-        let renderedPage = await renderer.render({
-          template: page.template,
+        let templateAssets = compilation.client.templateAssets[page.template];
+
+        let { scripts, stylesheets } = getAssets(templateAssets);
+
+        let renderedPage = await render({
           props: page.props,
+          scripts,
+          stylesheets,
+          template: {
+            name: page.template as string,
+            component: serverModule[page.template],
+          },
         });
 
         let normalizedPagePath = normalizePagePath(pagePath);
@@ -205,8 +221,9 @@ export class Site<Templates extends TemplateConfig> {
       cwd,
       output,
       pages,
+      render,
       resources,
-      runtimeModule,
+      runtime,
       templates,
     } = this;
 
@@ -216,7 +233,7 @@ export class Site<Templates extends TemplateConfig> {
       cwd,
       mode: 'development',
       output,
-      runtimeModule,
+      runtime,
       templates,
     });
 
@@ -227,6 +244,7 @@ export class Site<Templates extends TemplateConfig> {
       output,
       pages,
       port,
+      render,
       resources,
       templates,
     });

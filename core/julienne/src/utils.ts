@@ -37,3 +37,15 @@ export function moduleMapTemplate(
 export function identity<T>(val: T): T {
   return val;
 }
+
+export function getAssets(
+  templateAssets: string[],
+): { scripts: string[]; stylesheets: string[] } {
+  let scripts = templateAssets.filter((asset: string) => asset.endsWith('.js'));
+
+  let stylesheets = templateAssets.filter((asset: string) =>
+    asset.endsWith('.css'),
+  );
+
+  return { scripts, stylesheets };
+}

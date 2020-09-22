@@ -1,3 +1,4 @@
+import { render } from '@julienne/svelte-render';
 import { Props, Site } from 'julienne';
 import sade from 'sade';
 import { generateSW, ManifestTransform } from 'workbox-build';
@@ -32,7 +33,8 @@ async function createSite() {
   // resolved relative to this file rather than the root of the example
   // directory.
   let site = new Site({
-    runtimeModule: require.resolve('./src/runtime.ts'),
+    render,
+    runtime: require.resolve('./src/runtime.ts'),
     templates,
   });
 

@@ -1,18 +1,24 @@
-import defaultRuntime from '@julienne/default-runtime';
-import type { Runtime } from '@julienne/runtime';
+import type { SvelteComponent } from 'svelte';
+import svelteRuntime from '@julienne/svelte-runtime';
 
 function registerServiceWorker() {
   return navigator.serviceWorker.register('/sw.js');
 }
 
-const runtime: Runtime = ({ dev, template }) => {
-  defaultRuntime({ dev, template });
+export default function runtime({
+  dev,
+  hydrate,
+  template,
+}: {
+  dev: boolean;
+  hydrate: boolean;
+  template: typeof SvelteComponent;
+}): void {
+  svelteRuntime({ dev, hydrate, template });
 
   if (!dev) {
     registerServiceWorker().catch((e) => {
       console.error(e);
     });
   }
-};
-
-export default runtime;
+}

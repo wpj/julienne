@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { dirname, resolve as resolvePath, sep as pathSeparator } from 'path';
 
+import { render } from '@julienne/svelte-render';
 import globby from 'globby';
 import { Site } from 'julienne';
 import type { Root } from 'mdast';
@@ -98,6 +99,8 @@ async function createPostPage(site: Site<typeof templates>, postPath: string) {
 
 async function createSite() {
   let site = new Site<typeof templates>({
+    render,
+    runtime: '@julienne/svelte-runtime',
     templates,
   });
 

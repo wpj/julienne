@@ -1,4 +1,4 @@
-import { getPage, getRoot, Runtime } from '@julienne/runtime';
+import { getPage, getRoot } from '@julienne/runtime';
 import type { SvelteComponent } from 'svelte';
 
 import App from './app.svelte';
@@ -47,11 +47,17 @@ function handleLinkClick(
   }
 }
 
-const runtime: Runtime = ({ dev, template: Template }) => {
+export default function runtime({
+  hydrate,
+  template: Template,
+}: {
+  hydrate: boolean;
+  template: SvelteComponent;
+}): void {
   let page = getPage();
 
   let app = new App({
-    hydrate: !dev,
+    hydrate,
     props: {
       props: page.props,
       template: Template,
@@ -68,5 +74,4 @@ const runtime: Runtime = ({ dev, template: Template }) => {
   window.addEventListener('popstate', () => {
     updateTemplate(location.href, false, app);
   });
-};
-export default runtime;
+}

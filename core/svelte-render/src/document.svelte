@@ -1,9 +1,9 @@
 <script lang="ts">
-  export let body: string;
-  export let links: string[];
-  export let head: string;
+  export let body: string | undefined;
+  export let head: string | undefined;
   export let pageData: any;
   export let scripts: string[];
+  export let stylesheets: string[];
 
   // This is necessary so svelte-preprocess doesn't try to preprocess the data
   // script element.
@@ -24,7 +24,7 @@
     {@html head}
   {/if}
 
-  {#each links as href}
+  {#each stylesheets as href}
     <link rel="stylesheet" {href} type="text/css" />
   {/each}
 </head>

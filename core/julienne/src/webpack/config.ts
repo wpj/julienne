@@ -7,6 +7,7 @@ import type {
 import webpack from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import svelteAutoPreprocess from 'svelte-preprocess';
+import nodeExternals from 'webpack-node-externals';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 
 import { identity } from '../utils';
@@ -41,6 +42,25 @@ const defaultBabelConfig = {
   ],
 };
 
+const defaultReactBabelConfig = {
+  plugins: [
+    require.resolve('@babel/plugin-proposal-optional-chaining'),
+    require.resolve('@babel/plugin-proposal-class-properties'),
+    require.resolve('@babel/plugin-proposal-object-rest-spread'),
+  ],
+  presets: [
+    require.resolve('@babel/preset-react'),
+    require.resolve('@babel/preset-typescript'),
+    [
+      require.resolve('@babel/preset-env'),
+      {
+        corejs: '3',
+        useBuiltIns: 'entry',
+      },
+    ],
+  ],
+};
+
 const hotMiddlewareEntryPath = require.resolve('webpack-hot-middleware/client');
 const hotMiddlewareEntry = `${hotMiddlewareEntryPath}?reload=true`;
 
@@ -53,6 +73,16 @@ const getRules = {
       use: {
         loader: require.resolve('babel-loader'),
         options: configureBabel(defaultBabelConfig),
+      },
+      exclude: /node_modules/,
+    };
+  },
+  react({ configureBabel = identity }: { configureBabel?: ConfigureBabel }) {
+    return {
+      test: /\.(jsx|tsx)$/,
+      use: {
+        loader: require.resolve('babel-loader'),
+        options: configureBabel(defaultReactBabelConfig),
       },
       exclude: /node_modules/,
     };
@@ -149,18 +179,29 @@ export function createServerConfig({
 
   let resolve = {
     alias,
-    extensions: ['.js', '.mjs', '.ts', '.svelte', '.json', '.html'],
+    extensions: [
+      '.js',
+      '.jsx',
+      '.mjs',
+      '.ts',
+      '.tsx',
+      '.svelte',
+      '.json',
+      '.html',
+    ],
     mainFields: ['svelte', 'main', 'module'],
   };
 
   return {
     context: cwd,
     entry: { server: entryPath },
+    externals: [nodeExternals()],
     target: 'node',
     resolve,
     module: {
       rules: [
         getRules.js({ configureBabel }),
+        getRules.react({ configureBabel }),
         getRules.svelte({
           css: false,
           dev,
@@ -201,17 +242,19 @@ export interface Manifest {
 function clientPageRuntimeTemplate({
   dev,
   entryPath,
-  runtimeModule,
+  hydrate,
+  runtime,
 }: {
   dev: boolean;
   entryPath: string;
-  runtimeModule: string;
+  hydrate: boolean;
+  runtime: string;
 }) {
   return `
 import Template from "${entryPath}";
-import runtime from "${runtimeModule}";
+import runtime from "${runtime}";
 
-runtime({ dev: ${dev}, template: Template });
+runtime({ dev: ${dev}, hydrate: ${hydrate}, template: Template });
 `;
 }
 
@@ -223,7 +266,7 @@ export function createClientConfig({
   mode,
   outputPath,
   publicPath,
-  runtimeModule,
+  runtime,
 }: {
   __experimentalIncludeStaticModules: boolean;
   configureBabel?: ConfigureBabel;
@@ -232,13 +275,22 @@ export function createClientConfig({
   mode: Mode;
   outputPath: string;
   publicPath: string;
-  runtimeModule: string;
+  runtime: string;
 }): webpack.Configuration {
   let dev = mode === 'development';
 
   let resolve = {
     alias,
-    extensions: ['.mjs', '.js', '.ts', '.svelte', '.json', '.html'],
+    extensions: [
+      '.mjs',
+      '.js',
+      '.jsx',
+      '.ts',
+      '.tsx',
+      '.svelte',
+      '.json',
+      '.html',
+    ],
     // Resolve browser before other module types so that modules that depend
     // on this functionality work in the client bundle.
     mainFields: ['svelte', 'browser', 'module', 'main'],
@@ -279,6 +331,7 @@ export function createClientConfig({
 
   let rules: webpack.RuleSetRule[] = [
     getRules.js({ configureBabel }),
+    getRules.react({ configureBabel }),
     getRules.svelte({
       dev,
       emitCss: __experimentalIncludeStaticModules,
@@ -303,7 +356,8 @@ export function createClientConfig({
                 clientPageRuntimeTemplate({
                   dev,
                   entryPath: importPath,
-                  runtimeModule,
+                  hydrate: !dev,
+                  runtime,
                 }),
               ];
             },
