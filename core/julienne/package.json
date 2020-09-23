@@ -12,22 +12,11 @@
     "build": "npm run build-js && npm run build-types",
     "build-js": "rollup -c --silent",
     "build-types": "tsc --emitDeclarationOnly",
-    "format": "prettier --write --plugin-search-dir=. \"**/*.{ts,js,svelte,css,md}\"",
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
     "test": "uvu tests -r tests/setup/babel-register -i setup",
-    "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings",
+    "typecheck": "tsc --noEmit",
     "watch-js": "rollup -c --watch"
-  },
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
-    },
-    "./wrapper": {
-      "require": "./dist/wrapper.js",
-      "import": "./dist/wrapper.mjs"
-    }
   },
   "files": [
     "dist"
@@ -38,7 +27,6 @@
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
-    "@tsconfig/svelte": "^1.0.10",
     "@types/babel__core": "^7.1.9",
     "@types/fs-extra": "^9.0.1",
     "@types/loader-utils": "^2.0.1",
@@ -50,14 +38,12 @@
     "@types/webpack": "^4.41.21",
     "@types/webpack-dev-middleware": "~3.7.2",
     "@types/webpack-hot-middleware": "~2.25.3",
+    "@types/webpack-node-externals": "~2.5.0",
     "@types/webpack-virtual-modules": "^0.1.0",
     "@typescript-eslint/eslint-plugin": "~4.1.1",
     "@typescript-eslint/parser": "~4.1.1",
     "eslint": "~7.9.0",
     "rollup": "^2.26.7",
-    "rollup-plugin-svelte": "^6.0.0",
-    "svelte": "^3.25.1",
-    "svelte-check": "^1.0.41",
     "typescript": "^4.0.2",
     "uvu": "^0.3.3"
   },
@@ -67,29 +53,17 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.11.0",
     "@babel/plugin-proposal-optional-chaining": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
-    "@babel/preset-react": "~7.10.4",
     "@babel/preset-typescript": "^7.10.4",
-    "@julienne/svelte-runtime": "^0.0.0",
     "@polka/send": "~0.4.0",
     "@polka/send-type": "~0.5.2",
-    "@types/webpack-node-externals": "~2.5.0",
-    "babel-loader": "^8.1.0",
-    "css-loader": "^4.2.2",
     "fs-extra": "^9.0.1",
-    "loader-utils": "^2.0.0",
     "mime-types": "~2.1.27",
-    "mini-css-extract-plugin": "^0.11.0",
     "polka": "^0.5.2",
-    "style-loader": "~1.2.1",
-    "svelte-loader": "^2.13.6",
-    "svelte-preprocess": "^4.3.0",
     "webpack": "^4.44.1",
     "webpack-dev-middleware": "^3.7.2",
     "webpack-hot-middleware": "^2.25.0",
+    "webpack-merge": "~5.1.4",
     "webpack-node-externals": "~2.5.2",
     "webpack-virtual-modules": "^0.2.2"
-  },
-  "peerDependencies": {
-    "svelte": "^3.24.1"
   }
 }

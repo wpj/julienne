@@ -3,7 +3,7 @@ import webpack, {
   Stats as WebpackStats,
 } from 'webpack';
 
-import type { Mode, Output, TemplateConfig } from './types';
+import type { Output, TemplateConfig, WebpackConfig } from './types';
 import {
   Compilation,
   ClientCompilation,
@@ -16,9 +16,6 @@ export class CompilerError extends Error {
     super(Array.isArray(message) ? message.join('\n') : message);
   }
 }
-
-import { createClientConfig, createServerConfig } from './webpack';
-import { moduleMapTemplate } from './utils';
 
 function runWebpackCompiler(
   compiler: WebpackCompiler,
@@ -54,8 +51,6 @@ function runWebpackCompiler(
   });
 }
 
-const defaultMode: Mode = 'production';
-
 /*
  * TODO: expose a method for modifying loader configurations. One way to go
  * about this could be something like:
@@ -71,76 +66,43 @@ const defaultMode: Mode = 'production';
  * like babel-loader.
  */
 export class Compiler<Templates extends TemplateConfig> {
-  __experimentalIncludeStaticModules: boolean;
-  client: {
-    webpackConfig: webpack.Configuration;
-  };
   cwd: string;
   compileServer: boolean;
   output: Output;
-  server: {
-    webpackConfig: webpack.Configuration;
-  };
   templates: Templates;
+  webpackConfig: WebpackConfig;
 
   constructor({
-    __experimentalIncludeStaticModules = true,
     cwd = process.cwd(),
     compileServer,
-    mode = defaultMode,
     output,
-    runtime,
     templates,
+    webpackConfig,
   }: {
-    __experimentalIncludeStaticModules?: boolean;
     cwd?: string;
     compileServer: boolean;
-    mode?: Mode;
     output: Output;
-    runtime: string;
     templates: Templates;
+    webpackConfig: WebpackConfig;
   }) {
-    this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.compileServer = compileServer;
     this.cwd = cwd;
     this.output = output;
     this.templates = templates;
-
-    this.client = {
-      webpackConfig: createClientConfig({
-        __experimentalIncludeStaticModules,
-        cwd,
-        entry: templates,
-        mode,
-        outputPath: output.client,
-        publicPath: output.publicPath,
-        runtime,
-      }),
-    };
-
-    this.server = {
-      webpackConfig: createServerConfig({
-        __experimentalIncludeStaticModules,
-        cwd,
-        entrySource: moduleMapTemplate(templates, true),
-        mode,
-        outputPath: output.server,
-        publicPath: output.publicPath,
-      }),
-    };
+    this.webpackConfig = webpackConfig;
   }
 
   getWebpackCompiler(): { client: webpack.Compiler; server: webpack.Compiler } {
     return {
-      client: webpack(this.client.webpackConfig),
-      server: webpack(this.server.webpackConfig),
+      client: webpack(this.webpackConfig.client),
+      server: webpack(this.webpackConfig.server),
     };
   }
 
   async compile(): Promise<Compilation<Templates>> {
-    let { client, compileServer, server } = this;
+    let { compileServer, webpackConfig } = this;
 
-    let clientResult = await runWebpackCompiler(webpack(client.webpackConfig));
+    let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));
 
     let clientCompilation = new ClientCompilation({
       chunkAssets: clientResult.assetsByChunkName,
@@ -152,7 +114,7 @@ export class Compiler<Templates extends TemplateConfig> {
     let serverCompilation;
     if (compileServer) {
       let serverResult = await runWebpackCompiler(
-        webpack(server.webpackConfig),
+        webpack(webpackConfig.server),
       );
 
       serverCompilation = new ServerCompilation({

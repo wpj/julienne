@@ -1,5 +1,7 @@
 import type { Readable } from 'stream';
 
+import type * as webpack from 'webpack';
+
 import type { Resource } from './resource';
 
 /**
@@ -47,3 +49,8 @@ export type GetData = () => MaybePromise<string | Readable | Buffer>;
  * A lazy, potentially async resource.
  */
 export type GetResource = () => MaybePromise<Resource>;
+
+export type WebpackConfig = {
+  client: webpack.Configuration;
+  server: webpack.Configuration;
+};

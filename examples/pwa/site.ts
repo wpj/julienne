@@ -1,4 +1,4 @@
-import { render } from '@julienne/svelte-render';
+import { render, createWebpackConfig } from '@julienne/svelte';
 import { Props, Site } from 'julienne';
 import sade from 'sade';
 import { generateSW, ManifestTransform } from 'workbox-build';
@@ -22,7 +22,7 @@ const removeNonShellHtml: ManifestTransform = async (manifestEntries) => {
   return { manifest, warnings: [] };
 };
 
-async function createSite() {
+async function createSite({ dev }: { dev: boolean }) {
   let templates = {
     alt: require.resolve('./src/templates/alt.svelte'),
     main: require.resolve('./src/templates/main.svelte'),
@@ -36,6 +36,7 @@ async function createSite() {
     render,
     runtime: require.resolve('./src/runtime.ts'),
     templates,
+    webpackConfig: createWebpackConfig({ dev }),
   });
 
   function createPageAndPageJson(
@@ -63,7 +64,7 @@ async function createSite() {
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: false });
   await site.build();
 
   // workbox-build resolves paths against the current working directory.
@@ -78,7 +79,7 @@ prog.command('build').action(async () => {
 });
 
 prog.command('dev').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: true });
   site.dev();
 });
 

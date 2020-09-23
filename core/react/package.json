@@ -1,7 +1,7 @@
 {
-  "name": "@julienne/react-render",
+  "name": "@julienne/react",
   "version": "0.0.0",
-  "description": "React server side renderer",
+  "description:": "React configuration and server renderer for julienne sites",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -25,13 +25,30 @@
   ],
   "homepage": "https://github.com/wpj/julienne/core/react-render#readme",
   "devDependencies": {
+    "@types/babel__core": "^7.1.9",
+    "@types/mini-css-extract-plugin": "^0.9.1",
+    "@types/node": "^14.10.1",
     "@types/react": "~16.9.49",
     "@types/react-dom": "~16.9.8",
+    "@types/webpack": "^4.41.21",
     "@typescript-eslint/eslint-plugin": "~4.1.1",
     "@typescript-eslint/parser": "~4.1.1",
     "eslint": "~7.9.0",
     "microbundle": "~0.12.3",
     "typescript": "^4.0.2"
+  },
+  "dependencies": {
+    "@babel/core": "^7.11.4",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.11.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.11.0",
+    "@babel/preset-env": "^7.11.0",
+    "@babel/preset-react": "~7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "babel-loader": "~8.1.0",
+    "css-loader": "~4.3.0",
+    "mini-css-extract-plugin": "^0.11.0",
+    "webpack": "^4.44.1"
   },
   "peerDependencies": {
     "react": "^16.9.0",

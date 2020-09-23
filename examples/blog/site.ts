@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { dirname, resolve as resolvePath, sep as pathSeparator } from 'path';
 
-import { render } from '@julienne/svelte-render';
+import { render, createWebpackConfig } from '@julienne/svelte';
 import globby from 'globby';
 import { Site } from 'julienne';
 import type { Root } from 'mdast';
@@ -97,11 +97,12 @@ async function createPostPage(site: Site<typeof templates>, postPath: string) {
   });
 }
 
-async function createSite() {
+async function createSite({ dev }: { dev: boolean }) {
   let site = new Site<typeof templates>({
     render,
     runtime: '@julienne/svelte-runtime',
     templates,
+    webpackConfig: createWebpackConfig({ dev }),
   });
 
   let postPaths = await globby(['posts/**/*.md']);
@@ -136,12 +137,12 @@ async function createSite() {
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: false });
   await site.build();
 });
 
 prog.command('dev').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: true });
   site.dev();
 });
 

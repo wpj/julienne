@@ -1,10 +1,10 @@
-import { render } from '@julienne/svelte-render';
+import { render, createWebpackConfig } from '@julienne/svelte';
 import { Site } from 'julienne';
 import revHash from 'rev-hash';
 import sade from 'sade';
 import { generateSW } from 'workbox-build';
 
-async function createSite() {
+async function createSite({ dev }: { dev: boolean }) {
   let site = new Site({
     render,
     runtime: require.resolve('./src/runtime.ts'),
@@ -12,6 +12,7 @@ async function createSite() {
       alt: require.resolve('./src/templates/alt.svelte'),
       main: require.resolve('./src/templates/main.svelte'),
     },
+    webpackConfig: createWebpackConfig({ dev }),
   });
 
   let searchIndex = {
@@ -50,7 +51,7 @@ async function createSite() {
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: false });
   await site.build();
 
   // workbox-build resolves paths against the current working directory.
@@ -63,7 +64,7 @@ prog.command('build').action(async () => {
 });
 
 prog.command('dev').action(async () => {
-  let site = await createSite();
+  let site = await createSite({ dev: true });
   site.dev();
 });
 

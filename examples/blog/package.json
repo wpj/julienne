@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings"
   },
   "devDependencies": {
-    "@julienne/svelte-render": "^0.0.0",
+    "@julienne/svelte": "^0.0.0",
     "@tsconfig/svelte": "^1.0.10",
     "@types/js-yaml": "~3.12.5",
     "@types/mdast": "~3.0.3",

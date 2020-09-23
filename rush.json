@@ -377,8 +377,8 @@
       "projectFolder": "core/julienne"
     },
     {
-      "packageName": "@julienne/react-render",
-      "projectFolder": "core/react-render"
+      "packageName": "@julienne/react",
+      "projectFolder": "core/react"
     },
     {
       "packageName": "@julienne/react-runtime",
@@ -389,8 +389,8 @@
       "projectFolder": "core/runtime"
     },
     {
-      "packageName": "@julienne/svelte-render",
-      "projectFolder": "core/svelte-render"
+      "packageName": "@julienne/svelte",
+      "projectFolder": "core/svelte"
     },
     {
       "packageName": "@julienne/svelte-runtime",

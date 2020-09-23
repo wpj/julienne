@@ -2,7 +2,7 @@ import type * as webpack from 'webpack';
 import { getOptions as getLoaderOptions } from 'loader-utils';
 
 import { pathToName } from './utils';
-import { Flag, isFlagged } from './webpack/shared';
+import { Flag, isFlagged } from './shared';
 
 export default function loader(
   this: webpack.loader.LoaderContext,

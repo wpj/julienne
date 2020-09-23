@@ -3,6 +3,8 @@ import { Readable } from 'stream';
 import { dirname, join as pathJoin } from 'path';
 
 import { ensureDir } from 'fs-extra';
+import type * as webpack from 'webpack';
+import mergeWebpackConfigs from 'webpack-merge';
 
 import { Compiler } from './compiler';
 import type {
@@ -11,11 +13,13 @@ import type {
   GetResource,
   Output,
   TemplateConfig,
+  WebpackConfig,
 } from './types';
 import type { Render } from './render';
 import { writeResource } from './resource';
 import { startServer } from './server';
 import { getAssets } from './utils';
+import { createClientConfig, createServerConfig } from './webpack';
 
 interface OutputConfig {
   path: string;
@@ -38,6 +42,16 @@ function normalizePagePath(pagePath: string) {
   return pathJoin(pagePath, 'index.html');
 }
 
+// julienne generates its own entry, so we need to remove entries from the user
+// configuration.
+function cleanWebpackConfig({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  entry: _throwawayEntry,
+  ...config
+}: webpack.Configuration) {
+  return config;
+}
+
 export class Site<Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules: boolean;
   cwd: string;
@@ -47,6 +61,7 @@ export class Site<Templates extends TemplateConfig> {
   resources: Map<string, GetResource> = new Map();
   runtime: string;
   templates: Templates;
+  webpackConfig: WebpackConfig;
 
   constructor({
     __experimentalIncludeStaticModules = true,
@@ -58,6 +73,7 @@ export class Site<Templates extends TemplateConfig> {
     render,
     runtime,
     templates,
+    webpackConfig,
   }: {
     __experimentalIncludeStaticModules?: boolean;
     cwd?: string;
@@ -65,6 +81,7 @@ export class Site<Templates extends TemplateConfig> {
     render: Render;
     runtime: string;
     templates: Templates;
+    webpackConfig?: WebpackConfig;
   }) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.cwd = cwd;
@@ -72,6 +89,14 @@ export class Site<Templates extends TemplateConfig> {
     this.render = render;
     this.runtime = runtime;
     this.templates = templates;
+
+    // We're creating skeleton webpack configs to ease the common task of adding
+    // loaders and plugins in the case where a user is mutating the webpack
+    // configuration after creating a site.
+    this.webpackConfig = webpackConfig ?? {
+      client: { module: { rules: [] }, plugins: [] },
+      server: { module: { rules: [] }, plugins: [] },
+    };
   }
 
   /**
@@ -116,16 +141,39 @@ export class Site<Templates extends TemplateConfig> {
       resources,
       runtime,
       templates,
+      webpackConfig: baseWebpackConfig,
     } = this;
 
+    let webpackConfig = {
+      client: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.client),
+        createClientConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'production',
+          outputPath: output.client,
+          publicPath: output.publicPath,
+          runtime,
+          templates,
+        }),
+      ),
+      server: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.server),
+        createServerConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'production',
+          outputPath: output.server,
+          publicPath: output.publicPath,
+          templates,
+        }),
+      ),
+    };
+
     let compiler = new Compiler({
-      __experimentalIncludeStaticModules,
       cwd,
       compileServer: true,
-      mode: 'production',
       output,
-      runtime,
       templates,
+      webpackConfig,
     });
 
     let compilation = await compiler.compile();
@@ -225,16 +273,40 @@ export class Site<Templates extends TemplateConfig> {
       resources,
       runtime,
       templates,
+
+      webpackConfig: baseWebpackConfig,
     } = this;
 
+    let webpackConfig = {
+      client: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.client),
+        createClientConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'development',
+          outputPath: output.client,
+          publicPath: output.publicPath,
+          runtime,
+          templates,
+        }),
+      ),
+      server: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.server),
+        createServerConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'development',
+          outputPath: output.server,
+          publicPath: output.publicPath,
+          templates,
+        }),
+      ),
+    };
+
     let compiler = new Compiler<Templates>({
-      __experimentalIncludeStaticModules,
       compileServer: false,
       cwd,
-      mode: 'development',
       output,
-      runtime,
       templates,
+      webpackConfig,
     });
 
     let { client: clientWebpackCompiler } = compiler.getWebpackCompiler();
