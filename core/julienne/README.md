@@ -11,8 +11,11 @@ let site = new Site({
   },
 });
 
+// Compile the site's assets
+await site.compile();
+
 // Build the site
-await site.build();
+await site.generate();
 
 // Start a local development server
 site.dev();
@@ -24,15 +27,15 @@ site.dev();
 
 Construct a Site instance.
 
-#### cwd (optional)
+#### options.cwd (optional)
 
-Set the cwd when compiling and building the site. It's only necessary to set
-this when you're build script is not in the directory you're building your site
-from.
+Set the cwd when compiling and generating the site. It's only necessary to set
+this when you're build script is not in the directory you're generating your
+site from.
 
 If no value is passed, `process.cwd()` is used by default.
 
-#### output (optional)
+#### options.output (optional)
 
 Type:
 
@@ -52,7 +55,7 @@ directory structure will be created:
 └── server
 ```
 
-#### render
+#### options.render
 
 Function to use when rendering components on the server. The function must
 conform to the following signature:
@@ -69,7 +72,7 @@ type Render = (options: {
 }) => string | Promise<string>;
 ```
 
-#### runtime
+#### options.runtime
 
 Type: `string`
 
@@ -85,11 +88,108 @@ The runtime function should handle mounting the `template` component to the
 
 If creating a custom runtime, see [@julienne/runtime](../runtime) documentation.
 
-#### templates
+#### options.templates
 
 Type: `{ [name: string]: string }`
 
 An object that maps template names to file paths.
+
+#### options.webpackConfig (optional)
+
+Type: `{ client: webpack.Configuration, server: webpack.Configuration }`
+
+Custom webpack configuration. julienne generates entries internally, so entries
+should not be included in custom webpack configuration.
+
+### createPage(path, getPage)
+
+#### path
+
+Type: `string`
+
+The path/URL to create the page at. This path should start with a forward slash.
+
+#### getPage
+
+Function that returns page configuration. This is where you specify what
+template to use to generate the page and the props to pass to the template.
+julienne will `await` values returned from `getPage`, so you can use
+`async`/`await`.
+
+Template configuration has the following type:
+
+```typescript
+{
+
+  template: string;
+  props: { [key: string]: unknown };
+}
+```
+
+### createResource(path, getResource)
+
+#### path
+
+The path/URL to create the resource at. This path should start with a forward
+slash.
+
+#### getResource
+
+Function that returns resource data, which can be a string, a Buffer, or a
+stream. julienne will `await` values returned from `getResource`, so you can use
+`async`/`await`.
+
+### copyResource(from, to)
+
+#### from
+
+Type: `string`
+
+The path of the resource to copy.
+
+#### to
+
+Type: `string`
+
+The path/URL to copy the resource to. This path should start with a forward
+slash.
+
+### compile(options)
+
+Compiles the sites assets and writes them to the output directory.
+
+Returns a `Compilation` object, which can be used to inspect the result of a
+compilation or write the compilation manifest to disk to enable cached
+compilations.
+
+##### options.fromCache (optional)
+
+Path to read a cached compilation manifest from. If a cached compilation is
+found, the compilation step will be skipped.
+
+### generate()
+
+Write the site's pages and resources to disk.
+
+### dev(options)
+
+Starts a server for local development.
+
+#### options.port
+
+Type: `number` or `string`
+
+### Compilation
+
+A compilation manifest returned by `Site.compile`.
+
+### write(path)
+
+#### path
+
+Type: `string`
+
+The path to write the compilation manifest to.
 
 ## Polyfills
 

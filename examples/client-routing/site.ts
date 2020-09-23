@@ -41,7 +41,8 @@ let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
   let site = await createSite({ dev: false });
-  await site.build();
+  await site.compile();
+  await site.generate();
 });
 
 prog.command('dev').action(async () => {

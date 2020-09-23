@@ -69,3 +69,6 @@ dist
 
 # julienne build output
 .julienne
+
+# compilation cache manifests
+examples/**/*.cache.json

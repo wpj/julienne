@@ -65,7 +65,8 @@ let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
   let site = await createSite({ dev: false });
-  await site.build();
+  await site.compile();
+  await site.generate();
 
   // workbox-build resolves paths against the current working directory.
   await generateSW({

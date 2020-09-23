@@ -1,3 +1,5 @@
+import { join as pathJoin } from 'path';
+
 import { render, createWebpackConfig } from '@julienne/react';
 import { Site } from 'julienne';
 import sade from 'sade';
@@ -12,21 +14,19 @@ async function createSite({ dev }) {
     webpackConfig: createWebpackConfig({ dev }),
   });
 
-  site.createPage('/', async () => {
-    return {
-      template: 'main',
-      props: {},
-    };
-  });
-
   return site;
 }
 
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
+  let cachePath = pathJoin(process.cwd(), 'build.cache.json');
+
   let site = await createSite({ dev: false });
-  await site.compile();
+
+  let compilation = await site.compile({ fromCache: cachePath });
+  await compilation.write(cachePath);
+
   await site.generate();
 });
 

@@ -397,6 +397,10 @@
       "projectFolder": "core/svelte-runtime"
     },
     {
+      "packageName": "example-cached-compilation",
+      "projectFolder": "examples/cached-compilation"
+    },
+    {
       "packageName": "example-blog",
       "projectFolder": "examples/blog"
     },

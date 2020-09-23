@@ -1,3 +1,4 @@
+import { promises as fs } from 'fs';
 import { join as pathJoin } from 'path';
 
 import type { TemplateConfig } from './types';
@@ -77,6 +78,18 @@ export class Compilation<Templates extends TemplateConfig> {
   client: ClientCompilation<Templates>;
   server: ServerCompilation | null;
 
+  static async fromCache<Templates extends TemplateConfig>(
+    path: string,
+  ): Promise<Compilation<Templates> | null> {
+    try {
+      let cachedCompilation = await fs.readFile(path, 'utf8');
+      let { client, server } = JSON.parse(cachedCompilation);
+      return new Compilation<Templates>({ client, server });
+    } catch (e) {
+      return null;
+    }
+  }
+
   constructor({
     client,
     server,
@@ -86,5 +99,10 @@ export class Compilation<Templates extends TemplateConfig> {
   }) {
     this.client = client;
     this.server = server;
+  }
+
+  write(path: string): Promise<void> {
+    let { client, server } = this;
+    return fs.writeFile(path, JSON.stringify({ client, server }), 'utf8');
   }
 }

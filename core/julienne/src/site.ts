@@ -6,6 +6,7 @@ import { ensureDir } from 'fs-extra';
 import type * as webpack from 'webpack';
 import mergeWebpackConfigs from 'webpack-merge';
 
+import { Compilation } from './compilation';
 import { Compiler } from './compiler';
 import type {
   GetData,
@@ -54,6 +55,7 @@ function cleanWebpackConfig({
 
 export class Site<Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules: boolean;
+  compilation: Compilation<Templates> | null;
   cwd: string;
   output: Output;
   pages: Map<string, GetPage<keyof Templates>> = new Map();
@@ -84,6 +86,7 @@ export class Site<Templates extends TemplateConfig> {
     webpackConfig?: WebpackConfig;
   }) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
+    this.compilation = null;
     this.cwd = cwd;
     this.output = getOutput({ path: outputPath, publicPath });
     this.render = render;
@@ -131,14 +134,27 @@ export class Site<Templates extends TemplateConfig> {
     this.resources.set(to, () => ({ type: 'file', from }));
   }
 
-  async build(): Promise<void> {
+  /**
+   * Compile the site's assets.
+   *
+   * `compile` will attempt to find a cached compilation manifest at the path
+   * passed in `fromCache`. If one is found, the compilation will be skipped.
+   */
+  async compile({ fromCache }: { fromCache?: string } = {}): Promise<
+    Compilation<Templates>
+  > {
+    if (fromCache !== undefined) {
+      let cachedCompilation = await Compilation.fromCache<Templates>(fromCache);
+      if (cachedCompilation) {
+        this.compilation = cachedCompilation;
+        return cachedCompilation;
+      }
+    }
+
     let {
       __experimentalIncludeStaticModules,
       cwd,
       output,
-      pages,
-      render,
-      resources,
       runtime,
       templates,
       webpackConfig: baseWebpackConfig,
@@ -186,11 +202,28 @@ export class Site<Templates extends TemplateConfig> {
       compilation.client.warnings.forEach(console.warn.bind(console));
     }
 
+    this.compilation = compilation;
+
+    return compilation;
+  }
+
+  /**
+   * Write the site's pages and resources to disk.
+   */
+  async generate(): Promise<void> {
+    let { compilation, output, pages, render, resources, templates } = this;
+
+    if (compilation === null) {
+      throw new Error('Missing compilation, please call "site.compile()".');
+    }
+
     if (!compilation.server?.asset) {
       throw new Error('Server module not found');
     }
 
     let serverModule = await import(compilation.server.asset);
+
+    let clientCompilation = compilation.client;
 
     // Pages need to be rendered first so that any resources created during the
     // page creation process are ready to be processed.
@@ -211,7 +244,7 @@ export class Site<Templates extends TemplateConfig> {
           throw new Error(`Template error: ${page.template} does not exist.`);
         }
 
-        let templateAssets = compilation.client.templateAssets[page.template];
+        let templateAssets = clientCompilation.templateAssets[page.template];
 
         let { scripts, stylesheets } = getAssets(templateAssets);
 
@@ -263,6 +296,9 @@ export class Site<Templates extends TemplateConfig> {
     );
   }
 
+  /**
+   * Start a server for local development.
+   */
   dev({ port = 3000 }: { port?: number } = {}): void {
     let {
       __experimentalIncludeStaticModules,
