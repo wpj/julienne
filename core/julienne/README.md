@@ -47,7 +47,7 @@ Directories to write the output to. If no output is provided, the following
 directory structure will be created:
 
 ```
-__julienne__
+.julienne
 ├── public
 └── server
 ```

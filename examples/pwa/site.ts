@@ -69,12 +69,12 @@ prog.command('build').action(async () => {
 
   // workbox-build resolves paths against the current working directory.
   await generateSW({
-    globDirectory: '__julienne__/public',
+    globDirectory: '.julienne/public',
     globPatterns: ['**/*'],
     globIgnores: ['**/*.map', '**/!(__shell)/*.html'],
     manifestTransforms: [removeNonShellHtml],
     navigateFallback: '/__shell.html',
-    swDest: '__julienne__/public/sw.js',
+    swDest: '.julienne/public/sw.js',
   });
 });
 

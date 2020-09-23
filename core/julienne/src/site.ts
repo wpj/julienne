@@ -67,7 +67,7 @@ export class Site<Templates extends TemplateConfig> {
     __experimentalIncludeStaticModules = true,
     cwd = process.cwd(),
     output: {
-      path: outputPath = pathJoin(cwd, '__julienne__'),
+      path: outputPath = pathJoin(cwd, '.julienne'),
       publicPath = '/',
     } = {},
     render,
