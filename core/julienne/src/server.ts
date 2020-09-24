@@ -140,19 +140,20 @@ export function startServer<Templates extends TemplateConfig>({
 
     let page = await getPage();
 
-    let clientCompilation = new ClientCompilation<Templates>({
+    let clientCompilation = new ClientCompilation({
       chunkAssets: info.assetsByChunkName,
       publicPath: output.publicPath,
       templates,
       warnings: info.warnings,
     });
 
-    let compilation = new Compilation<Templates>({
+    let compilation = new Compilation({
       client: clientCompilation,
       server: null,
     });
 
-    let templateAssets = compilation.client.templateAssets[page.template];
+    let templateAssets =
+      compilation.client.templateAssets[page.template as string];
 
     let { scripts, stylesheets } = getAssets(templateAssets);
 

@@ -1,25 +1,22 @@
-import { promises as fs } from 'fs';
+import { join as pathJoin } from 'path';
 import { Readable } from 'stream';
-import { dirname, join as pathJoin } from 'path';
-
-import { ensureDir } from 'fs-extra';
 import type * as webpack from 'webpack';
 import mergeWebpackConfigs from 'webpack-merge';
-
 import { Compilation } from './compilation';
 import { Compiler } from './compiler';
+import { SiteGenerator } from './generator';
+import type { Render } from './render';
+import { startServer } from './server';
 import type {
   GetData,
   GetPage,
   GetResource,
   Output,
+  PageMap,
+  ResourceMap,
   TemplateConfig,
   WebpackConfig,
 } from './types';
-import type { Render } from './render';
-import { writeResource } from './resource';
-import { startServer } from './server';
-import { getAssets } from './utils';
 import { createClientConfig, createServerConfig } from './webpack';
 
 interface OutputConfig {
@@ -35,14 +32,6 @@ function getOutput(output: OutputConfig) {
   };
 }
 
-function normalizePagePath(pagePath: string) {
-  if (pagePath.endsWith('.html')) {
-    return pagePath;
-  }
-
-  return pathJoin(pagePath, 'index.html');
-}
-
 // julienne generates its own entry, so we need to remove entries from the user
 // configuration.
 function cleanWebpackConfig({
@@ -53,14 +42,21 @@ function cleanWebpackConfig({
   return config;
 }
 
+type CompileOptions = {
+  fromCache?: string;
+};
+
+type DevOptions = {
+  port?: number;
+};
+
 export class Site<Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules: boolean;
-  compilation: Compilation<Templates> | null;
   cwd: string;
   output: Output;
-  pages: Map<string, GetPage<keyof Templates>> = new Map();
+  pages: PageMap<keyof Templates> = new Map();
   render: Render;
-  resources: Map<string, GetResource> = new Map();
+  resources: ResourceMap = new Map();
   runtime: string;
   templates: Templates;
   webpackConfig: WebpackConfig;
@@ -86,7 +82,6 @@ export class Site<Templates extends TemplateConfig> {
     webpackConfig?: WebpackConfig;
   }) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
-    this.compilation = null;
     this.cwd = cwd;
     this.output = getOutput({ path: outputPath, publicPath });
     this.render = render;
@@ -135,171 +130,14 @@ export class Site<Templates extends TemplateConfig> {
   }
 
   /**
-   * Compile the site's assets.
+   * Compile the site's assets and return a site generator.
    *
    * `compile` will attempt to find a cached compilation manifest at the path
    * passed in `fromCache`. If one is found, the compilation will be skipped.
    */
-  async compile({ fromCache }: { fromCache?: string } = {}): Promise<
-    Compilation<Templates>
+  async compile({ fromCache }: CompileOptions = {}): Promise<
+    SiteGenerator<Templates>
   > {
-    if (fromCache !== undefined) {
-      let cachedCompilation = await Compilation.fromCache<Templates>(fromCache);
-      if (cachedCompilation) {
-        this.compilation = cachedCompilation;
-        return cachedCompilation;
-      }
-    }
-
-    let {
-      __experimentalIncludeStaticModules,
-      cwd,
-      output,
-      runtime,
-      templates,
-      webpackConfig: baseWebpackConfig,
-    } = this;
-
-    let webpackConfig = {
-      client: mergeWebpackConfigs(
-        cleanWebpackConfig(baseWebpackConfig.client),
-        createClientConfig({
-          __experimentalIncludeStaticModules,
-          mode: 'production',
-          outputPath: output.client,
-          publicPath: output.publicPath,
-          runtime,
-          templates,
-        }),
-      ),
-      server: mergeWebpackConfigs(
-        cleanWebpackConfig(baseWebpackConfig.server),
-        createServerConfig({
-          __experimentalIncludeStaticModules,
-          mode: 'production',
-          outputPath: output.server,
-          publicPath: output.publicPath,
-          templates,
-        }),
-      ),
-    };
-
-    let compiler = new Compiler({
-      cwd,
-      compileServer: true,
-      output,
-      templates,
-      webpackConfig,
-    });
-
-    let compilation = await compiler.compile();
-
-    if (compilation.server?.warnings) {
-      compilation.server.warnings.forEach(console.warn.bind(console));
-    }
-
-    if (compilation.client.warnings) {
-      compilation.client.warnings.forEach(console.warn.bind(console));
-    }
-
-    this.compilation = compilation;
-
-    return compilation;
-  }
-
-  /**
-   * Write the site's pages and resources to disk.
-   */
-  async generate(): Promise<void> {
-    let { compilation, output, pages, render, resources, templates } = this;
-
-    if (compilation === null) {
-      throw new Error('Missing compilation, please call "site.compile()".');
-    }
-
-    if (!compilation.server?.asset) {
-      throw new Error('Server module not found');
-    }
-
-    let serverModule = await import(compilation.server.asset);
-
-    let clientCompilation = compilation.client;
-
-    // Pages need to be rendered first so that any resources created during the
-    // page creation process are ready to be processed.
-    await Promise.allSettled(
-      Array.from(pages.entries()).map(async ([pagePath, getPage]) => {
-        let page;
-        try {
-          page = await getPage();
-        } catch (e) {
-          console.error(
-            `Error occurred when creating page ${pagePath}, aborting`,
-            e,
-          );
-          return;
-        }
-
-        if (!(page.template in templates)) {
-          throw new Error(`Template error: ${page.template} does not exist.`);
-        }
-
-        let templateAssets = clientCompilation.templateAssets[page.template];
-
-        let { scripts, stylesheets } = getAssets(templateAssets);
-
-        let renderedPage = await render({
-          props: page.props,
-          scripts,
-          stylesheets,
-          template: {
-            name: page.template as string,
-            component: serverModule[page.template],
-          },
-        });
-
-        let normalizedPagePath = normalizePagePath(pagePath);
-
-        let outputPath = pathJoin(output.client, normalizedPagePath);
-
-        let outputDir = dirname(outputPath);
-
-        await ensureDir(outputDir);
-
-        await fs.writeFile(outputPath, renderedPage, 'utf8');
-      }),
-    );
-
-    await Promise.allSettled(
-      Array.from(resources.entries()).map(
-        async ([resourcePath, getResource]) => {
-          let resource;
-          try {
-            resource = await getResource();
-          } catch (e) {
-            console.error(
-              `Error occurred when creating resource ${resourcePath}, aborting`,
-              e,
-            );
-            return;
-          }
-
-          let outputPath = pathJoin(output.client, resourcePath);
-
-          let outputDir = dirname(outputPath);
-
-          await ensureDir(outputDir);
-
-          return writeResource(outputPath, resource);
-        },
-      ),
-    );
-  }
-
-  /**
-   * Start a server for local development.
-   */
-  dev({ port = 3000 }: { port?: number } = {}): void {
     let {
       __experimentalIncludeStaticModules,
       cwd,
@@ -309,7 +147,83 @@ export class Site<Templates extends TemplateConfig> {
       resources,
       runtime,
       templates,
+      webpackConfig: baseWebpackConfig,
+    } = this;
 
+    let compilation: Compilation;
+
+    let cachedCompilation =
+      fromCache !== undefined ? await Compilation.fromCache(fromCache) : null;
+
+    if (cachedCompilation !== null) {
+      compilation = cachedCompilation;
+    } else {
+      let webpackConfig = {
+        client: mergeWebpackConfigs(
+          cleanWebpackConfig(baseWebpackConfig.client),
+          createClientConfig({
+            __experimentalIncludeStaticModules,
+            mode: 'production',
+            outputPath: output.client,
+            publicPath: output.publicPath,
+            runtime,
+            templates,
+          }),
+        ),
+        server: mergeWebpackConfigs(
+          cleanWebpackConfig(baseWebpackConfig.server),
+          createServerConfig({
+            __experimentalIncludeStaticModules,
+            mode: 'production',
+            outputPath: output.server,
+            publicPath: output.publicPath,
+            templates,
+          }),
+        ),
+      };
+
+      let compiler = new Compiler({
+        cwd,
+        compileServer: true,
+        output,
+        templates,
+        webpackConfig,
+      });
+
+      compilation = await compiler.compile();
+
+      if (compilation.server?.warnings) {
+        compilation.server.warnings.forEach(console.warn.bind(console));
+      }
+
+      if (compilation.client.warnings) {
+        compilation.client.warnings.forEach(console.warn.bind(console));
+      }
+    }
+
+    return new SiteGenerator({
+      compilation,
+      output,
+      pages,
+      render,
+      resources,
+      templates,
+    });
+  }
+
+  /**
+   * Start a server for local development.
+   */
+  dev({ port = 3000 }: DevOptions = {}): void {
+    let {
+      __experimentalIncludeStaticModules,
+      cwd,
+      output,
+      pages,
+      render,
+      resources,
+      runtime,
+      templates,
       webpackConfig: baseWebpackConfig,
     } = this;
 
@@ -337,7 +251,7 @@ export class Site<Templates extends TemplateConfig> {
       ),
     };
 
-    let compiler = new Compiler<Templates>({
+    let compiler = new Compiler({
       compileServer: false,
       cwd,
       output,

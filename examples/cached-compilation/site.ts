@@ -24,10 +24,10 @@ prog.command('build').action(async () => {
 
   let site = await createSite({ dev: false });
 
-  let compilation = await site.compile({ fromCache: cachePath });
-  await compilation.write(cachePath);
+  let generator = await site.compile({ fromCache: cachePath });
+  await generator.compilation.write(cachePath);
 
-  await site.generate();
+  await generator.generate();
 });
 
 prog.command('dev').action(async () => {

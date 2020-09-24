@@ -1,13 +1,15 @@
 import { promises as fs } from 'fs';
 import { join as pathJoin } from 'path';
 
-import type { TemplateConfig } from './types';
+import { TemplateConfig } from './types';
 
 export type CompilationWarnings = string[];
 
 interface NamedChunkAssets {
   [chunkName: string]: string | string[];
 }
+
+type TemplateAssets = { [name: string]: string[] };
 
 function normalizeAssets(assets: string | string[], publicPath: string) {
   return (Array.isArray(assets) ? assets : [assets]).map((assetPath) =>
@@ -19,8 +21,8 @@ function normalizeAssets(assets: string | string[], publicPath: string) {
  * Provides an interface for consumers to query information about a compilation
  * result.
  */
-export class ClientCompilation<Templates extends TemplateConfig> {
-  templateAssets: Record<keyof Templates, string[]>;
+export class ClientCompilation {
+  templateAssets: TemplateAssets;
   warnings: CompilationWarnings | null;
 
   constructor({
@@ -31,7 +33,7 @@ export class ClientCompilation<Templates extends TemplateConfig> {
   }: {
     chunkAssets: NamedChunkAssets;
     publicPath: string;
-    templates: Templates;
+    templates: TemplateConfig;
     warnings: CompilationWarnings | null;
   }) {
     let templateAssetsEntries = [];
@@ -74,17 +76,15 @@ export class ServerCompilation {
   }
 }
 
-export class Compilation<Templates extends TemplateConfig> {
-  client: ClientCompilation<Templates>;
+export class Compilation {
+  client: ClientCompilation;
   server: ServerCompilation | null;
 
-  static async fromCache<Templates extends TemplateConfig>(
-    path: string,
-  ): Promise<Compilation<Templates> | null> {
+  static async fromCache(path: string): Promise<Compilation | null> {
     try {
       let cachedCompilation = await fs.readFile(path, 'utf8');
       let { client, server } = JSON.parse(cachedCompilation);
-      return new Compilation<Templates>({ client, server });
+      return new Compilation({ client, server });
     } catch (e) {
       return null;
     }
@@ -94,7 +94,7 @@ export class Compilation<Templates extends TemplateConfig> {
     client,
     server,
   }: {
-    client: ClientCompilation<Templates>;
+    client: ClientCompilation;
     server: ServerCompilation | null;
   }) {
     this.client = client;

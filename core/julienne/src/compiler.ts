@@ -65,11 +65,11 @@ function runWebpackCompiler(
  * configured to run on svelte modules in addition to top level loaders
  * like babel-loader.
  */
-export class Compiler<Templates extends TemplateConfig> {
+export class Compiler {
   cwd: string;
   compileServer: boolean;
   output: Output;
-  templates: Templates;
+  templates: TemplateConfig;
   webpackConfig: WebpackConfig;
 
   constructor({
@@ -82,7 +82,7 @@ export class Compiler<Templates extends TemplateConfig> {
     cwd?: string;
     compileServer: boolean;
     output: Output;
-    templates: Templates;
+    templates: TemplateConfig;
     webpackConfig: WebpackConfig;
   }) {
     this.compileServer = compileServer;
@@ -99,7 +99,7 @@ export class Compiler<Templates extends TemplateConfig> {
     };
   }
 
-  async compile(): Promise<Compilation<Templates>> {
+  async compile(): Promise<Compilation> {
     let { compileServer, webpackConfig } = this;
 
     let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));

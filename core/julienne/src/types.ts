@@ -45,6 +45,10 @@ export type GetPage<Template> = () => MaybePromise<Page<Template>>;
  */
 export type GetData = () => MaybePromise<string | Readable | Buffer>;
 
+export type PageMap<T> = Map<string, GetPage<T>>;
+
+export type ResourceMap = Map<string, GetResource>;
+
 /**
  * A lazy, potentially async resource.
  */

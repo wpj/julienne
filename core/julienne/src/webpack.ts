@@ -5,7 +5,7 @@ import VirtualModulesPlugin from 'webpack-virtual-modules';
 import { moduleMapTemplate } from './utils';
 import type { Mode } from './types';
 
-type EntryName = string;
+import { TemplateConfig } from './types';
 
 const hotMiddlewareEntryPath = require.resolve('webpack-hot-middleware/client');
 const hotMiddlewareEntry = `${hotMiddlewareEntryPath}?reload=true`;
@@ -30,7 +30,7 @@ export function createServerConfig({
   mode: Mode;
   outputPath: string;
   publicPath: string;
-  templates: Record<EntryName, string>;
+  templates: TemplateConfig;
 }): webpack.Configuration {
   // This path must be in cwd so that relative imports of template modules in
   // the virtual server module work correctly.
@@ -100,7 +100,7 @@ export function createClientConfig({
   outputPath: string;
   publicPath: string;
   runtime: string;
-  templates: Record<EntryName, string>;
+  templates: TemplateConfig;
 }): webpack.Configuration {
   let dev = mode === 'development';
 
