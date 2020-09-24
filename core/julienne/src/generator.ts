@@ -4,7 +4,13 @@ import { dirname, join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { Render } from './render';
 import { writeResource } from './resource';
-import type { Output, PageMap, ResourceMap, TemplateConfig } from './types';
+import type {
+  Output,
+  PageMap,
+  Props,
+  ResourceMap,
+  TemplateConfig,
+} from './types';
 import { getAssets } from './utils';
 
 function normalizePagePath(pagePath: string) {
@@ -19,8 +25,9 @@ export class SiteGenerator<Templates extends TemplateConfig> {
   compilation: Compilation;
   output: Output;
   pages: PageMap<keyof Templates>;
-  render: Render;
+  renderInternal: Render;
   resources: ResourceMap;
+  serverModulePath: string;
   templates: Templates;
 
   constructor({
@@ -38,11 +45,16 @@ export class SiteGenerator<Templates extends TemplateConfig> {
     resources: ResourceMap;
     templates: Templates;
   }) {
+    if (!compilation.server?.asset) {
+      throw new Error('Server module not found');
+    }
+
     this.compilation = compilation;
     this.output = output;
     this.pages = pages;
-    this.render = render;
+    this.renderInternal = render;
     this.resources = resources;
+    this.serverModulePath = compilation.server.asset;
     this.templates = templates;
   }
 
@@ -50,15 +62,7 @@ export class SiteGenerator<Templates extends TemplateConfig> {
    * Write the site's pages and resources to disk.
    */
   async generate(): Promise<void> {
-    let { compilation, output, pages, render, resources, templates } = this;
-
-    if (!compilation.server?.asset) {
-      throw new Error('Server module not found');
-    }
-
-    let serverModule = await import(compilation.server.asset);
-
-    let clientCompilation = compilation.client;
+    let { output, pages, resources, templates } = this;
 
     // Pages need to be rendered first so that any resources created during the
     // page creation process are ready to be processed.
@@ -79,19 +83,9 @@ export class SiteGenerator<Templates extends TemplateConfig> {
           throw new Error(`Template error: ${page.template} does not exist.`);
         }
 
-        let templateAssets =
-          clientCompilation.templateAssets[page.template as string];
-
-        let { scripts, stylesheets } = getAssets(templateAssets);
-
-        let renderedPage = await render({
+        let renderedPage = await this.renderToString({
+          template: page.template,
           props: page.props,
-          scripts,
-          stylesheets,
-          template: {
-            name: page.template as string,
-            component: serverModule[page.template],
-          },
         });
 
         let normalizedPagePath = normalizePagePath(pagePath);
@@ -130,5 +124,34 @@ export class SiteGenerator<Templates extends TemplateConfig> {
         },
       ),
     );
+  }
+
+  /**
+   * Render `template` with `props` as input and return the rendered string.
+   */
+  async renderToString({
+    props,
+    template,
+  }: {
+    props: Props;
+    template: keyof Templates;
+  }) {
+    let { compilation, renderInternal, serverModulePath } = this;
+
+    let serverModule = await import(serverModulePath);
+
+    let templateAssets = compilation.client.templateAssets[template as string];
+
+    let { scripts, stylesheets } = getAssets(templateAssets);
+
+    return renderInternal({
+      props,
+      scripts,
+      stylesheets,
+      template: {
+        name: template as string,
+        component: serverModule[template],
+      },
+    });
   }
 }
