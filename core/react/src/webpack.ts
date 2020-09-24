@@ -39,12 +39,41 @@ const getRules = {
       exclude: /node_modules/,
     };
   },
-  css({ dev }: { dev: boolean }) {
+  css({
+    dev,
+    isServer,
+    modules,
+  }: {
+    dev: boolean;
+    isServer: boolean;
+    modules: boolean;
+  }) {
+    let loaders = [];
+
+    if (!isServer) {
+      if (dev) {
+        loaders.push({ loader: require.resolve('style-loader') });
+      } else {
+        loaders.push({
+          loader: MiniCssExtractPlugin.loader,
+        });
+      }
+    }
+
+    loaders.push({
+      loader: require.resolve('css-loader'),
+      options: {
+        modules: modules
+          ? isServer
+            ? { exportOnlyLocals: true }
+            : true
+          : false,
+      },
+    });
+
     return {
       test: /\.css$/i,
-      use: dev
-        ? [require.resolve('style-loader'), require.resolve('css-loader')]
-        : [MiniCssExtractPlugin.loader, require.resolve('css-loader')],
+      use: loaders,
     };
   },
 };
@@ -52,7 +81,13 @@ const getRules = {
 const cssFilename = 'static/css/[contenthash].css';
 const cssChunkFilename = 'static/css/[contenthash].css';
 
-function server(_options: { dev?: boolean } = {}): webpack.Configuration {
+function server({
+  cssModules,
+  dev,
+}: {
+  cssModules: boolean;
+  dev: boolean;
+}): webpack.Configuration {
   let resolve = {
     extensions: ['.js', '.jsx', '.mjs', '.ts', '.tsx', '.json'],
     mainFields: ['main', 'module'],
@@ -61,16 +96,21 @@ function server(_options: { dev?: boolean } = {}): webpack.Configuration {
   return {
     resolve,
     module: {
-      rules: [getRules.js()],
+      rules: [
+        getRules.js(),
+        getRules.css({ dev, isServer: true, modules: cssModules }),
+      ],
     },
   };
 }
 
 function client({
-  dev = false,
+  cssModules,
+  dev,
 }: {
-  dev?: boolean;
-} = {}): webpack.Configuration {
+  cssModules: boolean;
+  dev: boolean;
+}): webpack.Configuration {
   let resolve = {
     extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
     // Resolve browser before other module types so that modules that depend
@@ -78,7 +118,10 @@ function client({
     mainFields: ['browser', 'module', 'main'],
   };
 
-  let rules: webpack.RuleSetRule[] = [getRules.js(), getRules.css({ dev })];
+  let rules: webpack.RuleSetRule[] = [
+    getRules.js(),
+    getRules.css({ dev, isServer: false, modules: cssModules }),
+  ];
 
   let plugins = [];
 
@@ -101,12 +144,14 @@ function client({
 }
 
 export function createWebpackConfig({
-  dev,
+  cssModules = false,
+  dev = false,
 }: {
-  dev: boolean;
-}): { client: webpack.Configuration; server: webpack.Configuration } {
+  cssModules?: boolean;
+  dev?: boolean;
+} = {}): { client: webpack.Configuration; server: webpack.Configuration } {
   return {
-    client: client({ dev }),
-    server: server({ dev }),
+    client: client({ cssModules, dev }),
+    server: server({ cssModules, dev }),
   };
 }

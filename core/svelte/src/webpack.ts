@@ -76,12 +76,41 @@ const getRules = {
       use: svelteUse,
     };
   },
-  css({ dev }: { dev: boolean }) {
+  css({
+    dev,
+    isServer,
+    modules,
+  }: {
+    dev: boolean;
+    isServer: boolean;
+    modules: boolean;
+  }) {
+    let loaders = [];
+
+    if (!isServer) {
+      if (dev) {
+        loaders.push({ loader: require.resolve('style-loader') });
+      } else {
+        loaders.push({
+          loader: MiniCssExtractPlugin.loader,
+        });
+      }
+    }
+
+    loaders.push({
+      loader: require.resolve('css-loader'),
+      options: {
+        modules: modules
+          ? isServer
+            ? { exportOnlyLocals: true }
+            : true
+          : false,
+      },
+    });
+
     return {
       test: /\.css$/i,
-      use: dev
-        ? [require.resolve('style-loader'), require.resolve('css-loader')]
-        : [MiniCssExtractPlugin.loader, require.resolve('css-loader')],
+      use: loaders,
     };
   },
 };
@@ -90,11 +119,12 @@ const cssFilename = 'static/css/[contenthash].css';
 const cssChunkFilename = 'static/css/[contenthash].css';
 
 function server({
-  dev = false,
+  cssModules,
+  dev,
 }: {
-  __experimentalIncludeStaticModules?: boolean;
-  dev?: boolean;
-} = {}): webpack.Configuration {
+  cssModules: boolean;
+  dev: boolean;
+}): webpack.Configuration {
   let resolve = {
     alias,
     extensions: ['.js', '.mjs', '.ts', '.svelte', '.json', '.html'],
@@ -105,6 +135,7 @@ function server({
     resolve,
     module: {
       rules: [
+        getRules.css({ dev, isServer: true, modules: cssModules }),
         getRules.js(),
         getRules.svelte({
           css: false,
@@ -118,11 +149,12 @@ function server({
 }
 
 function client({
-  dev = false,
+  cssModules,
+  dev,
 }: {
-  __experimentalIncludeStaticModules?: boolean;
-  dev?: boolean;
-} = {}): webpack.Configuration {
+  cssModules: boolean;
+  dev: boolean;
+}): webpack.Configuration {
   let resolve = {
     alias,
     extensions: ['.mjs', '.js', '.ts', '.svelte', '.json', '.html'],
@@ -137,7 +169,7 @@ function client({
       dev,
       hydratable: !dev,
     }),
-    getRules.css({ dev }),
+    getRules.css({ dev, isServer: false, modules: cssModules }),
   ];
 
   let plugins = [];
@@ -161,12 +193,14 @@ function client({
 }
 
 export function createWebpackConfig({
-  dev,
+  cssModules = false,
+  dev = false,
 }: {
-  dev: boolean;
-}): { client: webpack.Configuration; server: webpack.Configuration } {
+  cssModules?: boolean;
+  dev?: boolean;
+} = {}): { client: webpack.Configuration; server: webpack.Configuration } {
   return {
-    client: client({ dev }),
-    server: server({ dev }),
+    client: client({ cssModules, dev }),
+    server: server({ cssModules, dev }),
   };
 }
