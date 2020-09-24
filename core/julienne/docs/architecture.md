@@ -95,3 +95,35 @@ that modified the source files:
 ```sh
 git log -n 1 --format=format:%H path/to/src
 ```
+
+### Service worker updates
+
+In order for a service worker to, its contents _must_ be changed. This is why
+workbox creates a revision ID based on the hash of the cached files contents for
+each precached resource and includes that revision ID in the service worker
+script.
+
+There are three scenarios that can occur during an incremental build:
+
+#### Content has changed
+
+When an incremental build is triggered based on changes to content,
+workbox-build will pick the changes up (along with the previously generated
+pages), generate revisions, and precache them.
+
+#### Application has changed
+
+It is up to the individual developer to determine the correct trigger for
+invalidating the build cache, but assuming that the build cache has been
+invalidated and the app is compiled again, there are two approaches that can be
+taken for handling content that has already been rendered:
+
+1. Overwrite the previous compilation and pages by clearing the build directory
+   prior to compilation and rebuilding all pages
+2. Leave prior compilations and pages in place and render only newly created
+   pages. This will result in inconsistencies between pages.
+
+#### Application and content have changed
+
+The considerations to make in this scenario match those for when only the
+application has changed.
