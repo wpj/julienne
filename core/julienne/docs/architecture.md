@@ -73,3 +73,25 @@ respond with the appropriate result.
 
 Currently, props are of type any, but is there a way to limit the type of props
 to the input of each template?
+
+## Incremental builds in a git-based markdown site
+
+At the end of each succesful build, the SHA of HEAD should be written to a file
+that is cached between builds.
+
+### Finding changed content files
+
+To find paths of content files that have changed since the last build:
+
+```sh
+git diff --name-only $LAST_BUILD_COMMIT..HEAD path/to/content
+```
+
+### Caching compilations
+
+A simple way to key the build cache would be to use the SHA of the last commit
+that modified the source files:
+
+```sh
+git log -n 1 --format=format:%H path/to/src
+```
