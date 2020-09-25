@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { ensureDir } from 'fs-extra';
 import { dirname, join as pathJoin } from 'path';
 import { Compilation } from './compilation';
-import type { Render } from './render';
+import type { RenderToString } from './render';
 import { writeResource } from './resource';
 import type {
   Output,
@@ -21,11 +21,11 @@ function normalizePagePath(pagePath: string) {
   return pathJoin(pagePath, 'index.html');
 }
 
-export class SiteGenerator<Templates extends TemplateConfig> {
+export class SiteGenerator<Component, Templates extends TemplateConfig> {
   compilation: Compilation;
   output: Output;
   pages: PageMap<keyof Templates>;
-  renderInternal: Render;
+  internalRenderToString: RenderToString<Component>;
   resources: ResourceMap;
   serverModulePath: string;
   templates: Templates;
@@ -34,14 +34,14 @@ export class SiteGenerator<Templates extends TemplateConfig> {
     compilation,
     output,
     pages,
-    render,
+    renderToString,
     resources,
     templates,
   }: {
     compilation: Compilation;
     output: Output;
     pages: PageMap<keyof Templates>;
-    render: Render;
+    renderToString: RenderToString<Component>;
     resources: ResourceMap;
     templates: Templates;
   }) {
@@ -52,7 +52,7 @@ export class SiteGenerator<Templates extends TemplateConfig> {
     this.compilation = compilation;
     this.output = output;
     this.pages = pages;
-    this.renderInternal = render;
+    this.internalRenderToString = renderToString;
     this.resources = resources;
     this.serverModulePath = compilation.server.asset;
     this.templates = templates;
@@ -135,8 +135,8 @@ export class SiteGenerator<Templates extends TemplateConfig> {
   }: {
     props: Props;
     template: keyof Templates;
-  }) {
-    let { compilation, renderInternal, serverModulePath } = this;
+  }): Promise<string> {
+    let { compilation, internalRenderToString, serverModulePath } = this;
 
     let serverModule = await import(serverModulePath);
 
@@ -144,7 +144,7 @@ export class SiteGenerator<Templates extends TemplateConfig> {
 
     let { scripts, stylesheets } = getAssets(templateAssets);
 
-    return renderInternal({
+    return internalRenderToString({
       props,
       scripts,
       stylesheets,

@@ -1,17 +1,14 @@
 import { join as pathJoin } from 'path';
 
-import { render, createWebpackConfig } from '@julienne/react';
-import { Site } from 'julienne';
+import { Site } from '@julienne/react';
 import sade from 'sade';
 
 async function createSite({ dev }) {
   let site = new Site({
-    render,
-    runtime: '@julienne/react-runtime',
+    dev,
     templates: {
       main: require.resolve('./src/templates/main.tsx'),
     },
-    webpackConfig: createWebpackConfig({ dev }),
   });
 
   return site;

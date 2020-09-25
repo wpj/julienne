@@ -1,24 +1,15 @@
+import type { RenderToString } from 'julienne';
 import type { SvelteComponent } from 'svelte';
-
 import Document from './document.svelte';
-
-type Props = {
-  [key: string]: unknown;
-};
 
 const DOCTYPE = '<!doctype html>\n';
 
-export async function render({
+export const renderToString: RenderToString<SvelteComponent> = ({
   props,
   scripts,
   stylesheets,
   template,
-}: {
-  props: Props;
-  scripts: string[];
-  stylesheets: string[];
-  template: { name: string; component: SvelteComponent | null };
-}): Promise<string> {
+}) => {
   let pageData = { props, template: template.name };
 
   if (!template.component) {
@@ -48,4 +39,4 @@ export async function render({
       stylesheets,
     }).html
   );
-}
+};

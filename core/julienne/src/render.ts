@@ -1,11 +1,11 @@
 import type { Props, MaybePromise } from './types';
 
-export type Render = (options: {
+export type RenderToString<Component> = (options: {
   props: Props;
   scripts: string[];
   stylesheets: string[];
   template: {
     name: string;
-    component: null | unknown;
+    component: Component | null;
   };
 }) => MaybePromise<string>;

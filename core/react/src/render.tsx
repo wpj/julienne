@@ -1,25 +1,19 @@
+import type { RenderToString } from 'julienne';
 import React, { ComponentType } from 'react';
-import { renderToStaticMarkup, renderToString } from 'react-dom/server';
-
+import {
+  renderToStaticMarkup,
+  renderToString as reactRenderToString,
+} from 'react-dom/server';
 import Document from './document';
-
-type Props = {
-  [key: string]: unknown;
-};
 
 const DOCTYPE = '<!doctype html>\n';
 
-export async function render({
+export const renderToString: RenderToString<ComponentType> = ({
   props,
   scripts,
   stylesheets,
   template,
-}: {
-  props: Props;
-  scripts: string[];
-  stylesheets: string[];
-  template: { name: string; component: ComponentType | null };
-}): Promise<string> {
+}) => {
   let pageData = { props, template: template.name };
 
   if (!template.component) {
@@ -39,7 +33,7 @@ export async function render({
 
   let Template = template.component;
 
-  let html = renderToString(<Template {...props} />);
+  let html = reactRenderToString(<Template {...props} />);
 
   // TODO: handle head
   return (
@@ -54,4 +48,4 @@ export async function render({
       />,
     )
   );
-}
+};

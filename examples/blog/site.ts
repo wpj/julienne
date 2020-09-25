@@ -1,9 +1,8 @@
 import { promises as fs } from 'fs';
 import { dirname, resolve as resolvePath, sep as pathSeparator } from 'path';
 
-import { render, createWebpackConfig } from '@julienne/svelte';
+import { Site } from '@julienne/svelte';
 import globby from 'globby';
-import { Site } from 'julienne';
 import type { Root } from 'mdast';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter, { YamlNode } from 'remark-frontmatter';
@@ -99,10 +98,8 @@ async function createPostPage(site: Site<typeof templates>, postPath: string) {
 
 async function createSite({ dev }: { dev: boolean }) {
   let site = new Site<typeof templates>({
-    render,
-    runtime: '@julienne/svelte-runtime',
+    dev,
     templates,
-    webpackConfig: createWebpackConfig({ dev }),
   });
 
   let postPaths = await globby(['posts/**/*.md']);

@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run build-js && npm run build-types",
     "build-js": "rollup -c --silent",
-    "build-types": "tsc --emitDeclarationOnly",
+    "build-types": "tsc --emitDeclarationOnly --project tsconfig.build.json",
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
     "test": "uvu tests -r tests/setup/babel-register -i setup",

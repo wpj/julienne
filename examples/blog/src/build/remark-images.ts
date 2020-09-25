@@ -2,7 +2,7 @@ import { createReadStream } from 'fs';
 import { extname, resolve as resolvePath } from 'path';
 
 import hasha from 'hasha';
-import type { Site } from 'julienne';
+import type { Site } from '@julienne/svelte';
 import type { Root, Image } from 'mdast';
 import sharp from 'sharp';
 import type { Plugin } from 'unified';

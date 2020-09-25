@@ -1,18 +1,16 @@
-import { render, createWebpackConfig } from '@julienne/svelte';
-import { Site } from 'julienne';
+import { Site } from '@julienne/svelte';
 import revHash from 'rev-hash';
 import sade from 'sade';
 import { generateSW } from 'workbox-build';
 
 async function createSite({ dev }: { dev: boolean }) {
   let site = new Site({
-    render,
+    dev,
     runtime: require.resolve('./src/runtime.ts'),
     templates: {
       alt: require.resolve('./src/templates/alt.svelte'),
       main: require.resolve('./src/templates/main.svelte'),
     },
-    webpackConfig: createWebpackConfig({ dev }),
   });
 
   let searchIndex = {

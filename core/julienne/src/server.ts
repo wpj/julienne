@@ -13,7 +13,7 @@ import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 
 import { ClientCompilation, Compilation } from './compilation';
-import type { Render } from './render';
+import type { RenderToString } from './render';
 import type { GetResource, GetPage, Output, TemplateConfig } from './types';
 import { getAssets } from './utils';
 
@@ -30,12 +30,12 @@ function getDevWebpackStatsFromLocals(locals: {
   return locals.webpackStats || locals.webpack?.devMiddleware.stats;
 }
 
-export function startServer<Templates extends TemplateConfig>({
+export function startServer<Component, Templates extends TemplateConfig>({
   clientWebpackCompiler,
   output,
   pages,
   port,
-  render,
+  renderToString,
   resources,
   templates,
 }: {
@@ -43,7 +43,7 @@ export function startServer<Templates extends TemplateConfig>({
   output: Output;
   pages: Map<string, GetPage<keyof Templates>>;
   port: number;
-  render: Render;
+  renderToString: RenderToString<Component>;
   resources: Map<string, GetResource>;
   templates: Templates;
 }): void {
@@ -157,7 +157,7 @@ export function startServer<Templates extends TemplateConfig>({
 
     let { scripts, stylesheets } = getAssets(templateAssets);
 
-    let renderedPage = await render({
+    let renderedPage = await renderToString({
       props: page.props,
       scripts,
       stylesheets,

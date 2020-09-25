@@ -6,7 +6,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "microbundle build --format es,cjs --jsx React.createElement",
+    "build": "microbundle build --no-compress --target node --format es,cjs --jsx React.createElement",
     "lint:ts": "eslint --max-warnings 0 '**/*.tsx'",
     "lint": "npm run lint:ts",
     "typecheck": "tsc --noEmit"
@@ -34,6 +34,7 @@
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",
     "eslint": "^7.9.0",
+    "julienne": "^0.0.0",
     "microbundle": "^0.12.3",
     "typescript": "^4.0.2"
   },
@@ -52,6 +53,8 @@
     "webpack": "^4.44.1"
   },
   "peerDependencies": {
+    "@julienne/react-runtime": "^0.0.0",
+    "julienne": "^0.0.0",
     "react": "^16.9.0",
     "react-dom": "^16.9.0"
   }

@@ -5,7 +5,7 @@ import mergeWebpackConfigs from 'webpack-merge';
 import { Compilation } from './compilation';
 import { Compiler } from './compiler';
 import { SiteGenerator } from './generator';
-import type { Render } from './render';
+import type { RenderToString } from './render';
 import { startServer } from './server';
 import type {
   GetData,
@@ -50,12 +50,22 @@ type DevOptions = {
   port?: number;
 };
 
-export class Site<Templates extends TemplateConfig> {
+export interface Options<Component, Templates extends TemplateConfig> {
+  __experimentalIncludeStaticModules?: boolean;
+  cwd?: string;
+  output?: Partial<OutputConfig>;
+  renderToString: RenderToString<Component>;
+  runtime: string;
+  templates: Templates;
+  webpackConfig?: WebpackConfig;
+}
+
+export class Site<Component, Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules: boolean;
   cwd: string;
   output: Output;
   pages: PageMap<keyof Templates> = new Map();
-  render: Render;
+  renderToString: RenderToString<Component>;
   resources: ResourceMap = new Map();
   runtime: string;
   templates: Templates;
@@ -68,23 +78,15 @@ export class Site<Templates extends TemplateConfig> {
       path: outputPath = pathJoin(cwd, '.julienne'),
       publicPath = '/',
     } = {},
-    render,
+    renderToString,
     runtime,
     templates,
     webpackConfig,
-  }: {
-    __experimentalIncludeStaticModules?: boolean;
-    cwd?: string;
-    output?: Partial<OutputConfig>;
-    render: Render;
-    runtime: string;
-    templates: Templates;
-    webpackConfig?: WebpackConfig;
-  }) {
+  }: Options<Component, Templates>) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.cwd = cwd;
     this.output = getOutput({ path: outputPath, publicPath });
-    this.render = render;
+    this.renderToString = renderToString;
     this.runtime = runtime;
     this.templates = templates;
 
@@ -136,14 +138,14 @@ export class Site<Templates extends TemplateConfig> {
    * passed in `fromCache`. If one is found, the compilation will be skipped.
    */
   async compile({ fromCache }: CompileOptions = {}): Promise<
-    SiteGenerator<Templates>
+    SiteGenerator<Component, Templates>
   > {
     let {
       __experimentalIncludeStaticModules,
       cwd,
       output,
       pages,
-      render,
+      renderToString,
       resources,
       runtime,
       templates,
@@ -205,7 +207,7 @@ export class Site<Templates extends TemplateConfig> {
       compilation,
       output,
       pages,
-      render,
+      renderToString,
       resources,
       templates,
     });
@@ -220,7 +222,7 @@ export class Site<Templates extends TemplateConfig> {
       cwd,
       output,
       pages,
-      render,
+      renderToString,
       resources,
       runtime,
       templates,
@@ -266,7 +268,7 @@ export class Site<Templates extends TemplateConfig> {
       output,
       pages,
       port,
-      render,
+      renderToString,
       resources,
       templates,
     });

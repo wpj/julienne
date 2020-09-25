@@ -1,5 +1,5 @@
-import { render, createWebpackConfig } from '@julienne/svelte';
-import { Props, Site } from 'julienne';
+import { Site } from '@julienne/svelte';
+import type { Props } from 'julienne';
 import sade from 'sade';
 
 import { createJsonSlug } from './src/helpers';
@@ -14,10 +14,9 @@ async function createSite({ dev }: { dev: boolean }) {
   // resolved relative to this file rather than the root of the example
   // directory.
   let site = new Site({
-    render,
+    dev,
     runtime: require.resolve('./src/runtime.ts'),
     templates,
-    webpackConfig: createWebpackConfig({ dev }),
   });
 
   function createPageAndPageJson(
