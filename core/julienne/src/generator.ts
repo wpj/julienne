@@ -1,9 +1,6 @@
-import { promises as fs } from 'fs';
-import { ensureDir } from 'fs-extra';
-import { dirname, join as pathJoin } from 'path';
+import { join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { RenderToString } from './render';
-import { writeResource } from './resource';
 import type {
   Output,
   PageMap,
@@ -12,6 +9,7 @@ import type {
   TemplateConfig,
 } from './types';
 import { getAssets } from './utils';
+import { writeFile } from './utils/file';
 
 function normalizePagePath(pagePath: string) {
   if (pagePath.endsWith('.html')) {
@@ -92,11 +90,7 @@ export class SiteGenerator<Component, Templates extends TemplateConfig> {
 
         let outputPath = pathJoin(output.client, normalizedPagePath);
 
-        let outputDir = dirname(outputPath);
-
-        await ensureDir(outputDir);
-
-        await fs.writeFile(outputPath, renderedPage, 'utf8');
+        await writeFile(outputPath, { type: 'page', data: renderedPage });
       }),
     );
 
@@ -116,11 +110,7 @@ export class SiteGenerator<Component, Templates extends TemplateConfig> {
 
           let outputPath = pathJoin(output.client, resourcePath);
 
-          let outputDir = dirname(outputPath);
-
-          await ensureDir(outputDir);
-
-          return writeResource(outputPath, resource);
+          return writeFile(outputPath, resource);
         },
       ),
     );

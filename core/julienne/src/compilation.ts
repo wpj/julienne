@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join as pathJoin } from 'path';
-
 import { TemplateConfig } from './types';
+import { writeFile } from './utils/file';
 
 export type CompilationWarnings = string[];
 
@@ -103,6 +103,9 @@ export class Compilation {
 
   write(path: string): Promise<void> {
     let { client, server } = this;
-    return fs.writeFile(path, JSON.stringify({ client, server }), 'utf8');
+    return writeFile(path, {
+      type: 'generated',
+      data: JSON.stringify({ client, server }),
+    });
   }
 }
