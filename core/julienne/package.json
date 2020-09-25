@@ -14,7 +14,8 @@
     "build-types": "tsc --emitDeclarationOnly --project tsconfig.build.json",
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
-    "test": "uvu tests -r tests/setup/babel-register -i setup",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "watch-js": "rollup -c --watch"
   },
@@ -22,13 +23,13 @@
     "dist"
   ],
   "devDependencies": {
-    "@babel/register": "^7.11.5",
     "@rollup/plugin-babel": "^5.2.0",
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
     "@types/babel__core": "^7.1.9",
     "@types/fs-extra": "^9.0.1",
+    "@types/jest": "^26.0.14",
     "@types/loader-utils": "^2.0.1",
     "@types/lodash": "^4.14.160",
     "@types/mime-types": "^2.1.0",
@@ -42,10 +43,11 @@
     "@types/webpack-virtual-modules": "^0.1.0",
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",
+    "babel-jest": "^26.3.0",
     "eslint": "^7.9.0",
+    "jest": "^26.4.2",
     "rollup": "^2.26.7",
-    "typescript": "^4.0.2",
-    "uvu": "^0.3.3"
+    "typescript": "^4.0.2"
   },
   "dependencies": {
     "@babel/core": "^7.11.4",
@@ -57,6 +59,7 @@
     "@polka/send": "^0.4.0",
     "@polka/send-type": "^0.5.2",
     "fs-extra": "^9.0.1",
+    "is-stream": "^2.0.0",
     "mime-types": "^2.1.27",
     "polka": "^0.5.2",
     "webpack": "^4.44.1",

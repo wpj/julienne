@@ -4,6 +4,14 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
   ],
   ignorePatterns: ['dist', '**/*.d.ts'],
+  overrides: [
+    {
+      files: ['tests/**/*'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+  ],
   parser: '@typescript-eslint/parser',
   rules: {
     '@typescript-eslint/no-namespace': [

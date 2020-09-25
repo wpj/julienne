@@ -1,5 +1,5 @@
 import { join as pathJoin } from 'path';
-import { Readable } from 'stream';
+import isStream from 'is-stream';
 import type * as webpack from 'webpack';
 import mergeWebpackConfigs from 'webpack-merge';
 import { Compilation } from './compilation';
@@ -114,7 +114,7 @@ export class Site<Component, Templates extends TemplateConfig> {
     let getResource: GetResource = async () => {
       let data = await getData();
 
-      if (data instanceof Readable) {
+      if (isStream.readable(data)) {
         return { type: 'stream', data };
       } else {
         return { type: 'generated', data };
