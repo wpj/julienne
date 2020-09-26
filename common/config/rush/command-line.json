@@ -35,6 +35,7 @@
       "summary": "Run tests",
       "description": "Runs tests for each package.",
       "ignoreMissingScript": true,
+      "allowWarningsInSuccessfulBuild": true,
       "enableParallelism": true
     },
     {
