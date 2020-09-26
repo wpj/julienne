@@ -15,6 +15,7 @@
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "watch-js": "rollup -c --watch"
