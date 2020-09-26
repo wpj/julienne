@@ -1,16 +1,15 @@
-import { Readable } from 'stream';
 import { join as pathJoin } from 'path';
-import {
-  ClientCompilation,
-  Compilation,
-  ServerCompilation,
-} from '../src/compilation';
+import { Readable } from 'stream';
+import { SiteGenerator } from '../src/generator';
 import type { RenderToString as RenderToStringType } from '../src/render';
 import type { Output } from '../src/types';
-
-import { SiteGenerator } from '../src/generator';
-
 import { writeFile } from '../src/utils/file';
+import {
+  clientScripts,
+  clientStylesheets,
+  createTestCompilation,
+  templates,
+} from './__fixtures__/compilation';
 
 // This doesn't need to be declared prior to importing modules that depend on
 // this mocked module because jest hoists all mock declarations to the top under
@@ -29,47 +28,6 @@ let defaultOutput: Output = {
 
 function getPublicPath(path: string) {
   return pathJoin(defaultOutput.client, path);
-}
-
-let templates = {
-  main: './this/does/not/exist.js',
-};
-
-let clientScripts = [
-  'static/chunks/runtime.js',
-  'static/chunks/vendor.js',
-  'static/chunks/main.js',
-];
-
-let clientStylesheets = ['static/css/main.css'];
-
-let testPublicPath = '/';
-
-function createTestCompilation({
-  includeServerCompilation,
-}: {
-  includeServerCompilation: boolean;
-}): Compilation {
-  let client = new ClientCompilation({
-    chunkAssets: {
-      runtime: [clientScripts[0]],
-      vendor: [clientScripts[1]],
-      main: [clientScripts[2], clientStylesheets[0]],
-    },
-    publicPath: testPublicPath,
-    templates,
-    warnings: null,
-  });
-
-  let server = includeServerCompilation
-    ? new ServerCompilation({
-        chunkAssets: { server: ['server.js'] },
-        outputPath: defaultOutput.server,
-        warnings: null,
-      })
-    : null;
-
-  return new Compilation({ client, server });
 }
 
 describe('Generator', () => {
