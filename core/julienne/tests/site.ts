@@ -84,7 +84,7 @@ describe('Site', () => {
         runtime: '@julienne/react-runtime',
       });
 
-      site.copyResource('./fake.txt', '/fake.txt');
+      site.copyResource('/fake.txt', './fake.txt');
 
       expect((site.resources.get('/fake.txt') as GetResource)()).toEqual({
         type: 'file',

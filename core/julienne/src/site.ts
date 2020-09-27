@@ -128,7 +128,7 @@ export class Site<Component, Templates extends TemplateConfig> {
   /**
    * Copies a resource to the site's output directory.
    */
-  copyResource(from: string, to: string): void {
+  copyResource(to: string, from: string): void {
     this.resources.set(to, () => ({ type: 'file', from }));
   }
 

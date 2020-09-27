@@ -139,13 +139,13 @@ Function that returns resource data, which can be a string, a Buffer, or a
 stream. julienne will `await` values returned from `getResource`, so you can use
 `async`/`await`.
 
-### copyResource(from, to)
+### copyResource(to, from)
 
-#### from
+Example usage:
 
-Type: `string`
-
-The path of the resource to copy.
+```typescript
+site.copyResource("/robots.txt", path.join(__dirname, "robots.txt"));`
+```
 
 #### to
 
@@ -154,7 +154,15 @@ Type: `string`
 The path/URL to copy the resource to. This path should start with a forward
 slash.
 
+#### from
+
+Type: `string`
+
+The path of the resource to copy.
+
 ### compile(options)
+
+Usage: `let generator = await site.compile()`
 
 Compiles the sites assets and writes them to the output directory.
 
