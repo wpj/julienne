@@ -103,6 +103,17 @@ should not be included in custom webpack configuration.
 
 ### createPage(path, getPage)
 
+Example usage:
+
+```typescript
+site.createPage('/', () => ({
+  template: 'main',
+  props: {
+    name: 'World',
+  },
+}));
+```
+
 #### path
 
 Type: `string`
@@ -127,6 +138,12 @@ Template configuration has the following type:
 ```
 
 ### createResource(path, getResource)
+
+Example usage:
+
+```typescript
+site.createResource('/index.json', () => JSON.stringify({ key: 'value' }));
+```
 
 #### path
 
@@ -162,7 +179,11 @@ The path of the resource to copy.
 
 ### compile(options)
 
-Usage: `let generator = await site.compile()`
+Example usage:
+
+```typescript
+let generator = await site.compile();
+```
 
 Compiles the sites assets and writes them to the output directory.
 
@@ -177,11 +198,21 @@ found, the compilation step will be skipped.
 
 ### generate()
 
+Example usage:
+
+```typescript
+await generator.generate();
+```
+
 Write the site's pages and resources to disk.
 
 ### dev(options)
 
-Usage: `await site.dev()`;
+Example usage:
+
+```typescript
+await site.dev();
+```
 
 Starts a server for local development. Returns a promise that resolves to an
 object with a `close` method for stopping the server.
@@ -197,6 +228,12 @@ The port to use to start the development server on; defaults to `3000`.
 A compilation manifest returned by `Site.compile`.
 
 ### write(path)
+
+Example usage:
+
+```typescript
+compilation.write(path.join(__dirname, 'build.json'));
+```
 
 #### path
 
