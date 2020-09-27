@@ -1,7 +1,7 @@
-export type Runtime = (options: {
+export type Runtime<Component> = (options: {
   dev: boolean;
   hydrate: boolean;
-  template: unknown;
+  template: Component;
 }) => void | Promise<void>;
 
 const ROOT_SELECTOR = '#julienne-root';

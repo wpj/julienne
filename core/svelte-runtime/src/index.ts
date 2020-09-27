@@ -1,15 +1,11 @@
 import { SvelteComponent } from 'svelte';
 
-import { getPage, getRoot } from '@julienne/runtime';
+import { getPage, getRoot, Runtime } from '@julienne/runtime';
 
-export default function runtime({
+const runtime: Runtime<typeof SvelteComponent> = ({
   hydrate,
   template: Template,
-}: {
-  dev: boolean;
-  hydrate: boolean;
-  template: typeof SvelteComponent;
-}): void {
+}) => {
   let page = getPage();
 
   new Template({
@@ -17,4 +13,6 @@ export default function runtime({
     props: page.props,
     target: getRoot(),
   });
-}
+};
+
+export default runtime;

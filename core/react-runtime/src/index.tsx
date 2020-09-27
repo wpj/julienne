@@ -1,15 +1,12 @@
 import React from 'react';
 import { render, hydrate as reactHydrate } from 'react-dom';
 
-import { getPage, getRoot } from '@julienne/runtime';
+import { getPage, getRoot, Runtime } from '@julienne/runtime';
 
-export default function runtime({
+const runtime: Runtime<React.ComponentType> = ({
   hydrate,
   template: Template,
-}: {
-  hydrate: boolean;
-  template: React.ComponentType;
-}): void {
+}) => {
   let page = getPage();
 
   if (hydrate) {
@@ -17,4 +14,6 @@ export default function runtime({
   } else {
     render(<Template {...page.props} />, getRoot());
   }
-}
+};
+
+export default runtime;

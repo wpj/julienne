@@ -1,19 +1,16 @@
 import type { SvelteComponent } from 'svelte';
+import type { Runtime } from '@julienne/runtime';
 import svelteRuntime from '@julienne/svelte-runtime';
 
 function registerServiceWorker() {
   return navigator.serviceWorker.register('/sw.js');
 }
 
-export default function runtime({
+const runtime: Runtime<typeof SvelteComponent> = ({
   dev,
   hydrate,
   template,
-}: {
-  dev: boolean;
-  hydrate: boolean;
-  template: typeof SvelteComponent;
-}): void {
+}) => {
   svelteRuntime({ dev, hydrate, template });
 
   if (!dev) {
@@ -21,4 +18,6 @@ export default function runtime({
       console.error(e);
     });
   }
-}
+};
+
+export default runtime;
