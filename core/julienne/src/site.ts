@@ -8,6 +8,7 @@ import { SiteGenerator } from './generator';
 import type { RenderToString } from './render';
 import { startServer } from './server';
 import type {
+  DevServerActions,
   GetData,
   GetPage,
   GetResource,
@@ -216,7 +217,7 @@ export class Site<Component, Templates extends TemplateConfig> {
   /**
    * Start a server for local development.
    */
-  dev({ port = 3000 }: DevOptions = {}): void {
+  async dev({ port = 3000 }: DevOptions = {}): Promise<DevServerActions> {
     let {
       __experimentalIncludeStaticModules,
       cwd,
@@ -263,7 +264,7 @@ export class Site<Component, Templates extends TemplateConfig> {
 
     let { client: clientWebpackCompiler } = compiler.getWebpackCompiler();
 
-    startServer({
+    let actions = await startServer({
       clientWebpackCompiler,
       output,
       pages,
@@ -272,5 +273,7 @@ export class Site<Component, Templates extends TemplateConfig> {
       resources,
       templates,
     });
+
+    return actions;
   }
 }

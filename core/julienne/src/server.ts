@@ -1,9 +1,9 @@
-import { createReadStream } from 'fs';
-import { basename } from 'path';
-
 import send from '@polka/send';
 import sendType from '@polka/send-type';
+import { createReadStream } from 'fs';
+import { Server } from 'http';
 import mime from 'mime-types';
+import { basename } from 'path';
 import polka from 'polka';
 import type {
   Compiler as WebpackCompiler,
@@ -11,18 +11,41 @@ import type {
 } from 'webpack';
 import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
-
 import { ClientCompilation, Compilation } from './compilation';
 import type { RenderToString } from './render';
-import type { GetResource, GetPage, Output, TemplateConfig } from './types';
+import type {
+  DevServerActions,
+  GetPage,
+  GetResource,
+  Output,
+  TemplateConfig,
+} from './types';
 import { getAssets } from './utils';
+
+// Patch polkas types - there should be a server field on polka instances.
+declare module 'polka' {
+  interface Polka {
+    server: Server;
+  }
+}
+
+async function startApp(app: polka.Polka, port: number): Promise<Server> {
+  return new Promise((resolve, reject) => {
+    app.listen(port, (err: Error) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(app.server);
+      }
+    });
+  });
+}
 
 /**
  * webpack-dev-middleware stores the compilation stats in the ServerResponse
  * object. For more info, see
  * https://github.com/webpack/webpack-dev-middleware#server-side-rendering.
  */
-
 function getDevWebpackStatsFromLocals(locals: {
   webpackStats?: WebpackStats;
   webpack?: { devMiddleware: { stats: WebpackStats } };
@@ -30,7 +53,7 @@ function getDevWebpackStatsFromLocals(locals: {
   return locals.webpackStats || locals.webpack?.devMiddleware.stats;
 }
 
-export function startServer<Component, Templates extends TemplateConfig>({
+export async function startServer<Component, Templates extends TemplateConfig>({
   clientWebpackCompiler,
   output,
   pages,
@@ -46,7 +69,7 @@ export function startServer<Component, Templates extends TemplateConfig>({
   renderToString: RenderToString<Component>;
   resources: Map<string, GetResource>;
   templates: Templates;
-}): void {
+}): Promise<DevServerActions> {
   let api = polka();
 
   /**
@@ -103,13 +126,28 @@ export function startServer<Component, Templates extends TemplateConfig>({
     sendType(res, 200, data, headers);
   });
 
-  app.use(
-    webpackDevMiddleware(clientWebpackCompiler, {
-      serverSideRender: true,
-      stats: 'errors-warnings',
-    }),
-    webpackHotMiddleware(clientWebpackCompiler),
-  );
+  let devMiddleware = webpackDevMiddleware(clientWebpackCompiler, {
+    serverSideRender: true,
+    stats: 'errors-warnings',
+
+    /*
+     * webpack-dev-middleware v4 logging configuration.
+     */
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    infrastructureLogging: { level: 'error' },
+
+    /*
+     * webpack-dev-middleware v3 logging configuration
+     */
+    logLevel: 'error',
+  });
+  let hotMiddleware = webpackHotMiddleware(clientWebpackCompiler, {
+    log: false,
+  });
+
+  app.use(devMiddleware, hotMiddleware);
 
   /**
    * Server render page requests. This skips rendering the template on the
@@ -174,12 +212,18 @@ export function startServer<Component, Templates extends TemplateConfig>({
 
   app.use('__julienne__', api);
 
-  app.listen(port, (err: Error) => {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
+  let server = await startApp(app, port);
 
-    console.log(`Started on port ${port}`);
+  let actions = {
+    close: () => {
+      devMiddleware.close();
+      server.close();
+    },
+  };
+
+  return new Promise((resolve) => {
+    devMiddleware.waitUntilValid(() => {
+      resolve(actions);
+    });
   });
 }

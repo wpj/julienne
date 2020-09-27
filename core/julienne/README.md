@@ -18,7 +18,7 @@ await site.compile();
 await site.generate();
 
 // Start a local development server
-site.dev();
+await site.dev();
 ```
 
 ## API
@@ -173,11 +173,16 @@ Write the site's pages and resources to disk.
 
 ### dev(options)
 
-Starts a server for local development.
+Usage: `await site.dev()`;
+
+Starts a server for local development. Returns a promise that resolves to an
+object with a `close` method for stopping the server.
 
 #### options.port
 
-Type: `number` or `string`
+Type: `number`
+
+The port to use to start the development server on; defaults to `3000`.
 
 ### Compilation
 

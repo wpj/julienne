@@ -58,3 +58,7 @@ export type WebpackConfig = {
   client: webpack.Configuration;
   server: webpack.Configuration;
 };
+
+export interface DevServerActions {
+  close: () => void;
+}

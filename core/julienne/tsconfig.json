@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,5 +13,5 @@
     "target": "esnext"
   },
   "exclude": ["dist"],
-  "include": ["src", "tests", "types"]
+  "include": ["src", "e2e-tests", "tests", "types"]
 }

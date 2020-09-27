@@ -46,7 +46,10 @@ prog.command('build').action(async () => {
 
 prog.command('dev').action(async () => {
   let site = await createSite({ dev: true });
-  site.dev();
+
+  let port = 3000;
+  await site.dev({ port });
+  console.log(`Started on http://localhost:${port}`);
 });
 
 prog.parse(process.argv);

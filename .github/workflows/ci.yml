@@ -30,6 +30,8 @@ jobs:
             ${{ runner.OS }}-node-
             ${{ runner.OS }}-
 
+      - uses: microsoft/playwright-github-action@v1
+
       - name: Install dependencies
         run: node common/scripts/install-run-rush.js install
         env:
