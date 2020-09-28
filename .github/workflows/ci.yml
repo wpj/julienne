@@ -19,10 +19,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Cache Node.js modules
-        id: cache
+        id: cache-node_modules
         uses: actions/cache@v2
         with:
-          path: common/temp
+          path: common/temp/pnpm-store
           key:
             ${{ runner.OS }}-node-${{
             hashFiles('common/config/rush/pnpm-lock.yaml') }}
@@ -36,10 +36,17 @@ jobs:
         run: node common/scripts/install-run-rush.js install
         env:
           CI: true
+          PLAYWRIGHT_BROWSERS_PATH: 0
 
       - run: node common/scripts/install-run-rush.js rebuild --verbose
         env:
           CI: true
+
+      - name: Run tests
+        run: node common/scripts/install-run-rush.js test --verbose
+        env:
+          CI: true
+          PLAYWRIGHT_BROWSERS_PATH: 0
 
       - name: Lint files
         run: node common/scripts/install-run-rush.js lint --verbose
@@ -48,10 +55,5 @@ jobs:
 
       - name: Check types
         run: node common/scripts/install-run-rush.js typecheck --verbose
-        env:
-          CI: true
-
-      - name: Run tests
-        run: node common/scripts/install-run-rush.js test --verbose
         env:
           CI: true
