@@ -1,134 +1,135 @@
-import webpack, {
-  Compiler as WebpackCompiler,
-  Stats as WebpackStats,
-} from 'webpack';
-
+import { join as pathJoin } from 'path';
+import type * as webpack from 'webpack';
+import mergeWebpackConfigs from 'webpack-merge';
+import type { Compilation } from './compilation';
 import type { Output, TemplateConfig, WebpackConfig } from './types';
 import {
-  Compilation,
-  ClientCompilation,
-  CompilationWarnings,
-  ServerCompilation,
-} from './compilation';
+  Compiler as WebpackCompiler,
+  createClientConfig,
+  createServerConfig,
+} from './webpack';
 
-export class CompilerError extends Error {
-  constructor(message: string | string[]) {
-    super(Array.isArray(message) ? message.join('\n') : message);
-  }
+interface OutputConfig {
+  path: string;
+  publicPath: string;
 }
 
-function runWebpackCompiler(
-  compiler: WebpackCompiler,
-): Promise<{
-  assetsByChunkName: NonNullable<
-    WebpackStats.ToJsonOutput['assetsByChunkName']
-  >;
-  hash: string;
-  warnings: CompilationWarnings | null;
-}> {
-  return new Promise((resolve, reject) => {
-    compiler.run((err: Error, stats: WebpackStats) => {
-      if (err) {
-        reject(err);
-      } else {
-        let info = stats.toJson();
-
-        if (stats.hasErrors()) {
-          reject(new CompilerError(info.errors));
-        } else if (info.assetsByChunkName === undefined) {
-          reject(new CompilerError('Missing assets for chunks'));
-        } else if (info.hash === undefined) {
-          reject(new CompilerError('Missing build hash'));
-        } else {
-          resolve({
-            assetsByChunkName: info.assetsByChunkName,
-            hash: info.hash,
-            warnings: stats.hasWarnings() ? info.warnings : null,
-          });
-        }
-      }
-    });
-  });
+function getOutput(output: OutputConfig) {
+  return {
+    server: pathJoin(output.path, 'server'),
+    client: pathJoin(output.path, 'public'),
+    publicPath: output.publicPath,
+  };
 }
 
-/*
- * TODO: expose a method for modifying loader configurations. One way to go
- * about this could be something like:
- *
- * compiler.configureLoaders((loaderName, loaderOptions) => {
- *   if (loaderName === "babel-loader") {
- *     loaderOptions.exclude = /node_modules/
- *   }
- * })
- *
- * Note that this method should be invoked for nested loaders like those
- * configured to run on svelte modules in addition to top level loaders
- * like babel-loader.
- */
-export class Compiler {
+// julienne generates its own entry, so we need to remove entries from the user
+// configuration.
+function cleanWebpackConfig({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  entry: _throwawayEntry,
+  ...config
+}: webpack.Configuration) {
+  return config;
+}
+
+export interface Options<Templates extends TemplateConfig> {
+  __experimentalIncludeStaticModules?: boolean;
+  cwd?: string;
+  output?: Partial<OutputConfig>;
+  runtime: string;
+  templates: Templates;
+  webpackConfig?: WebpackConfig;
+}
+
+export class Compiler<Templates extends TemplateConfig> {
+  __experimentalIncludeStaticModules: boolean;
   cwd: string;
-  compileServer: boolean;
   output: Output;
-  templates: TemplateConfig;
+  runtime: string;
+  templates: Templates;
   webpackConfig: WebpackConfig;
 
   constructor({
+    __experimentalIncludeStaticModules = true,
     cwd = process.cwd(),
-    compileServer,
-    output,
+    output: {
+      path: outputPath = pathJoin(cwd, '.julienne'),
+      publicPath = '/',
+    } = {},
+    runtime,
     templates,
     webpackConfig,
-  }: {
-    cwd?: string;
-    compileServer: boolean;
-    output: Output;
-    templates: TemplateConfig;
-    webpackConfig: WebpackConfig;
-  }) {
-    this.compileServer = compileServer;
+  }: Options<Templates>) {
+    this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.cwd = cwd;
-    this.output = output;
+    this.output = getOutput({ path: outputPath, publicPath });
+    this.runtime = runtime;
     this.templates = templates;
-    this.webpackConfig = webpackConfig;
-  }
 
-  getWebpackCompiler(): { client: webpack.Compiler; server: webpack.Compiler } {
-    return {
-      client: webpack(this.webpackConfig.client),
-      server: webpack(this.webpackConfig.server),
+    // We're creating skeleton webpack configs to ease the common task of adding
+    // loaders and plugins in the case where a user is mutating the webpack
+    // configuration after creating a site.
+    this.webpackConfig = webpackConfig ?? {
+      client: { module: { rules: [] }, plugins: [] },
+      server: { module: { rules: [] }, plugins: [] },
     };
   }
 
+  /**
+   * Compile the site's assets and return a site generator.
+   */
   async compile(): Promise<Compilation> {
-    let { compileServer, webpackConfig } = this;
+    let {
+      __experimentalIncludeStaticModules,
+      cwd,
+      output,
+      runtime,
+      templates,
+      webpackConfig: baseWebpackConfig,
+    } = this;
 
-    let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));
+    let webpackConfig = {
+      client: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.client),
+        createClientConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'production',
+          outputPath: output.client,
+          publicPath: output.publicPath,
+          runtime,
+          templates,
+        }),
+      ),
+      server: mergeWebpackConfigs(
+        cleanWebpackConfig(baseWebpackConfig.server),
+        createServerConfig({
+          __experimentalIncludeStaticModules,
+          mode: 'production',
+          outputPath: output.server,
+          publicPath: output.publicPath,
+          templates,
+        }),
+      ),
+    };
 
-    let clientCompilation = new ClientCompilation({
-      chunkAssets: clientResult.assetsByChunkName,
-      publicPath: this.output.publicPath,
-      templates: this.templates,
-      warnings: clientResult.warnings,
+    let compiler = new WebpackCompiler({
+      cwd,
+      compileServer: true,
+      output,
+      templates,
+      webpackConfig,
     });
 
-    let serverCompilation;
-    if (compileServer) {
-      let serverResult = await runWebpackCompiler(
-        webpack(webpackConfig.server),
-      );
+    let compilation = await compiler.compile();
 
-      serverCompilation = new ServerCompilation({
-        chunkAssets: serverResult.assetsByChunkName,
-        outputPath: this.output.server,
-        warnings: serverResult.warnings,
-      });
-    } else {
-      serverCompilation = null;
+    if (compilation.server?.warnings) {
+      compilation.server.warnings.forEach(console.warn.bind(console));
     }
 
-    return new Compilation({
-      client: clientCompilation,
-      server: serverCompilation,
-    });
+    if (compilation.client.warnings) {
+      compilation.client.warnings.forEach(console.warn.bind(console));
+    }
+
+    return compilation;
   }
 }

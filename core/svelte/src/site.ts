@@ -1,30 +1,28 @@
-import {
-  RenderToString,
-  Site as JulienneSite,
-  SiteOptions,
-  TemplateConfig,
-} from 'julienne';
+import { Site, SiteOptions, TemplateConfig } from 'julienne';
 import type { SvelteComponent } from 'svelte';
-import { renderToString } from './render';
+import { renderToString as defaultRenderToString } from './render';
 import { createWebpackConfig } from './webpack';
 
-type Options<Templates extends TemplateConfig> = Omit<
-  SiteOptions<SvelteComponent, Templates>,
-  'renderToString' | 'runtime'
-> & {
-  dev?: boolean;
-  renderToString?: RenderToString<SvelteComponent>;
-  runtime?: string;
-};
+type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
-class SvelteSite<Templates extends TemplateConfig> extends JulienneSite<
+class SvelteSite<Templates extends TemplateConfig> extends Site<
   SvelteComponent,
   Templates
 > {
-  constructor({ dev = false, ...options }: Options<Templates>) {
+  constructor({
+    dev = false,
+    renderToString = defaultRenderToString,
+    runtime = require.resolve('@julienne/svelte-runtime'),
+    ...options
+  }: Optional<
+    SiteOptions<SvelteComponent, Templates>,
+    'renderToString' | 'runtime'
+  > & {
+    dev?: boolean;
+  }) {
     super({
       renderToString,
-      runtime: require.resolve('@julienne/svelte-runtime'),
+      runtime,
       webpackConfig: createWebpackConfig({ dev }),
       ...options,
     });

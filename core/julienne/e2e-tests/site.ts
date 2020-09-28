@@ -37,10 +37,9 @@ describe('Site', () => {
         props: { name: 'World' },
       }));
 
-      site.createResource('/index.json', () => JSON.stringify({ key: 'val' }));
+      site.createFile('/index.json', () => JSON.stringify({ key: 'val' }));
 
-      let generator = await site.compile();
-      await generator.generate();
+      await site.build();
     });
 
     afterAll(() => {
@@ -53,7 +52,7 @@ describe('Site', () => {
       expect(generatedTestPage).toContain('Hello, World');
     });
 
-    test('writes resources to output directory', async () => {
+    test('writes files to output directory', async () => {
       let generatedIndexJson = await readGeneratedFile('/index.json');
 
       expect(generatedIndexJson).toBe(JSON.stringify({ key: 'val' }));
@@ -92,7 +91,7 @@ describe('Site', () => {
 
     let site: Site<Component, typeof templates>;
 
-    let devServer: DevServerActions;
+    let serverActions: DevServerActions;
 
     beforeAll(async () => {
       site = new Site({
@@ -106,11 +105,11 @@ describe('Site', () => {
         props: { name: 'World' },
       }));
 
-      devServer = await site.dev({ port });
+      serverActions = await site.dev({ port });
     });
 
     afterAll(() => {
-      devServer.close();
+      serverActions.close();
     });
 
     test('serves pages with webpack assets for local development', async () => {

@@ -1,32 +1,32 @@
 import { createWriteStream, promises as fs } from 'fs';
 import { ensureDir } from 'fs-extra';
 import { dirname } from 'path';
-import type { Resource } from '../resource';
+import type { File } from '../file';
 
 /**
- * Writes a resource or page to the filesystem, creating directories as
+ * Writes a file or page to the filesystem, creating directories as
  * necessary.
  */
 export async function writeFile(
-  resourcePath: string,
-  resource: Resource | { type: 'page'; data: string },
+  path: string,
+  file: File | { type: 'page'; data: string },
 ): Promise<void> {
-  let outputDir = dirname(resourcePath);
+  let outputDir = dirname(path);
 
   await ensureDir(outputDir);
 
-  if (resource.type === 'file') {
-    return fs.copyFile(resource.from, resourcePath);
-  } else if (resource.type === 'stream') {
-    let { data } = resource;
+  if (file.type === 'copy') {
+    return fs.copyFile(file.from, path);
+  } else if (file.type === 'stream') {
+    let { data } = file;
     return new Promise((resolve, reject) => {
-      let writeStream = createWriteStream(resourcePath);
+      let writeStream = createWriteStream(path);
       writeStream.on('finish', resolve);
       writeStream.on('error', reject);
 
       data.pipe(writeStream);
     });
   } else {
-    return fs.writeFile(resourcePath, resource.data, 'utf8');
+    return fs.writeFile(path, file.data, 'utf8');
   }
 }

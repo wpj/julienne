@@ -1,30 +1,28 @@
-import {
-  RenderToString,
-  Site as JulienneSite,
-  SiteOptions,
-  TemplateConfig,
-} from 'julienne';
+import { Site, SiteOptions, TemplateConfig } from 'julienne';
 import type { ComponentType } from 'react';
-import { renderToString } from './render';
+import { renderToString as defaultRenderToString } from './render';
 import { createWebpackConfig } from './webpack';
 
-type Options<Templates extends TemplateConfig> = Omit<
-  SiteOptions<ComponentType, Templates>,
-  'renderToString' | 'runtime'
-> & {
-  dev?: boolean;
-  renderToString?: RenderToString<ComponentType>;
-  runtime?: string;
-};
+type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
-class ReactSite<Templates extends TemplateConfig> extends JulienneSite<
+class ReactSite<Templates extends TemplateConfig> extends Site<
   ComponentType,
   Templates
 > {
-  constructor({ dev = false, ...options }: Options<Templates>) {
+  constructor({
+    dev = false,
+    renderToString = defaultRenderToString,
+    runtime = require.resolve('@julienne/react-runtime'),
+    ...options
+  }: Optional<
+    SiteOptions<ComponentType, Templates>,
+    'renderToString' | 'runtime'
+  > & {
+    dev?: boolean;
+  }) {
     super({
       renderToString,
-      runtime: require.resolve('@julienne/react-runtime'),
+      runtime,
       webpackConfig: createWebpackConfig({ dev }),
       ...options,
     });

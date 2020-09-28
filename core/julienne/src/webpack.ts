@@ -1,23 +1,30 @@
-import webpack from 'webpack';
+import webpack, {
+  Compiler as WebpackCompiler,
+  Stats as WebpackStats,
+} from 'webpack';
 import nodeExternals from 'webpack-node-externals';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
-
-import { moduleMapTemplate } from './utils';
-import type { Mode } from './types';
-
+import {
+  ClientCompilation,
+  Compilation,
+  CompilationWarnings,
+  ServerCompilation,
+} from './compilation';
+import type { Mode, Output, WebpackConfig } from './types';
 import { TemplateConfig } from './types';
+import { moduleMapTemplate } from './utils';
 
 const hotMiddlewareEntryPath = require.resolve('webpack-hot-middleware/client');
 const hotMiddlewareEntry = `${hotMiddlewareEntryPath}?reload=true`;
 
 const filenames = {
-  development: 'static/chunks/[name].js',
-  production: 'static/chunks/[name]-[contenthash].js',
+  development: '_julienne/static/chunks/[name].js',
+  production: '_julienne/static/chunks/[name]-[contenthash].js',
 };
 
 const chunkFilenames = {
-  development: 'static/chunks/[name].chunk.js',
-  production: 'static/chunks/[name].[contenthash].js',
+  development: '_julienne/static/chunks/[name].chunk.js',
+  production: '_julienne/static/chunks/[name].[contenthash].js',
 };
 
 export function createServerConfig({
@@ -97,7 +104,8 @@ export function createClientConfig({
 }: {
   __experimentalIncludeStaticModules: boolean;
   mode: Mode;
-  outputPath: string;
+  // Optional because the dev config has no output.
+  outputPath?: string;
   publicPath: string;
   runtime: string;
   templates: TemplateConfig;
@@ -200,4 +208,114 @@ export function createClientConfig({
     plugins,
     target: 'web',
   };
+}
+
+export class CompilerError extends Error {
+  constructor(message: string | string[]) {
+    super(Array.isArray(message) ? message.join('\n') : message);
+  }
+}
+
+function runWebpackCompiler(
+  compiler: WebpackCompiler,
+): Promise<{
+  assetsByChunkName: NonNullable<
+    WebpackStats.ToJsonOutput['assetsByChunkName']
+  >;
+  hash: string;
+  warnings: CompilationWarnings | null;
+}> {
+  return new Promise((resolve, reject) => {
+    compiler.run((err: Error, stats: WebpackStats) => {
+      if (err) {
+        reject(err);
+      } else {
+        let info = stats.toJson();
+
+        if (stats.hasErrors()) {
+          reject(new CompilerError(info.errors));
+        } else if (info.assetsByChunkName === undefined) {
+          reject(new CompilerError('Missing assets for chunks'));
+        } else if (info.hash === undefined) {
+          reject(new CompilerError('Missing build hash'));
+        } else {
+          resolve({
+            assetsByChunkName: info.assetsByChunkName,
+            hash: info.hash,
+            warnings: stats.hasWarnings() ? info.warnings : null,
+          });
+        }
+      }
+    });
+  });
+}
+
+export class Compiler {
+  cwd: string;
+  compileServer: boolean;
+  output: Output;
+  templates: TemplateConfig;
+  webpackConfig: WebpackConfig;
+
+  constructor({
+    cwd = process.cwd(),
+    compileServer,
+    output,
+    templates,
+    webpackConfig,
+  }: {
+    cwd?: string;
+    compileServer: boolean;
+    output: Output;
+    templates: TemplateConfig;
+    webpackConfig: WebpackConfig;
+  }) {
+    this.compileServer = compileServer;
+    this.cwd = cwd;
+    this.output = output;
+    this.templates = templates;
+    this.webpackConfig = webpackConfig;
+  }
+
+  getWebpackCompiler(): { client: webpack.Compiler; server: webpack.Compiler } {
+    return {
+      client: webpack(this.webpackConfig.client),
+      server: webpack(this.webpackConfig.server),
+    };
+  }
+
+  async compile(): Promise<Compilation> {
+    let { compileServer, webpackConfig } = this;
+
+    let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));
+
+    let clientCompilation = new ClientCompilation({
+      chunkAssets: clientResult.assetsByChunkName,
+      hash: clientResult.hash,
+      publicPath: this.output.publicPath,
+      templates: this.templates,
+      warnings: clientResult.warnings,
+    });
+
+    let serverCompilation;
+    if (compileServer) {
+      let serverResult = await runWebpackCompiler(
+        webpack(webpackConfig.server),
+      );
+
+      serverCompilation = new ServerCompilation({
+        chunkAssets: serverResult.assetsByChunkName,
+        hash: serverResult.hash,
+        outputPath: this.output.server,
+        warnings: serverResult.warnings,
+      });
+    } else {
+      serverCompilation = null;
+    }
+
+    return new Compilation({
+      client: clientCompilation,
+      server: serverCompilation,
+    });
+  }
 }

@@ -9,7 +9,7 @@ jest.mock('fs');
 jest.mock('fs-extra');
 
 describe('writeFile', () => {
-  test('writes generated resources', async () => {
+  test('writes generated files', async () => {
     let path = pathJoin(__dirname, 'test.txt');
 
     await writeFile(path, {
@@ -27,7 +27,7 @@ describe('writeFile', () => {
     let to = pathJoin(__dirname, 'out.txt');
 
     await writeFile(to, {
-      type: 'file',
+      type: 'copy',
       from,
     });
 

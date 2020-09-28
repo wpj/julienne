@@ -1,13 +1,8 @@
+import { promises as fs } from 'fs';
 import { join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { RenderToString } from './render';
-import type {
-  Output,
-  PageMap,
-  Props,
-  ResourceMap,
-  TemplateConfig,
-} from './types';
+import type { FileMap, PageMap, Props, TemplateConfig } from './types';
 import { getAssets } from './utils';
 import { writeFile } from './utils/file';
 
@@ -19,28 +14,31 @@ function normalizePagePath(pagePath: string) {
   return pathJoin(pagePath, 'index.html');
 }
 
-export class SiteGenerator<Component, Templates extends TemplateConfig> {
+/**
+ * When `generate` is invoked, all known files and pages will be generate and written to the filesystem.
+ */
+export class Generator<Component, Templates extends TemplateConfig> {
   compilation: Compilation;
-  output: Output;
-  pages: PageMap<keyof Templates>;
   internalRenderToString: RenderToString<Component>;
-  resources: ResourceMap;
+  files: FileMap;
+  output: string;
+  pages: PageMap<keyof Templates>;
   serverModulePath: string;
   templates: Templates;
 
   constructor({
     compilation,
+    files,
     output,
     pages,
     renderToString,
-    resources,
     templates,
   }: {
     compilation: Compilation;
-    output: Output;
+    files: FileMap;
+    output: string;
     pages: PageMap<keyof Templates>;
     renderToString: RenderToString<Component>;
-    resources: ResourceMap;
     templates: Templates;
   }) {
     if (!compilation.server?.asset) {
@@ -48,71 +46,80 @@ export class SiteGenerator<Component, Templates extends TemplateConfig> {
     }
 
     this.compilation = compilation;
+    this.files = files;
+    this.internalRenderToString = renderToString;
     this.output = output;
     this.pages = pages;
-    this.internalRenderToString = renderToString;
-    this.resources = resources;
     this.serverModulePath = compilation.server.asset;
     this.templates = templates;
   }
 
   /**
-   * Write the site's pages and resources to disk.
+   * Write the site's pages and files to disk.
    */
   async generate(): Promise<void> {
-    let { output, pages, resources, templates } = this;
+    let { files, output, pages, templates } = this;
 
-    // Pages need to be rendered first so that any resources created during the
+    // Pages need to be rendered first so that any files created during the
     // page creation process are ready to be processed.
     await Promise.allSettled(
-      Array.from(pages.entries()).map(async ([pagePath, getPage]) => {
-        let page;
-        try {
-          page = await getPage();
-        } catch (e) {
-          console.error(
-            `Error occurred when creating page ${pagePath}, aborting`,
-            e,
-          );
-          return;
-        }
-
-        if (!(page.template in templates)) {
-          throw new Error(`Template error: ${page.template} does not exist.`);
-        }
-
-        let renderedPage = await this.renderToString({
-          template: page.template,
-          props: page.props,
-        });
-
+      Array.from(pages.entries()).map(async ([pagePath, pageAction]) => {
         let normalizedPagePath = normalizePagePath(pagePath);
+        let outputPath = pathJoin(output, normalizedPagePath);
 
-        let outputPath = pathJoin(output.client, normalizedPagePath);
+        if (pageAction.type === 'create') {
+          let getPage = pageAction.getData;
 
-        await writeFile(outputPath, { type: 'page', data: renderedPage });
-      }),
-    );
-
-    await Promise.allSettled(
-      Array.from(resources.entries()).map(
-        async ([resourcePath, getResource]) => {
-          let resource;
+          let page;
           try {
-            resource = await getResource();
+            page = await getPage();
           } catch (e) {
             console.error(
-              `Error occurred when creating resource ${resourcePath}, aborting`,
+              `Error occurred when creating page ${pagePath}, aborting`,
               e,
             );
             return;
           }
 
-          let outputPath = pathJoin(output.client, resourcePath);
+          if (!(page.template in templates)) {
+            throw new Error(`Template error: ${page.template} does not exist.`);
+          }
 
-          return writeFile(outputPath, resource);
-        },
-      ),
+          let renderedPage = await this.renderToString({
+            template: page.template,
+            props: page.props,
+          });
+
+          return writeFile(outputPath, { type: 'page', data: renderedPage });
+        } else {
+          return fs.unlink(outputPath);
+        }
+      }),
+    );
+
+    await Promise.allSettled(
+      Array.from(files.entries()).map(async ([filePath, fileAction]) => {
+        let outputPath = pathJoin(output, filePath);
+
+        if (fileAction.type === 'create') {
+          let getFile = fileAction.getData;
+
+          let file;
+          try {
+            file = await getFile();
+          } catch (e) {
+            console.error(
+              `Error occurred when creating file ${filePath}, aborting`,
+              e,
+            );
+            return;
+          }
+
+          return writeFile(outputPath, file);
+        } else {
+          return fs.unlink(outputPath);
+        }
+      }),
     );
   }
 

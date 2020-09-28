@@ -11,9 +11,9 @@ export let templates = {
 };
 
 export let clientScripts = [
-  'static/chunks/runtime.js',
-  'static/chunks/vendor.js',
-  'static/chunks/main.js',
+  '_julienne/static/chunks/runtime.js',
+  '_julienne/static/chunks/vendor.js',
+  '_julienne/static/chunks/main.js',
 ];
 
 export let clientStylesheets = ['static/css/main.css'];
@@ -37,6 +37,7 @@ export function createTestCompilation({
       vendor: [clientScripts[1]],
       main: [clientScripts[2], clientStylesheets[0]],
     },
+    hash: 'fake-hash',
     publicPath: defaultPublicPath,
     templates,
     warnings: null,
@@ -45,6 +46,7 @@ export function createTestCompilation({
   let server = includeServerCompilation
     ? new ServerCompilation({
         chunkAssets: { server: ['server.js'] },
+        hash: 'fake-hash',
         outputPath: defaultOutput.server,
         warnings: null,
       })

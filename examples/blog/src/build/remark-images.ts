@@ -2,7 +2,7 @@ import { createReadStream } from 'fs';
 import { extname, resolve as resolvePath } from 'path';
 
 import hasha from 'hasha';
-import type { Site } from '@julienne/svelte';
+import type { Store } from 'julienne';
 import type { Root, Image } from 'mdast';
 import sharp from 'sharp';
 import type { Plugin } from 'unified';
@@ -27,11 +27,11 @@ function getImagesFromTree(ast: Root) {
  * 4. Replaces the original image path with its updated path in `public/static/images`.
  */
 export const remarkImages: Plugin = ({
-  site,
+  store,
   contentDirectory,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  site: Site<any>;
+  store: Store<any>;
   contentDirectory: string;
 }) => {
   return transformer;
@@ -50,7 +50,7 @@ export const remarkImages: Plugin = ({
 
         image.url = publicPath;
 
-        site.createResource(publicPath, () => {
+        store.createFile(publicPath, () => {
           let transformer = sharp().resize(300);
           return createReadStream(imagePath).pipe(transformer);
         });

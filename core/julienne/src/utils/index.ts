@@ -1,4 +1,5 @@
 import * as path from 'path';
+import type * as webpack from 'webpack';
 
 export const internalDirName = `${process.cwd()}/__build__`;
 
@@ -48,4 +49,14 @@ export function getAssets(
   );
 
   return { scripts, stylesheets };
+}
+
+// julienne generates its own entry, so we need to remove entries from the user
+// configuration.
+export function cleanWebpackConfig({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  entry: _throwawayEntry,
+  ...config
+}: webpack.Configuration): webpack.Configuration {
+  return config;
 }

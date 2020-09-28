@@ -1,37 +1,40 @@
 import { Site } from '@julienne/react';
+import type { Store } from 'julienne';
 import sade from 'sade';
 
-async function createSite({ dev }) {
-  let site = new Site({
-    dev,
-    templates: {
-      main: require.resolve('./src/templates/main.tsx'),
-    },
-  });
+let templates = {
+  main: require.resolve('./src/templates/main.tsx'),
+} as const;
 
-  site.createPage('/', async () => {
+type Templates = typeof templates;
+
+async function addPagesAndFiles(store: Store<Templates>) {
+  store.createPage('/', async () => {
     return {
       template: 'main',
       props: {},
     };
   });
-
-  return site;
 }
 
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
-  let site = await createSite({ dev: false });
-  let generator = await site.compile();
-  await generator.generate();
+  let site = new Site({ templates });
+
+  addPagesAndFiles(site);
+
+  await site.build();
 });
 
 prog.command('dev').action(async () => {
-  let site = await createSite({ dev: true });
+  let site = new Site({ dev: true, templates });
+
+  addPagesAndFiles(site);
 
   let port = 3000;
   await site.dev({ port });
+
   console.log(`Started on http://localhost:${port}`);
 });
 

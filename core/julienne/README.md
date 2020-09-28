@@ -137,45 +137,43 @@ Template configuration has the following type:
 }
 ```
 
-### createResource(path, getResource)
+### createFile(path, getFile)
 
 Example usage:
 
 ```typescript
-site.createResource('/index.json', () => JSON.stringify({ key: 'value' }));
+site.createFile('/index.json', () => JSON.stringify({ key: 'value' }));
 ```
 
 #### path
 
-The path/URL to create the resource at. This path should start with a forward
-slash.
+The path/URL to create the file at. This path should start with a forward slash.
 
-#### getResource
+#### getFile
 
-Function that returns resource data, which can be a string, a Buffer, or a
-stream. julienne will `await` values returned from `getResource`, so you can use
+Function that returns file data, which can be a string, a Buffer, or a stream.
+julienne will `await` values returned from `getFile`, so you can use
 `async`/`await`.
 
-### copyResource(to, from)
+### copyFile(to, from)
 
 Example usage:
 
 ```typescript
-site.copyResource("/robots.txt", path.join(__dirname, "robots.txt"));`
+site.copyFile("/robots.txt", path.join(__dirname, "robots.txt"));`
 ```
 
 #### to
 
 Type: `string`
 
-The path/URL to copy the resource to. This path should start with a forward
-slash.
+The path/URL to copy the file to. This path should start with a forward slash.
 
 #### from
 
 Type: `string`
 
-The path of the resource to copy.
+The path of the file to copy.
 
 ### compile(options)
 
@@ -204,7 +202,7 @@ Example usage:
 await generator.generate();
 ```
 
-Write the site's pages and resources to disk.
+Write the site's pages and files to disk.
 
 ### dev(options)
 
@@ -226,20 +224,6 @@ The port to use to start the development server on; defaults to `3000`.
 ### Compilation
 
 A compilation manifest returned by `Site.compile`.
-
-### write(path)
-
-Example usage:
-
-```typescript
-compilation.write(path.join(__dirname, 'build.json'));
-```
-
-#### path
-
-Type: `string`
-
-The path to write the compilation manifest to.
 
 ## Polyfills
 

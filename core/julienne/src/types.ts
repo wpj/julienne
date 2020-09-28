@@ -1,8 +1,5 @@
 import type { Readable } from 'stream';
-
 import type * as webpack from 'webpack';
-
-import type { Resource } from './resource';
 
 /**
  * A mapping of template names to file paths.
@@ -41,18 +38,25 @@ export type MaybePromise<T> = T | Promise<T>;
 export type GetPage<Template> = () => MaybePromise<Page<Template>>;
 
 /**
- * Lazy, potentially async resource data.
+ * Lazy, potentially async file data.
  */
 export type GetData = () => MaybePromise<string | Readable | Buffer>;
 
-export type PageMap<T> = Map<string, GetPage<T>>;
+export type FileCreateAction<T> = { type: 'create'; getData: T };
+export type FileRemoveAction = { type: 'remove' };
+export type OutputFileAction<T> = FileCreateAction<T> | FileRemoveAction;
 
-export type ResourceMap = Map<string, GetResource>;
+export type PageMap<Template> = Map<
+  string,
+  OutputFileAction<GetPage<Template>>
+>;
+
+export type FileMap = Map<string, OutputFileAction<GetFile>>;
 
 /**
- * A lazy, potentially async resource.
+ * A lazy, potentially async file.
  */
-export type GetResource = () => MaybePromise<Resource>;
+export type GetFile = () => MaybePromise<File>;
 
 export type WebpackConfig = {
   client: webpack.Configuration;
@@ -62,3 +66,23 @@ export type WebpackConfig = {
 export interface DevServerActions {
   close: () => void;
 }
+
+export type Copy = {
+  type: 'copy';
+  from: string;
+};
+
+export type Generated = {
+  type: 'generated';
+  data: string | Buffer;
+};
+
+export type Stream = {
+  type: 'stream';
+  data: Readable;
+};
+
+/**
+ * A file destined to be written to the output directory.
+ */
+export type File = Copy | Generated | Stream;

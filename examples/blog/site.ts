@@ -1,23 +1,23 @@
-import { promises as fs } from 'fs';
-import { dirname, resolve as resolvePath, sep as pathSeparator } from 'path';
-
 import { Site } from '@julienne/svelte';
+import { promises as fs } from 'fs';
 import globby from 'globby';
+import { safeLoad } from 'js-yaml';
 import type { Root } from 'mdast';
+import { dirname, resolve as resolvePath, sep as pathSeparator } from 'path';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter, { YamlNode } from 'remark-frontmatter';
 import remarkParse from 'remark-parse';
 import remarkToRehype from 'remark-rehype';
 import sade from 'sade';
 import unified from 'unified';
-import { safeLoad } from 'js-yaml';
-
 import { remarkImages } from './src/build/remark-images';
 
 const templates = {
   post: require.resolve('./src/templates/post.svelte'),
   postIndex: require.resolve('./src/templates/post-index.svelte'),
 };
+
+type Templates = typeof templates;
 
 function extractFrontmatter<T>(node: Root) {
   let frontmatterNode =
@@ -35,7 +35,7 @@ function extractFrontmatter<T>(node: Root) {
  * creation and post index creation.
  */
 let postCache = new Map();
-async function getPost(site: Site<typeof templates>, postPath: string) {
+async function getAndCreatePost(site: Site<Templates>, postPath: string) {
   if (postCache.has(postPath)) {
     return postCache.get(postPath);
   }
@@ -51,7 +51,7 @@ async function getPost(site: Site<typeof templates>, postPath: string) {
     .parse(markdown);
 
   let transformedMarkdown = (await unified()
-    .use(remarkImages, { site, contentDirectory })
+    .use(remarkImages, { store: site, contentDirectory })
     .run(markdownAst)) as Root;
 
   let frontmatter = extractFrontmatter<{ title: string }>(transformedMarkdown);
@@ -81,10 +81,10 @@ function slugifyPostPath(postPath: string) {
 /**
  * Creates a page for each post and processes its images.
  */
-async function createPostPage(site: Site<typeof templates>, postPath: string) {
+async function createPostPage(site: Site<Templates>, postPath: string) {
   let slug = slugifyPostPath(postPath);
   site.createPage(slug, async () => {
-    let { content, title } = await getPost(site, postPath);
+    let { content, title } = await getAndCreatePost(site, postPath);
 
     return {
       template: 'post',
@@ -96,12 +96,7 @@ async function createPostPage(site: Site<typeof templates>, postPath: string) {
   });
 }
 
-async function createSite({ dev }: { dev: boolean }) {
-  let site = new Site<typeof templates>({
-    dev,
-    templates,
-  });
-
+async function addPagesAndFiles(site: Site<Templates>) {
   let postPaths = await globby(['posts/**/*.md']);
 
   postPaths.forEach((postPath) => {
@@ -114,7 +109,7 @@ async function createSite({ dev }: { dev: boolean }) {
     let posts = await Promise.all(
       postPaths.map(async (postPath) => {
         let slug = slugifyPostPath(postPath);
-        let { title } = await getPost(site, postPath);
+        let { title } = await getAndCreatePost(site, postPath);
 
         return { slug, title };
       }),
@@ -127,20 +122,22 @@ async function createSite({ dev }: { dev: boolean }) {
       },
     };
   });
-
-  return site;
 }
 
 let prog = sade('julienne-site');
 
 prog.command('build').action(async () => {
-  let site = await createSite({ dev: false });
-  let generator = await site.compile();
-  await generator.generate();
+  let site = new Site({ templates });
+
+  await addPagesAndFiles(site);
+
+  await site.build();
 });
 
 prog.command('dev').action(async () => {
-  let site = await createSite({ dev: true });
+  let site = new Site({ dev: true, templates });
+
+  await addPagesAndFiles(site);
 
   let port = 3000;
   await site.dev({ port });

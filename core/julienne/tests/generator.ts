@@ -1,8 +1,8 @@
 import { join as pathJoin } from 'path';
 import { Readable } from 'stream';
-import { SiteGenerator } from '../src/generator';
+import { Generator } from '../src/generator';
+import { Store } from '../src/store';
 import type { RenderToString as RenderToStringType } from '../src/render';
-import type { Output } from '../src/types';
 import { writeFile } from '../src/utils/file';
 import {
   clientScripts,
@@ -16,18 +16,16 @@ import {
 // the hood.
 jest.mock('../src/utils/file');
 
+type Templates = typeof templates;
+
 type RenderToStringFunc = RenderToStringType<
   (props: { [key: string]: unknown }) => string
 >;
 
-let defaultOutput: Output = {
-  client: pathJoin(__dirname, '.julienne/public'),
-  server: pathJoin(__dirname, '__fixtures__'),
-  publicPath: '/',
-};
+let defaultOutput = pathJoin(__dirname, '.julienne/public');
 
 function getPublicPath(path: string) {
-  return pathJoin(defaultOutput.client, path);
+  return pathJoin(defaultOutput, path);
 }
 
 describe('Generator', () => {
@@ -37,11 +35,11 @@ describe('Generator', () => {
     });
 
     expect(() => {
-      new SiteGenerator({
+      new Generator({
         compilation,
+        files: new Map(),
         output: defaultOutput,
         pages: new Map(),
-        resources: new Map(),
         renderToString: () => 'html',
         templates: {
           main: './src/main.js',
@@ -75,12 +73,12 @@ describe('Generator', () => {
         });
       };
 
-      let generator = new SiteGenerator({
+      let generator = new Generator({
         compilation,
+        files: new Map(),
         output: defaultOutput,
         pages: new Map(),
         renderToString,
-        resources: new Map(),
         templates,
       });
 
@@ -114,21 +112,24 @@ describe('Generator', () => {
     });
 
     test('renders and writes pages to the filesystem', async () => {
-      let pages = new Map();
+      let store = new Store<Templates>();
 
-      pages.set('/a', () => ({ template: 'main', props: { name: 'World' } }));
-      pages.set('/b.html', () => ({
+      store.createPage('/a', () => ({
+        template: 'main',
+        props: { name: 'World' },
+      }));
+
+      store.createPage('/b.html', () => ({
         template: 'main',
         props: { name: 'Universe' },
       }));
 
-      let generator = new SiteGenerator({
+      let generator = new Generator({
         compilation,
         output: defaultOutput,
-        pages,
         renderToString,
-        resources: new Map(),
         templates,
+        ...store,
       });
 
       await generator.generate();
@@ -144,37 +145,24 @@ describe('Generator', () => {
       });
     });
 
-    test('writes resources to the filesystem', async () => {
-      let resources = new Map();
+    test('writes files to the filesystem', async () => {
+      let store = new Store<Templates>();
 
-      resources.set('/a.json', () => ({
-        type: 'generated',
-        data: JSON.stringify({ hello: 'world' }),
-      }));
+      store.createFile('/a.json', () => JSON.stringify({ hello: 'world' }));
 
-      resources.set('/b.txt', () => ({
-        type: 'generated',
-        data: 'Hello, world',
-      }));
+      store.createFile('/b.txt', () => 'Hello, world');
 
       let stream = Readable.from('Hello, universe');
-      resources.set('/c.txt', () => ({
-        type: 'stream',
-        data: stream,
-      }));
+      store.createFile('/c.txt', () => stream);
 
-      resources.set('/text/mock.txt', () => ({
-        type: 'file',
-        from: pathJoin(__dirname, 'mock.txt'),
-      }));
+      store.copyFile('/text/mock.txt', pathJoin(__dirname, 'mock.txt'));
 
-      let generator = new SiteGenerator({
+      let generator = new Generator({
         compilation,
         output: defaultOutput,
-        pages: new Map(),
         renderToString,
-        resources,
         templates,
+        ...store,
       });
 
       await generator.generate();
@@ -195,7 +183,7 @@ describe('Generator', () => {
       });
 
       expect(writeFile).toHaveBeenCalledWith(getPublicPath('text/mock.txt'), {
-        type: 'file',
+        type: 'copy',
         from: pathJoin(__dirname, 'mock.txt'),
       });
 
