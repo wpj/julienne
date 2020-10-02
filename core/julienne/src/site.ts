@@ -1,14 +1,38 @@
+import { join as pathJoin } from 'path';
+import { Builder } from './builder';
 import { Compiler, Options as CompilerOptions } from './compiler';
 import { Generator } from './generator';
 import type { RenderToString } from './render';
 import { Server as DevServer } from './server';
 import { Store } from './store';
-import type { DevServerActions, TemplateConfig } from './types';
+import type {
+  DevServerActions,
+  Output,
+  OutputConfig,
+  TemplateConfig,
+} from './types';
 
-export type Options<
-  Component,
-  Templates extends TemplateConfig
-> = CompilerOptions<Templates> & {
+function getOutputWithDefaults({
+  cwd,
+  internal: internalOutputPath = pathJoin(cwd, '.julienne'),
+  public: publicOutputPath = pathJoin(cwd, 'public'),
+  publicPath = '/',
+}: OutputConfig & { cwd: string }): Output {
+  return {
+    compiler: {
+      client: pathJoin(internalOutputPath, 'client'),
+      publicPath,
+      server: pathJoin(internalOutputPath, 'server'),
+    },
+    public: publicOutputPath,
+  };
+}
+
+export type Options<Component, Templates extends TemplateConfig> = Omit<
+  CompilerOptions<Templates>,
+  'output'
+> & {
+  output?: OutputConfig;
   renderToString: RenderToString<Component>;
 };
 
@@ -16,38 +40,45 @@ export class Site<Component, Templates extends TemplateConfig> extends Store<
   Templates
 > {
   compilerOptions: CompilerOptions<Templates>;
+  output: Output;
   renderToString: RenderToString<Component>;
 
   constructor({
+    cwd = process.cwd(),
+    output: outputConfig,
     renderToString,
     ...compilerOptions
   }: Options<Component, Templates>) {
     super();
 
+    let output = getOutputWithDefaults({ cwd, ...outputConfig });
+
+    this.compilerOptions = { cwd, output: output.compiler, ...compilerOptions };
+    this.output = output;
     this.renderToString = renderToString;
-    this.compilerOptions = compilerOptions;
   }
 
-  async compile(): Promise<Generator<Component, Templates>> {
-    let { compilerOptions, files, pages, renderToString } = this;
+  async compile(): Promise<Builder<Component, Templates>> {
+    let { compilerOptions, files, output, pages, renderToString } = this;
 
     let compiler = new Compiler(compilerOptions);
 
     let compilation = await compiler.compile();
 
-    return new Generator<Component, Templates>({
+    let generator = new Generator<Component, Templates>({
       compilation,
       files,
-      output: compiler.output.client,
+      output: output.public,
       pages,
       renderToString,
-      templates: compilerOptions.templates,
     });
+
+    return new Builder({ compilation, generator, output });
   }
 
   async build(): Promise<void> {
-    let generator = await this.compile();
-    await generator.generate();
+    let builder = await this.compile();
+    await builder.build();
   }
 
   async dev({ port = 3000 }: { port?: number } = {}): Promise<

@@ -8,10 +8,21 @@ export interface TemplateConfig {
   [name: string]: string;
 }
 
-export interface Output {
+export interface OutputConfig {
+  internal?: string;
+  public?: string;
+  publicPath?: string;
+}
+
+export interface CompilerOutput {
   client: string;
   publicPath: string;
   server: string;
+}
+
+export interface Output {
+  compiler: CompilerOutput;
+  public: string;
 }
 
 export type Mode = 'development' | 'production';

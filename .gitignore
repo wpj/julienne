@@ -66,8 +66,7 @@ common/autoinstallers/*/.npmrc
 
 # build output
 dist
-
-# julienne build output
+public
 .julienne
 
 # compilation cache manifests

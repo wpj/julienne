@@ -2,6 +2,7 @@ import { join as pathJoin } from 'path';
 import { Readable } from 'stream';
 import { Generator } from '../src/generator';
 import { Store } from '../src/store';
+import type { Props } from '../src/types';
 import type { RenderToString as RenderToStringType } from '../src/render';
 import { writeFile } from '../src/utils/file';
 import {
@@ -28,6 +29,8 @@ function getPublicPath(path: string) {
   return pathJoin(defaultOutput, path);
 }
 
+type Component = (props: Props) => string;
+
 describe('Generator', () => {
   test('throws an error when created without a server compilation', () => {
     let compilation = createTestCompilation({
@@ -35,15 +38,12 @@ describe('Generator', () => {
     });
 
     expect(() => {
-      new Generator({
+      new Generator<Component, Templates>({
         compilation,
         files: new Map(),
         output: defaultOutput,
         pages: new Map(),
         renderToString: () => 'html',
-        templates: {
-          main: './src/main.js',
-        },
       });
     }).toThrow();
   });
@@ -73,13 +73,12 @@ describe('Generator', () => {
         });
       };
 
-      let generator = new Generator({
+      let generator = new Generator<Component, Templates>({
         compilation,
         files: new Map(),
         output: defaultOutput,
         pages: new Map(),
         renderToString,
-        templates,
       });
 
       let rendered = await generator.renderToString({
@@ -124,11 +123,10 @@ describe('Generator', () => {
         props: { name: 'Universe' },
       }));
 
-      let generator = new Generator({
+      let generator = new Generator<Component, Templates>({
         compilation,
         output: defaultOutput,
         renderToString,
-        templates,
         ...store,
       });
 
@@ -157,11 +155,10 @@ describe('Generator', () => {
 
       store.copyFile('/text/mock.txt', pathJoin(__dirname, 'mock.txt'));
 
-      let generator = new Generator({
+      let generator = new Generator<Component, Templates>({
         compilation,
         output: defaultOutput,
         renderToString,
-        templates,
         ...store,
       });
 

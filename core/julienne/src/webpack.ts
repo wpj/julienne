@@ -10,7 +10,7 @@ import {
   CompilationWarnings,
   ServerCompilation,
 } from './compilation';
-import type { Mode, Output, WebpackConfig } from './types';
+import type { Mode, CompilerOutput, WebpackConfig } from './types';
 import { TemplateConfig } from './types';
 import { moduleMapTemplate } from './utils';
 
@@ -253,7 +253,7 @@ function runWebpackCompiler(
 export class Compiler {
   cwd: string;
   compileServer: boolean;
-  output: Output;
+  output: CompilerOutput;
   templates: TemplateConfig;
   webpackConfig: WebpackConfig;
 
@@ -266,7 +266,7 @@ export class Compiler {
   }: {
     cwd?: string;
     compileServer: boolean;
-    output: Output;
+    output: CompilerOutput;
     templates: TemplateConfig;
     webpackConfig: WebpackConfig;
   }) {

@@ -11,11 +11,8 @@ let site = new Site({
   },
 });
 
-// Compile the site's assets
-await site.compile();
-
 // Build the site
-await site.generate();
+await site.build();
 
 // Start a local development server
 await site.dev();
@@ -30,8 +27,8 @@ Construct a Site instance.
 #### options.cwd (optional)
 
 Set the cwd when compiling and generating the site. It's only necessary to set
-this when you're build script is not in the directory you're generating your
-site from.
+this when your build script is not in the directory you're generating your site
+from.
 
 If no value is passed, `process.cwd()` is used by default.
 
@@ -41,7 +38,8 @@ Type:
 
 ```typescript
 {
-  path: string;
+  internal: string;
+  public: string;
   publicPath: string;
 }
 ```
@@ -50,10 +48,16 @@ Directories to write the output to. If no output is provided, the following
 directory structure will be created:
 
 ```
-.julienne
-├── public
-└── server
+.
+├── .julienne
+│   ├── client
+│   └── server
+└── public
 ```
+
+`public` is the directory that the site's webpack bundle, static pages, and
+files will be written to. `internal` contains files internal to julienne used
+during static rendering.
 
 #### options.render
 
@@ -175,34 +179,28 @@ Type: `string`
 
 The path of the file to copy.
 
-### compile(options)
+### compile()
 
 Example usage:
 
 ```typescript
-let generator = await site.compile();
+let builder = await site.compile();
 ```
 
-Compiles the sites assets and writes them to the output directory.
+Compiles the site's Webpack bundle and returns a `Builder` object, which can be
+used to inspect the result of the compilation and write the pages, files, and
+compilation to the public output directory.
 
-Returns a `Compilation` object, which can be used to inspect the result of a
-compilation or write the compilation manifest to disk to enable cached
-compilations.
-
-##### options.fromCache (optional)
-
-Path to read a cached compilation manifest from. If a cached compilation is
-found, the compilation step will be skipped.
-
-### generate()
+### build()
 
 Example usage:
 
 ```typescript
-await generator.generate();
+await builder.build();
 ```
 
-Write the site's pages and files to disk.
+Compiles and writes the site's Webpack bundle, pages, and files to the public
+output directory.
 
 ### dev(options)
 
@@ -220,6 +218,16 @@ object with a `close` method for stopping the server.
 Type: `number`
 
 The port to use to start the development server on; defaults to `3000`.
+
+### Builder
+
+#### compilation
+
+The site's compilation manifest.
+
+#### build()
+
+Writes the site's pages, files, and compilation to the public output directory.
 
 ### Compilation
 

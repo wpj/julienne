@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import * as fs from 'fs-extra';
 import { join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { RenderToString } from './render';
@@ -24,7 +24,6 @@ export class Generator<Component, Templates extends TemplateConfig> {
   output: string;
   pages: PageMap<keyof Templates>;
   serverModulePath: string;
-  templates: Templates;
 
   constructor({
     compilation,
@@ -32,14 +31,12 @@ export class Generator<Component, Templates extends TemplateConfig> {
     output,
     pages,
     renderToString,
-    templates,
   }: {
     compilation: Compilation;
     files: FileMap;
     output: string;
     pages: PageMap<keyof Templates>;
     renderToString: RenderToString<Component>;
-    templates: Templates;
   }) {
     if (!compilation.server?.asset) {
       throw new Error('Server module not found');
@@ -51,14 +48,13 @@ export class Generator<Component, Templates extends TemplateConfig> {
     this.output = output;
     this.pages = pages;
     this.serverModulePath = compilation.server.asset;
-    this.templates = templates;
   }
 
   /**
    * Write the site's pages and files to disk.
    */
   async generate(): Promise<void> {
-    let { files, output, pages, templates } = this;
+    let { files, output, pages } = this;
 
     // Pages need to be rendered first so that any files created during the
     // page creation process are ready to be processed.
@@ -79,10 +75,6 @@ export class Generator<Component, Templates extends TemplateConfig> {
               e,
             );
             return;
-          }
-
-          if (!(page.template in templates)) {
-            throw new Error(`Template error: ${page.template} does not exist.`);
           }
 
           let renderedPage = await this.renderToString({
@@ -138,6 +130,10 @@ export class Generator<Component, Templates extends TemplateConfig> {
     let serverModule = await import(serverModulePath);
 
     let templateAssets = compilation.client.templateAssets[template as string];
+
+    if (!templateAssets) {
+      throw new Error(`Render error: assets for "${template}" not found.`);
+    }
 
     let { scripts, stylesheets } = getAssets(templateAssets);
 

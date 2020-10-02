@@ -1,26 +1,12 @@
-import { join as pathJoin } from 'path';
 import type * as webpack from 'webpack';
 import mergeWebpackConfigs from 'webpack-merge';
 import type { Compilation } from './compilation';
-import type { Output, TemplateConfig, WebpackConfig } from './types';
+import type { CompilerOutput, TemplateConfig, WebpackConfig } from './types';
 import {
   Compiler as WebpackCompiler,
   createClientConfig,
   createServerConfig,
 } from './webpack';
-
-interface OutputConfig {
-  path: string;
-  publicPath: string;
-}
-
-function getOutput(output: OutputConfig) {
-  return {
-    server: pathJoin(output.path, 'server'),
-    client: pathJoin(output.path, 'public'),
-    publicPath: output.publicPath,
-  };
-}
 
 // julienne generates its own entry, so we need to remove entries from the user
 // configuration.
@@ -35,7 +21,7 @@ function cleanWebpackConfig({
 export interface Options<Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules?: boolean;
   cwd?: string;
-  output?: Partial<OutputConfig>;
+  output: CompilerOutput;
   runtime: string;
   templates: Templates;
   webpackConfig?: WebpackConfig;
@@ -44,7 +30,7 @@ export interface Options<Templates extends TemplateConfig> {
 export class Compiler<Templates extends TemplateConfig> {
   __experimentalIncludeStaticModules: boolean;
   cwd: string;
-  output: Output;
+  output: CompilerOutput;
   runtime: string;
   templates: Templates;
   webpackConfig: WebpackConfig;
@@ -52,17 +38,14 @@ export class Compiler<Templates extends TemplateConfig> {
   constructor({
     __experimentalIncludeStaticModules = true,
     cwd = process.cwd(),
-    output: {
-      path: outputPath = pathJoin(cwd, '.julienne'),
-      publicPath = '/',
-    } = {},
+    output,
     runtime,
     templates,
     webpackConfig,
   }: Options<Templates>) {
     this.__experimentalIncludeStaticModules = __experimentalIncludeStaticModules;
     this.cwd = cwd;
-    this.output = getOutput({ path: outputPath, publicPath });
+    this.output = output;
     this.runtime = runtime;
     this.templates = templates;
 

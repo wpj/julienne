@@ -4,7 +4,6 @@ import {
   Compilation,
   ServerCompilation,
 } from '../../src/compilation';
-import type { Output } from '../../src/types';
 
 export let templates = {
   main: './this/does/not/exist.js',
@@ -19,12 +18,6 @@ export let clientScripts = [
 export let clientStylesheets = ['static/css/main.css'];
 
 export let defaultPublicPath = '/';
-
-let defaultOutput: Output = {
-  client: pathJoin(__dirname, '.julienne/public'),
-  server: __dirname,
-  publicPath: defaultPublicPath,
-};
 
 export function createTestCompilation({
   includeServerCompilation,
@@ -47,7 +40,7 @@ export function createTestCompilation({
     ? new ServerCompilation({
         chunkAssets: { server: ['server.js'] },
         hash: 'fake-hash',
-        outputPath: defaultOutput.server,
+        outputPath: pathJoin(__dirname),
         warnings: null,
       })
     : null;

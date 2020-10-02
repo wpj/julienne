@@ -15,7 +15,7 @@
     "build": "ts-node site.ts build",
     "lint:ts": "eslint --max-warnings 0 '**/*.{ts,tsx}'",
     "lint": "npm run lint:ts",
-    "serve": "serve .julienne/public",
+    "serve": "serve public",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
