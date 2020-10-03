@@ -36,9 +36,7 @@ export type Options<Component, Templates extends TemplateConfig> = Omit<
   renderToString: RenderToString<Component>;
 };
 
-export class Site<Component, Templates extends TemplateConfig> extends Store<
-  Templates
-> {
+export class Site<Component, Templates extends TemplateConfig> {
   compilerOptions: CompilerOptions<Templates>;
   output: Output;
   renderToString: RenderToString<Component>;
@@ -49,8 +47,6 @@ export class Site<Component, Templates extends TemplateConfig> extends Store<
     renderToString,
     ...compilerOptions
   }: Options<Component, Templates>) {
-    super();
-
     let output = getOutputWithDefaults({ cwd, ...outputConfig });
 
     this.compilerOptions = { cwd, output: output.compiler, ...compilerOptions };
@@ -59,7 +55,7 @@ export class Site<Component, Templates extends TemplateConfig> extends Store<
   }
 
   async compile(): Promise<Builder<Component, Templates>> {
-    let { compilerOptions, files, output, pages, renderToString } = this;
+    let { compilerOptions, output, renderToString } = this;
 
     let compiler = new Compiler(compilerOptions);
 
@@ -67,25 +63,28 @@ export class Site<Component, Templates extends TemplateConfig> extends Store<
 
     let generator = new Generator<Component, Templates>({
       compilation,
-      files,
       output: output.public,
-      pages,
       renderToString,
     });
 
     return new Builder({ compilation, generator, output });
   }
 
-  async build(): Promise<void> {
+  async build({ store }: { store: Store<Templates> }): Promise<void> {
     let builder = await this.compile();
-    await builder.build();
+    await builder.build({ store });
   }
 
-  async dev({ port = 3000 }: { port?: number } = {}): Promise<
-    DevServerActions
-  > {
-    let { compilerOptions, files, pages, renderToString } = this;
+  async dev({
+    port = 3000,
+    store,
+  }: {
+    port?: number;
+    store: Store<Templates>;
+  }): Promise<DevServerActions> {
+    let { compilerOptions, renderToString } = this;
     let { runtime, templates, webpackConfig } = compilerOptions;
+    let { files, pages } = store;
 
     let devServer = new DevServer<Component, Templates>({
       files,

@@ -1,5 +1,5 @@
 import { Site } from '@julienne/svelte';
-import type { Props } from 'julienne';
+import { Props, Store } from 'julienne';
 import sade from 'sade';
 import { generateSW, ManifestTransform } from 'workbox-build';
 import { createJsonSlug } from './src/helpers';
@@ -31,7 +31,8 @@ const removeNonShellHtml: ManifestTransform = async (manifestEntries) => {
   return { manifest, warnings: [] };
 };
 
-function addPagesAndFiles(site: Site<Templates>) {
+function getStore(): Store<Templates> {
+  let store = new Store();
   function createPageAndPageJson(
     slug: string,
     {
@@ -39,8 +40,8 @@ function addPagesAndFiles(site: Site<Templates>) {
       props,
     }: { template: keyof Omit<typeof templates, 'shell'>; props: Props },
   ) {
-    site.createPage(slug, () => ({ template, props }));
-    site.createFile(createJsonSlug(slug), () =>
+    store.createPage(slug, () => ({ template, props }));
+    store.createFile(createJsonSlug(slug), () =>
       JSON.stringify({ template, props }),
     );
   }
@@ -49,7 +50,9 @@ function addPagesAndFiles(site: Site<Templates>) {
 
   createPageAndPageJson('/alt', { template: 'alt', props: { name: 'Alt' } });
 
-  site.createPage('/__shell.html', () => ({ template: 'shell', props: {} }));
+  store.createPage('/__shell.html', () => ({ template: 'shell', props: {} }));
+
+  return store;
 }
 
 let prog = sade('julienne-site');
@@ -57,9 +60,9 @@ let prog = sade('julienne-site');
 prog.command('build').action(async () => {
   let site = new Site({ runtime, templates });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
-  await site.build();
+  await site.build({ store });
 
   // workbox-build resolves paths against the current working directory.
   await generateSW({
@@ -79,10 +82,10 @@ prog.command('dev').action(async () => {
     templates,
   });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
   let port = 3000;
-  await site.dev({ port });
+  await site.dev({ port, store });
   console.log(`Started on http://localhost:${port}`);
 });
 

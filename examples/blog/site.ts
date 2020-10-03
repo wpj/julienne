@@ -1,3 +1,4 @@
+import { Store } from 'julienne';
 import { Site } from '@julienne/svelte';
 import { promises as fs } from 'fs';
 import globby from 'globby';
@@ -35,7 +36,7 @@ function extractFrontmatter<T>(node: Root) {
  * creation and post index creation.
  */
 let postCache = new Map();
-async function getAndCreatePost(site: Site<Templates>, postPath: string) {
+async function getAndCreatePost(store: Store<Templates>, postPath: string) {
   if (postCache.has(postPath)) {
     return postCache.get(postPath);
   }
@@ -51,7 +52,7 @@ async function getAndCreatePost(site: Site<Templates>, postPath: string) {
     .parse(markdown);
 
   let transformedMarkdown = (await unified()
-    .use(remarkImages, { store: site, contentDirectory })
+    .use(remarkImages, { store, contentDirectory })
     .run(markdownAst)) as Root;
 
   let frontmatter = extractFrontmatter<{ title: string }>(transformedMarkdown);
@@ -81,10 +82,10 @@ function slugifyPostPath(postPath: string) {
 /**
  * Creates a page for each post and processes its images.
  */
-async function createPostPage(site: Site<Templates>, postPath: string) {
+async function createPostPage(store: Store<Templates>, postPath: string) {
   let slug = slugifyPostPath(postPath);
-  site.createPage(slug, async () => {
-    let { content, title } = await getAndCreatePost(site, postPath);
+  store.createPage(slug, async () => {
+    let { content, title } = await getAndCreatePost(store, postPath);
 
     return {
       template: 'post',
@@ -96,20 +97,22 @@ async function createPostPage(site: Site<Templates>, postPath: string) {
   });
 }
 
-async function addPagesAndFiles(site: Site<Templates>) {
+async function getStore(): Promise<Store<Templates>> {
+  let store = new Store();
+
   let postPaths = await globby(['posts/**/*.md']);
 
   postPaths.forEach((postPath) => {
     let resolvedPath = resolvePath(postPath);
 
-    createPostPage(site, resolvedPath);
+    createPostPage(store, resolvedPath);
   });
 
-  site.createPage('/', async () => {
+  store.createPage('/', async () => {
     let posts = await Promise.all(
       postPaths.map(async (postPath) => {
         let slug = slugifyPostPath(postPath);
-        let { title } = await getAndCreatePost(site, postPath);
+        let { title } = await getAndCreatePost(store, postPath);
 
         return { slug, title };
       }),
@@ -122,6 +125,8 @@ async function addPagesAndFiles(site: Site<Templates>) {
       },
     };
   });
+
+  return store;
 }
 
 let prog = sade('julienne-site');
@@ -129,18 +134,18 @@ let prog = sade('julienne-site');
 prog.command('build').action(async () => {
   let site = new Site({ templates });
 
-  await addPagesAndFiles(site);
+  let store = await getStore();
 
-  await site.build();
+  await site.build({ store });
 });
 
 prog.command('dev').action(async () => {
   let site = new Site({ dev: true, templates });
 
-  await addPagesAndFiles(site);
+  let store = await getStore();
 
   let port = 3000;
-  await site.dev({ port });
+  await site.dev({ port, store });
   console.log(`Started on http://localhost:${port}`);
 });
 

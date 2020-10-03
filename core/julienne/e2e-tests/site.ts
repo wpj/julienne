@@ -3,7 +3,7 @@ import http from 'http';
 import { join as pathJoin } from 'path';
 import rimraf from 'rimraf';
 import serve from 'serve-handler';
-import { Site } from '../src';
+import { Site, Store } from '../src';
 import { DevServerActions } from '../src/types';
 import { renderToString } from './__fixtures__/render-raw-html';
 import type { Component } from './__fixtures__/types';
@@ -21,6 +21,9 @@ describe('Site', () => {
     }
 
     beforeAll(async () => {
+      let templates = {
+        main: pathJoin(__dirname, '__fixtures__/template-raw-html.js'),
+      };
       let site = new Site({
         output: {
           internal: internalOutputDirectory,
@@ -28,19 +31,19 @@ describe('Site', () => {
         },
         renderToString,
         runtime: pathJoin(__dirname, '__fixtures__/runtime-set-inner-html.js'),
-        templates: {
-          main: pathJoin(__dirname, '__fixtures__/template-raw-html.js'),
-        },
+        templates,
       });
 
-      site.createPage('/test', () => ({
+      let store = new Store<typeof templates>();
+
+      store.createPage('/test', () => ({
         template: 'main',
         props: { name: 'World' },
       }));
 
-      site.createFile('/index.json', () => JSON.stringify({ key: 'val' }));
+      store.createFile('/index.json', () => JSON.stringify({ key: 'val' }));
 
-      await site.build();
+      await site.build({ store });
     });
 
     afterAll(() => {
@@ -102,12 +105,14 @@ describe('Site', () => {
         templates,
       });
 
-      site.createPage('/test', () => ({
+      let store = new Store<typeof templates>();
+
+      store.createPage('/test', () => ({
         template: 'main',
         props: { name: 'World' },
       }));
 
-      serverActions = await site.dev({ port });
+      serverActions = await site.dev({ port, store });
     });
 
     afterAll(() => {

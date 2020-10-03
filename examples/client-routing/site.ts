@@ -1,3 +1,4 @@
+import { Store } from 'julienne';
 import { Site } from '@julienne/svelte';
 import type { Props } from 'julienne';
 import sade from 'sade';
@@ -12,13 +13,15 @@ let templates = {
 
 type Templates = typeof templates;
 
-function addPagesAndFiles(site: Site<Templates>) {
+function getStore(): Store<Templates> {
+  let store = new Store();
+
   function createPageAndPageJson(
     slug: string,
     { template, props }: { template: keyof typeof templates; props: Props },
   ) {
-    site.createPage(slug, () => ({ template, props }));
-    site.createFile(createJsonSlug(slug), () =>
+    store.createPage(slug, () => ({ template, props }));
+    store.createFile(createJsonSlug(slug), () =>
       JSON.stringify({ template, props }),
     );
   }
@@ -26,6 +29,8 @@ function addPagesAndFiles(site: Site<Templates>) {
   createPageAndPageJson('/', { template: 'main', props: { name: 'Main' } });
 
   createPageAndPageJson('/alt', { template: 'alt', props: { name: 'Alt' } });
+
+  return store;
 }
 
 let prog = sade('julienne-site');
@@ -33,9 +38,9 @@ let prog = sade('julienne-site');
 prog.command('build').action(async () => {
   let site = new Site({ runtime, templates });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
-  await site.build();
+  await site.build({ store });
 });
 
 prog.command('dev').action(async () => {
@@ -45,10 +50,10 @@ prog.command('dev').action(async () => {
     templates,
   });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
   let port = 3000;
-  await site.dev({ port });
+  await site.dev({ port, store });
   console.log(`Started on http://localhost:${port}`);
 });
 

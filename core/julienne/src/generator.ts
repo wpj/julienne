@@ -2,7 +2,8 @@ import * as fs from 'fs-extra';
 import { join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { RenderToString } from './render';
-import type { FileMap, PageMap, Props, TemplateConfig } from './types';
+import type { Store } from './store';
+import type { Props, TemplateConfig } from './types';
 import { getAssets } from './utils';
 import { writeFile } from './utils/file';
 
@@ -20,22 +21,16 @@ function normalizePagePath(pagePath: string) {
 export class Generator<Component, Templates extends TemplateConfig> {
   compilation: Compilation;
   internalRenderToString: RenderToString<Component>;
-  files: FileMap;
   output: string;
-  pages: PageMap<keyof Templates>;
   serverModulePath: string;
 
   constructor({
     compilation,
-    files,
     output,
-    pages,
     renderToString,
   }: {
     compilation: Compilation;
-    files: FileMap;
     output: string;
-    pages: PageMap<keyof Templates>;
     renderToString: RenderToString<Component>;
   }) {
     if (!compilation.server?.asset) {
@@ -43,18 +38,17 @@ export class Generator<Component, Templates extends TemplateConfig> {
     }
 
     this.compilation = compilation;
-    this.files = files;
     this.internalRenderToString = renderToString;
     this.output = output;
-    this.pages = pages;
     this.serverModulePath = compilation.server.asset;
   }
 
   /**
    * Write the site's pages and files to disk.
    */
-  async generate(): Promise<void> {
-    let { files, output, pages } = this;
+  async generate({ store }: { store: Store<Templates> }): Promise<void> {
+    let { output } = this;
+    let { files, pages } = store;
 
     // Pages need to be rendered first so that any files created during the
     // page creation process are ready to be processed.

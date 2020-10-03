@@ -1,5 +1,5 @@
 import { Site } from '@julienne/react';
-import type { Store } from 'julienne';
+import { Store } from 'julienne';
 import sade from 'sade';
 
 let templates = {
@@ -8,13 +8,17 @@ let templates = {
 
 type Templates = typeof templates;
 
-async function addPagesAndFiles(store: Store<Templates>) {
+function getStore(): Store<Templates> {
+  let store = new Store();
+
   store.createPage('/', async () => {
     return {
       template: 'main',
       props: {},
     };
   });
+
+  return store;
 }
 
 let prog = sade('julienne-site');
@@ -22,18 +26,18 @@ let prog = sade('julienne-site');
 prog.command('build').action(async () => {
   let site = new Site({ templates });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
-  await site.build();
+  await site.build({ store });
 });
 
 prog.command('dev').action(async () => {
   let site = new Site({ dev: true, templates });
 
-  addPagesAndFiles(site);
+  let store = getStore();
 
   let port = 3000;
-  await site.dev({ port });
+  await site.dev({ port, store });
 
   console.log(`Started on http://localhost:${port}`);
 });

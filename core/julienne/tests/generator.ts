@@ -40,9 +40,7 @@ describe('Generator', () => {
     expect(() => {
       new Generator<Component, Templates>({
         compilation,
-        files: new Map(),
         output: defaultOutput,
-        pages: new Map(),
         renderToString: () => 'html',
       });
     }).toThrow();
@@ -75,9 +73,7 @@ describe('Generator', () => {
 
       let generator = new Generator<Component, Templates>({
         compilation,
-        files: new Map(),
         output: defaultOutput,
-        pages: new Map(),
         renderToString,
       });
 
@@ -127,10 +123,9 @@ describe('Generator', () => {
         compilation,
         output: defaultOutput,
         renderToString,
-        ...store,
       });
 
-      await generator.generate();
+      await generator.generate({ store });
 
       expect(writeFile).toHaveBeenCalledWith(getPublicPath('a/index.html'), {
         type: 'page',
@@ -159,10 +154,9 @@ describe('Generator', () => {
         compilation,
         output: defaultOutput,
         renderToString,
-        ...store,
       });
 
-      await generator.generate();
+      await generator.generate({ store });
 
       expect(writeFile).toHaveBeenCalledWith(getPublicPath('a.json'), {
         type: 'generated',
