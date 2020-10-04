@@ -1,0 +1,28 @@
+{
+  "name": "@julienne/svelte",
+  "entries": [
+    {
+      "version": "0.1.1",
+      "tag": "@julienne/svelte_v0.1.1",
+      "date": "Sun, 04 Oct 2020 23:16:15 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Add license to README"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"julienne\" from `^0.1.0` to `^0.1.1`"
+          },
+          {
+            "comment": "Updating dependency \"@julienne/svelte-runtime\" from `^0.1.0` to `^0.1.1`"
+          },
+          {
+            "comment": "Updating dependency \"julienne\" from `^0.1.0` to `^0.1.1`"
+          }
+        ]
+      }
+    }
+  ]
+}

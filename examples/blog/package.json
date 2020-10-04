@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings"
   },
   "devDependencies": {
-    "@julienne/svelte": "^0.1.0",
+    "@julienne/svelte": "^0.1.1",
     "@tsconfig/svelte": "^1.0.10",
     "@types/js-yaml": "^3.12.5",
     "@types/mdast": "^3.0.3",
@@ -34,7 +34,7 @@
     "globby": "^11.0.1",
     "hasha": "^5.2.0",
     "js-yaml": "^3.14.0",
-    "julienne": "^0.1.0",
+    "julienne": "^0.1.1",
     "rehype-stringify": "^8.0.0",
     "remark-frontmatter": "^2.0.0",
     "remark-parse": "^8.0.3",
@@ -51,6 +51,6 @@
     "unist-util-visit": "^2.0.3"
   },
   "dependencies": {
-    "@julienne/svelte-runtime": "^0.1.0"
+    "@julienne/svelte-runtime": "^0.1.1"
   }
 }
