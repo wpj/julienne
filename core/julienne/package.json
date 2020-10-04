@@ -1,6 +1,6 @@
 {
   "name": "julienne",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Small static site generator",
   "repository": "wpj/julienne",
   "main": "./dist/index.js",
@@ -26,7 +26,7 @@
     "dist"
   ],
   "devDependencies": {
-    "@julienne/runtime": "^0.0.0",
+    "@julienne/runtime": "^0.1.0",
     "@rollup/plugin-babel": "^5.2.0",
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-json": "^4.1.0",
