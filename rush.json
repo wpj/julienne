@@ -374,43 +374,53 @@
   "projects": [
     {
       "packageName": "julienne",
-      "projectFolder": "core/julienne"
+      "projectFolder": "core/julienne",
+      "shouldPublish": true
     },
     {
       "packageName": "@julienne/react",
-      "projectFolder": "core/react"
+      "projectFolder": "core/react",
+      "shouldPublish": true
     },
     {
       "packageName": "@julienne/react-runtime",
-      "projectFolder": "core/react-runtime"
+      "projectFolder": "core/react-runtime",
+      "shouldPublish": true
     },
     {
       "packageName": "@julienne/runtime",
-      "projectFolder": "core/runtime"
+      "projectFolder": "core/runtime",
+      "shouldPublish": true
     },
     {
       "packageName": "@julienne/svelte",
-      "projectFolder": "core/svelte"
+      "projectFolder": "core/svelte",
+      "shouldPublish": true
     },
     {
       "packageName": "@julienne/svelte-runtime",
-      "projectFolder": "core/svelte-runtime"
+      "projectFolder": "core/svelte-runtime",
+      "shouldPublish": true
     },
     {
       "packageName": "example-blog",
-      "projectFolder": "examples/blog"
+      "projectFolder": "examples/blog",
+      "shouldPublish": false
     },
     {
       "packageName": "example-react",
-      "projectFolder": "examples/react"
+      "projectFolder": "examples/react",
+      "shouldPublish": false
     },
     {
       "packageName": "example-client-routing",
-      "projectFolder": "examples/client-routing"
+      "projectFolder": "examples/client-routing",
+      "shouldPublish": false
     },
     {
       "packageName": "example-pwa",
-      "projectFolder": "examples/pwa"
+      "projectFolder": "examples/pwa",
+      "shouldPublish": false
     }
     // {
     //   /**
