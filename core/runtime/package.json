@@ -6,7 +6,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "microbundle build --format es,cjs",
+    "build": "rimraf dist && microbundle build --format es,cjs",
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
     "typecheck": "tsc --noEmit"
@@ -29,6 +29,7 @@
     "@typescript-eslint/parser": "^4.1.1",
     "eslint": "^7.9.0",
     "microbundle": "^0.12.3",
+    "rimraf": "^3.0.2",
     "typescript": "^4.0.2"
   }
 }
