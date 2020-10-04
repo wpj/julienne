@@ -247,3 +247,7 @@ import 'regenerator-runtime';
 
 // Define custom runtime here.
 ```
+
+## License
+
+MIT
