@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Add license to README",
+      "type": "patch",
+      "packageName": "julienne"
+    }
+  ],
+  "packageName": "julienne",
+  "email": "w@wyatt.page"
+}
