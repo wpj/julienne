@@ -8,6 +8,12 @@ import type {
   TemplateConfig,
 } from './types';
 
+function validatePath(path: string, entity: string) {
+  if (!path.startsWith('/')) {
+    throw new Error(`${entity} paths must begin with a forward slash`);
+  }
+}
+
 /**
  * Stores a site's pages and files.
  */
@@ -20,6 +26,7 @@ export class Store<Templates extends TemplateConfig> {
    * `getPage`.
    */
   createPage(path: string, getPage: GetPage<keyof Templates>): void {
+    validatePath(path, 'Page');
     this.pages.set(path, { type: 'create', getData: getPage });
   }
 
@@ -27,6 +34,7 @@ export class Store<Templates extends TemplateConfig> {
    * Removes a page from the site's output directory.
    */
   removePage(path: string): void {
+    validatePath(path, 'Page');
     this.pages.set(path, { type: 'remove' });
   }
 
@@ -34,6 +42,7 @@ export class Store<Templates extends TemplateConfig> {
    * Creates a file in the site's output directory.
    */
   createFile(path: string, getData: GetData): void {
+    validatePath(path, 'File');
     let getFile: GetFile = async () => {
       let data = await getData();
 
@@ -51,6 +60,7 @@ export class Store<Templates extends TemplateConfig> {
    * Copies a file to the site's output directory.
    */
   copyFile(to: string, from: string): void {
+    validatePath(to, 'File');
     let getData = () => ({ type: 'copy', from } as const);
 
     this.files.set(to, { type: 'create', getData });
@@ -60,6 +70,8 @@ export class Store<Templates extends TemplateConfig> {
    * Removes a file from the site's output directory.
    */
   removeFile(path: string): void {
+    validatePath(path, 'File');
+
     this.files.set(path, { type: 'remove' });
   }
 }

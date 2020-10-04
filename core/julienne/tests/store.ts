@@ -6,6 +6,17 @@ let getNull = () => null;
 
 describe('Store', () => {
   describe('createPage', () => {
+    test('throws error with invalid path', () => {
+      let store = new Store();
+
+      expect(() =>
+        store.createPage('invalid', () => ({
+          template: 'main',
+          props: { name: 'world' },
+        })),
+      ).toThrow();
+    });
+
     test('adds a page to the store', async () => {
       let store = new Store();
 
@@ -27,6 +38,12 @@ describe('Store', () => {
   });
 
   describe('createFile', () => {
+    test('throws error with invalid path', () => {
+      let store = new Store();
+
+      expect(() => store.createFile('invalid', () => 'Test content')).toThrow();
+    });
+
     test('adds files to the store', async () => {
       let store = new Store();
 
@@ -78,6 +95,12 @@ describe('Store', () => {
   });
 
   describe('copyFile', () => {
+    test('throws error with invalid path', () => {
+      let store = new Store();
+
+      expect(() => store.copyFile('invalid', './path/to/file')).toThrow();
+    });
+
     test('adds copied files to the store', () => {
       let store = new Store();
 

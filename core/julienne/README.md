@@ -122,7 +122,7 @@ site.createPage('/', () => ({
 
 Type: `string`
 
-The path/URL to create the page at. This path should start with a forward slash.
+The path/URL to create the page at. This path must start with a forward slash.
 
 #### getPage
 
@@ -151,7 +151,7 @@ site.createFile('/index.json', () => JSON.stringify({ key: 'value' }));
 
 #### path
 
-The path/URL to create the file at. This path should start with a forward slash.
+The path/URL to create the file at. This path must start with a forward slash.
 
 #### getFile
 
@@ -171,7 +171,7 @@ site.copyFile("/robots.txt", path.join(__dirname, "robots.txt"));`
 
 Type: `string`
 
-The path/URL to copy the file to. This path should start with a forward slash.
+The path/URL to copy the file to. This path must start with a forward slash.
 
 #### from
 
