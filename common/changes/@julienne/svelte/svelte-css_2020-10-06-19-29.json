@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@julienne/svelte",
+      "comment": "Emit CSS in client builds.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@julienne/svelte",
+  "email": "w@wyatt.page"
+}

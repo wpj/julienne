@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@julienne/svelte-runtime",
+      "comment": "",
+      "type": "none"
+    }
+  ],
+  "packageName": "@julienne/svelte-runtime",
+  "email": "w@wyatt.page"
+}
