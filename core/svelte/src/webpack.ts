@@ -46,13 +46,11 @@ const getRules = {
   svelte({
     css,
     dev,
-    emitCss,
     generate,
     hydratable,
   }: {
-    css?: boolean;
+    css: boolean;
     dev: boolean;
-    emitCss?: boolean;
     generate?: 'ssr';
     hydratable: boolean;
   }) {
@@ -62,7 +60,7 @@ const getRules = {
         options: {
           css,
           dev,
-          emitCss,
+          emitCss: css,
           generate,
           hydratable,
           hotReload: false, // pending https://github.com/sveltejs/svelte/issues/2377
@@ -166,6 +164,7 @@ function client({
   let rules: webpack.RuleSetRule[] = [
     getRules.js(),
     getRules.svelte({
+      css: true,
       dev,
       hydratable: !dev,
     }),
