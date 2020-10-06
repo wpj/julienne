@@ -1,6 +1,6 @@
 {
   "name": "@julienne/svelte",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Svelte configuration and server renderer for julienne sites",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

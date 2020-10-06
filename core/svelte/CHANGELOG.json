@@ -2,6 +2,18 @@
   "name": "@julienne/svelte",
   "entries": [
     {
+      "version": "0.1.2",
+      "tag": "@julienne/svelte_v0.1.2",
+      "date": "Tue, 06 Oct 2020 19:41:27 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Emit CSS in client builds."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.1",
       "tag": "@julienne/svelte_v0.1.1",
       "date": "Sun, 04 Oct 2020 23:16:15 GMT",
