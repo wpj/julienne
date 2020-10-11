@@ -13,9 +13,9 @@ export default function Document({
   scripts: string[];
   stylesheets: string[];
 }): JSX.Element {
-  let stylesheetTags = stylesheets.map(
-    (href) => `<link rel="stylesheet" href="${href}" type="text/css" />`,
-  );
+  let stylesheetTags = stylesheets
+    .map((href) => `<link rel="stylesheet" href="${href}" type="text/css" />`)
+    .join('\n');
 
   let headHtml = `
 <meta charset="UTF-8">
