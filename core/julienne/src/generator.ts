@@ -6,6 +6,7 @@ import type { Store } from './store';
 import type { Props, TemplateConfig } from './types';
 import { getAssets } from './utils';
 import { writeFile } from './utils/file';
+import AggregateError from 'aggregate-error';
 
 function normalizePagePath(pagePath: string) {
   if (pagePath.endsWith('.html')) {
@@ -50,9 +51,11 @@ export class Generator<Component, Templates extends TemplateConfig> {
     let { output } = this;
     let { files, pages } = store;
 
+    let errors: Error[] = [];
+
     // Pages need to be rendered first so that any files created during the
     // page creation process are ready to be processed.
-    await Promise.allSettled(
+    let pageResults = await Promise.allSettled(
       Array.from(pages.entries()).map(async ([pagePath, pageAction]) => {
         let normalizedPagePath = normalizePagePath(pagePath);
         let outputPath = pathJoin(output, normalizedPagePath);
@@ -60,16 +63,7 @@ export class Generator<Component, Templates extends TemplateConfig> {
         if (pageAction.type === 'create') {
           let getPage = pageAction.getData;
 
-          let page;
-          try {
-            page = await getPage();
-          } catch (e) {
-            console.error(
-              `Error occurred when creating page ${pagePath}, aborting`,
-              e,
-            );
-            return;
-          }
+          let page = await getPage();
 
           let renderedPage = await this.renderToString({
             template: page.template,
@@ -83,23 +77,14 @@ export class Generator<Component, Templates extends TemplateConfig> {
       }),
     );
 
-    await Promise.allSettled(
+    let fileResults = await Promise.allSettled(
       Array.from(files.entries()).map(async ([filePath, fileAction]) => {
         let outputPath = pathJoin(output, filePath);
 
         if (fileAction.type === 'create') {
           let getFile = fileAction.getData;
 
-          let file;
-          try {
-            file = await getFile();
-          } catch (e) {
-            console.error(
-              `Error occurred when creating file ${filePath}, aborting`,
-              e,
-            );
-            return;
-          }
+          let file = await getFile();
 
           return writeFile(outputPath, file);
         } else {
@@ -107,6 +92,16 @@ export class Generator<Component, Templates extends TemplateConfig> {
         }
       }),
     );
+
+    [...pageResults, ...fileResults].forEach((result) => {
+      if (result.status === 'rejected') {
+        errors.push(result.reason);
+      }
+    });
+
+    if (errors.length > 0) {
+      throw new AggregateError(errors);
+    }
   }
 
   /**
