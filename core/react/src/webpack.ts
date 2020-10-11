@@ -1,3 +1,4 @@
+import { isAbsolute as isAbsolutePath, extname } from 'path';
 import { loadPartialConfig } from '@babel/core';
 import type webpack from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
@@ -20,6 +21,37 @@ const defaultBabelConfig = {
     ],
   ],
 };
+
+/**
+ * Mark packages that resolve to JS files as external.
+ *
+ * This is preferable to externalizing everything in node_modules because it
+ * lets webpack bundle dependencies that node doesn't know how to handle, like
+ * CSS.
+ */
+function handleExternal(
+  _context: string,
+  request: string,
+  callback: webpack.ExternalsFunctionCallback,
+) {
+  // Don't externalize relative/absolute imports.
+  if (request.startsWith('.') || isAbsolutePath(request)) {
+    callback();
+    return;
+  }
+
+  let resolved = require.resolve(request);
+  let ext = extname(resolved);
+
+  let isNodeModule = resolved.includes('/node_modules/');
+  let isJs = ext === '.js' || ext === '.mjs';
+
+  if (isNodeModule && isJs) {
+    callback(null, request);
+  } else {
+    callback();
+  }
+}
 
 const getRules = {
   js() {
@@ -94,13 +126,14 @@ function server({
   };
 
   return {
-    resolve,
+    externals: [handleExternal],
     module: {
       rules: [
         getRules.js(),
         getRules.css({ dev, isServer: true, modules: cssModules }),
       ],
     },
+    resolve,
   };
 }
 
@@ -135,11 +168,11 @@ function client({
   }
 
   return {
-    resolve,
     module: {
       rules,
     },
     plugins,
+    resolve,
   };
 }
 

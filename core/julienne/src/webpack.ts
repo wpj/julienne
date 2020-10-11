@@ -2,7 +2,6 @@ import webpack, {
   Compiler as WebpackCompiler,
   Stats as WebpackStats,
 } from 'webpack';
-import nodeExternals from 'webpack-node-externals';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
 import {
   ClientCompilation,
@@ -47,7 +46,6 @@ export function createServerConfig({
 
   return {
     entry: { server: entryPath },
-    externals: [nodeExternals()],
     mode,
     optimization: {
       minimize: false,
