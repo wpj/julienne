@@ -2,6 +2,18 @@
   "name": "julienne",
   "entries": [
     {
+      "version": "0.2.0",
+      "tag": "julienne_v0.2.0",
+      "date": "Mon, 12 Oct 2020 21:29:05 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Remove splitChunks config, implement a more flexible webpack asset handling method, throw AggregateError from Generator.build if page/file creation throws."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.1",
       "tag": "julienne_v0.1.1",
       "date": "Sun, 04 Oct 2020 23:16:15 GMT",

@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit && svelte-check --fail-on-warnings"
   },
   "devDependencies": {
-    "@julienne/svelte": "^0.1.2",
+    "@julienne/svelte": "^0.2.0",
     "@tsconfig/svelte": "^1.0.10",
     "@types/node": "^14.10.1",
     "@types/sade": "^1.7.2",
@@ -20,7 +20,7 @@
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",
     "eslint": "^7.9.0",
-    "julienne": "^0.1.1",
+    "julienne": "^0.2.0",
     "sade": "^1.7.3",
     "serve": "^11.3.2",
     "svelte": "^3.25.1",

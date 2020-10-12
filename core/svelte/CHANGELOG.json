@@ -2,6 +2,26 @@
   "name": "@julienne/svelte",
   "entries": [
     {
+      "version": "0.2.0",
+      "tag": "@julienne/svelte_v0.2.0",
+      "date": "Mon, 12 Oct 2020 21:29:05 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add splitChunks config."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"julienne\" from `^0.1.1` to `^0.2.0`"
+          },
+          {
+            "comment": "Updating dependency \"julienne\" from `^0.1.1` to `^0.2.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.2",
       "tag": "@julienne/svelte_v0.1.2",
       "date": "Tue, 06 Oct 2020 19:41:27 GMT",

@@ -1,6 +1,13 @@
 # Change Log - @julienne/svelte
 
-This log was last generated on Tue, 06 Oct 2020 19:41:27 GMT and should not be manually modified.
+This log was last generated on Mon, 12 Oct 2020 21:29:05 GMT and should not be manually modified.
+
+## 0.2.0
+Mon, 12 Oct 2020 21:29:05 GMT
+
+### Minor changes
+
+- Add splitChunks config.
 
 ## 0.1.2
 Tue, 06 Oct 2020 19:41:27 GMT
