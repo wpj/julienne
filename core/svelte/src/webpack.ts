@@ -187,6 +187,20 @@ function client({
     module: {
       rules,
     },
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          framework: {
+            chunks: 'all',
+            enforce: true,
+            name: 'framework',
+            priority: 40,
+            test: /[\\/]node_modules[\\/](?:svelte)[\\/]/,
+          },
+        },
+      },
+    },
     plugins,
   };
 }

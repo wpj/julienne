@@ -179,22 +179,6 @@ export function createClientConfig({
   return {
     entry,
     mode,
-    optimization:
-      __experimentalIncludeStaticModules && !dev
-        ? {
-            moduleIds: 'hashed',
-            runtimeChunk: 'single',
-            splitChunks: {
-              cacheGroups: {
-                vendor: {
-                  test: /[\\/]node_modules[\\/]/,
-                  name: 'vendor',
-                  chunks: 'all',
-                },
-              },
-            },
-          }
-        : undefined,
     output: {
       path: outputPath,
       filename: __experimentalIncludeStaticModules
