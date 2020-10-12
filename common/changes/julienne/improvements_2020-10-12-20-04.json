@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "julienne",
+      "comment": "Remove splitChunks config, implement a more flexible webpack asset handling method, throw AggregateError from Generator.build if page/file creation throws.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "julienne",
+  "email": "w@wyatt.page"
+}

@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@julienne/react",
+      "comment": "Fix multiple stylesheet issue, improve webpack externals config, add splitChunks config.",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@julienne/react",
+  "email": "w@wyatt.page"
+}
