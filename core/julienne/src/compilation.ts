@@ -1,19 +1,10 @@
 import { join as pathJoin } from 'path';
-import { TemplateConfig } from './types';
+import { EntryAssets } from './types';
+import { makePublicEntryAssets } from './utils';
 
 export type CompilationWarnings = string[];
 
-interface NamedChunkAssets {
-  [chunkName: string]: string | string[];
-}
-
-type TemplateAssets = { [name: string]: string[] };
-
-function normalizeAssets(assets: string | string[], publicPath: string) {
-  return (Array.isArray(assets) ? assets : [assets]).map((assetPath) =>
-    pathJoin(publicPath, assetPath),
-  );
-}
+type TemplateAssets = EntryAssets;
 
 /**
  * Provides an interface for consumers to query information about a compilation
@@ -25,37 +16,18 @@ export class ClientCompilation {
   warnings: CompilationWarnings | null;
 
   constructor({
-    chunkAssets,
+    entryAssets,
     hash,
     publicPath,
-    templates,
     warnings,
   }: {
-    chunkAssets: NamedChunkAssets;
+    entryAssets: EntryAssets;
     hash: string;
     publicPath: string;
-    templates: TemplateConfig;
     warnings: CompilationWarnings | null;
   }) {
     this.hash = hash;
-
-    let templateAssetsEntries = [];
-    for (let templateName in templates) {
-      let runtimeChunkAssets = chunkAssets.runtime ?? [];
-      let vendorChunkAssets = chunkAssets.vendor ?? [];
-      let templateChunkAssets = chunkAssets[templateName];
-
-      templateAssetsEntries.push([
-        templateName,
-        [
-          ...normalizeAssets(runtimeChunkAssets, publicPath),
-          ...normalizeAssets(vendorChunkAssets, publicPath),
-          ...normalizeAssets(templateChunkAssets, publicPath),
-        ],
-      ]);
-    }
-    this.templateAssets = Object.fromEntries(templateAssetsEntries);
-
+    this.templateAssets = makePublicEntryAssets(entryAssets, publicPath);
     this.warnings = warnings;
   }
 }
@@ -66,18 +38,18 @@ export class ServerCompilation {
   warnings: CompilationWarnings | null;
 
   constructor({
-    chunkAssets,
+    entryAssets,
     hash,
     outputPath,
     warnings,
   }: {
-    chunkAssets: NamedChunkAssets;
+    entryAssets: EntryAssets;
     hash: string;
     outputPath: string;
     warnings: CompilationWarnings | null;
   }) {
     // In the server compilation, only one asset is generated.
-    this.asset = normalizeAssets(chunkAssets.server, outputPath)[0];
+    this.asset = pathJoin(outputPath, entryAssets.server[0]);
     this.hash = hash;
     this.warnings = warnings;
   }

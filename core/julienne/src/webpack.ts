@@ -10,8 +10,8 @@ import {
   ServerCompilation,
 } from './compilation';
 import type { Mode, CompilerOutput, WebpackConfig } from './types';
-import { TemplateConfig } from './types';
-import { moduleMapTemplate } from './utils';
+import { EntryAssets, TemplateConfig } from './types';
+import { getEntryAssets, moduleMapTemplate } from './utils';
 
 const hotMiddlewareEntryPath = require.resolve('webpack-hot-middleware/client');
 const hotMiddlewareEntry = `${hotMiddlewareEntryPath}?reload=true`;
@@ -217,9 +217,7 @@ export class CompilerError extends Error {
 function runWebpackCompiler(
   compiler: WebpackCompiler,
 ): Promise<{
-  assetsByChunkName: NonNullable<
-    WebpackStats.ToJsonOutput['assetsByChunkName']
-  >;
+  entryAssets: EntryAssets;
   hash: string;
   warnings: CompilationWarnings | null;
 }> {
@@ -232,13 +230,15 @@ function runWebpackCompiler(
 
         if (stats.hasErrors()) {
           reject(new CompilerError(info.errors));
-        } else if (info.assetsByChunkName === undefined) {
+        } else if (info.namedChunkGroups === undefined) {
           reject(new CompilerError('Missing assets for chunks'));
         } else if (info.hash === undefined) {
           reject(new CompilerError('Missing build hash'));
         } else {
+          let entryAssets = getEntryAssets(info.namedChunkGroups);
+
           resolve({
-            assetsByChunkName: info.assetsByChunkName,
+            entryAssets,
             hash: info.hash,
             warnings: stats.hasWarnings() ? info.warnings : null,
           });
@@ -288,10 +288,9 @@ export class Compiler {
     let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));
 
     let clientCompilation = new ClientCompilation({
-      chunkAssets: clientResult.assetsByChunkName,
+      entryAssets: clientResult.entryAssets,
       hash: clientResult.hash,
       publicPath: this.output.publicPath,
-      templates: this.templates,
       warnings: clientResult.warnings,
     });
 
@@ -302,7 +301,7 @@ export class Compiler {
       );
 
       serverCompilation = new ServerCompilation({
-        chunkAssets: serverResult.assetsByChunkName,
+        entryAssets: serverResult.entryAssets,
         hash: serverResult.hash,
         outputPath: this.output.server,
         warnings: serverResult.warnings,

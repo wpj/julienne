@@ -97,3 +97,5 @@ export type Stream = {
  * A file destined to be written to the output directory.
  */
 export type File = Copy | Generated | Stream;
+
+export type EntryAssets = Record<string, string[]>;

@@ -17,6 +17,8 @@ export let clientScripts = [
 
 export let clientStylesheets = ['static/css/main.css'];
 
+export let clientAssets = [...clientScripts, ...clientStylesheets];
+
 export let defaultPublicPath = '/';
 
 export function createTestCompilation({
@@ -25,20 +27,15 @@ export function createTestCompilation({
   includeServerCompilation: boolean;
 }): Compilation {
   let client = new ClientCompilation({
-    chunkAssets: {
-      runtime: [clientScripts[0]],
-      vendor: [clientScripts[1]],
-      main: [clientScripts[2], clientStylesheets[0]],
-    },
+    entryAssets: { main: clientAssets },
     hash: 'fake-hash',
     publicPath: defaultPublicPath,
-    templates,
     warnings: null,
   });
 
   let server = includeServerCompilation
     ? new ServerCompilation({
-        chunkAssets: { server: ['server.js'] },
+        entryAssets: { server: ['server.js'] },
         hash: 'fake-hash',
         outputPath: pathJoin(__dirname),
         warnings: null,

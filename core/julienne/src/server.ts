@@ -18,7 +18,7 @@ import type {
   TemplateConfig,
   WebpackConfig,
 } from './types';
-import { cleanWebpackConfig, getAssets } from './utils';
+import { cleanWebpackConfig, getAssets, getEntryAssets } from './utils';
 import { createClientConfig } from './webpack';
 
 // Patch polkas types - there should be a server field on polka instances.
@@ -229,11 +229,19 @@ export class Server<Component, Templates extends TemplateConfig> {
 
       let page = await getPage();
 
+      let { namedChunkGroups } = info;
+
+      if (namedChunkGroups === undefined) {
+        send(res, 500, 'Invalid webpack compilation: missing namedChunkGroups');
+        return;
+      }
+
+      let entryAssets = getEntryAssets(namedChunkGroups);
+
       let clientCompilation = new ClientCompilation({
-        chunkAssets: info.assetsByChunkName,
+        entryAssets,
         hash: 'fake-dev-hash',
         publicPath: defaultDevPublicPath,
-        templates,
         warnings: info.warnings,
       });
 

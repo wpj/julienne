@@ -1,5 +1,6 @@
 import * as path from 'path';
 import type * as webpack from 'webpack';
+import type { EntryAssets } from '../types';
 
 export const internalDirName = `${process.cwd()}/__build__`;
 
@@ -59,4 +60,33 @@ export function cleanWebpackConfig({
   ...config
 }: webpack.Configuration): webpack.Configuration {
   return config;
+}
+
+/**
+ * Converts named chunk groups to a simple map of chunk names to asset paths.
+ */
+export function getEntryAssets(
+  namedChunkGroups: Record<string, webpack.Stats.ChunkGroup>,
+): EntryAssets {
+  return Object.fromEntries(
+    Object.entries(namedChunkGroups).map(([name, chunkGroup]) => [
+      name,
+      chunkGroup.assets,
+    ]),
+  );
+}
+
+/**
+ * Prepends the public path onto the path of each asset in the entry.
+ */
+export function makePublicEntryAssets(
+  entryAssets: EntryAssets,
+  publicPath: string,
+): EntryAssets {
+  return Object.fromEntries(
+    Object.entries(entryAssets).map(([name, assets]) => [
+      name,
+      assets.map((asset) => path.join(publicPath, asset)),
+    ]),
+  );
 }
