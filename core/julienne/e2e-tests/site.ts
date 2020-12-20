@@ -68,7 +68,7 @@ describe('Site', () => {
         return serve(req, res, { public: publicOutputDirectory });
       });
 
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         server.listen(port, () => {
           resolve();
         });
