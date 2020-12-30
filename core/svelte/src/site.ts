@@ -12,7 +12,7 @@ class SvelteSite<Templates extends TemplateConfig> extends Site<
   constructor({
     dev = false,
     renderToString = defaultRenderToString,
-    runtime = require.resolve('@julienne/svelte-runtime'),
+    runtime = '@julienne/svelte-runtime',
     ...options
   }: Optional<
     SiteOptions<SvelteComponent, Templates>,

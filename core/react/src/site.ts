@@ -12,7 +12,7 @@ class ReactSite<Templates extends TemplateConfig> extends Site<
   constructor({
     dev = false,
     renderToString = defaultRenderToString,
-    runtime = require.resolve('@julienne/react-runtime'),
+    runtime = '@julienne/react-runtime',
     ...options
   }: Optional<
     SiteOptions<ComponentType, Templates>,

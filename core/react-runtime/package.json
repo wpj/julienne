@@ -35,10 +35,10 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@julienne/runtime": "^0.1.1"
+    "@julienne/runtime": "workspace:^0.1.1"
   },
   "peerDependencies": {
-    "react": "^16.9.0",
-    "react-dom": "^16.9.0"
+    "react": "^16.9.0 || ^17.0.0",
+    "react-dom": "^16.9.0 || ^17.0.0"
   }
 }
