@@ -3,14 +3,14 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 
+import { builtinModules } from 'module';
+
 import pkg from './package.json';
 
 let extensions = ['.js', '.ts', '.mjs'];
 
 let external = [
-  'path',
-  'fs',
-  'stream',
+  ...builtinModules,
   ...Object.keys(pkg.dependencies || []),
   ...Object.keys(pkg.peerDependencies || []),
 ].map((pkgName) => new RegExp(`^${pkgName}`));

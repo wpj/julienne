@@ -32,27 +32,11 @@ function getPublicPath(path: string) {
 type Component = (props: Props) => string;
 
 describe('Generator', () => {
-  test('throws an error when created without a server compilation', () => {
-    let compilation = createTestCompilation({
-      includeServerCompilation: false,
-    });
-
-    expect(() => {
-      new Generator<Component, Templates>({
-        compilation,
-        output: defaultOutput,
-        renderToString: () => 'html',
-      });
-    }).toThrow();
-  });
-
   describe('renderToString', () => {
     test('calls the configured render function with the correct data and returns its output', async () => {
       let props = { name: 'World' };
 
-      let compilation = createTestCompilation({
-        includeServerCompilation: true,
-      });
+      let compilation = createTestCompilation();
 
       let renderToString: RenderToStringFunc = ({
         props,
@@ -86,7 +70,9 @@ describe('Generator', () => {
         JSON.stringify({
           props,
           rendered: 'Hello, World',
-          scripts: clientScripts.map((script) => pathJoin('/', script)),
+          scripts: clientScripts.map((script) => ({
+            src: pathJoin('/', script),
+          })),
           stylesheets: clientStylesheets.map((stylesheet) =>
             pathJoin('/', stylesheet),
           ),
@@ -102,9 +88,7 @@ describe('Generator', () => {
       return component(props);
     };
 
-    let compilation = createTestCompilation({
-      includeServerCompilation: true,
-    });
+    let compilation = createTestCompilation();
 
     test('renders and writes pages to the filesystem', async () => {
       let store = new Store<Templates>();

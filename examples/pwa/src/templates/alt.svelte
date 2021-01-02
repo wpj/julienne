@@ -6,8 +6,6 @@
   <title>Alt</title>
 </svelte:head>
 
-<p>
-  Hi, {name}.
-</p>
+<p>Hi, {name}.</p>
 
 <a href="/">Main</a>

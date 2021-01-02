@@ -1,25 +1,21 @@
 import send from '@polka/send';
 import sendType from '@polka/send-type';
 import { createReadStream } from 'fs';
-import { Server as HttpServer } from 'http';
+import { IncomingMessage, Server as HttpServer, ServerResponse } from 'http';
 import mime from 'mime-types';
 import { basename } from 'path';
 import polka from 'polka';
-import webpack, { Stats as WebpackStats } from 'webpack';
-import webpackDevMiddleware from 'webpack-dev-middleware';
-import webpackHotMiddleware from 'webpack-hot-middleware';
-import mergeWebpackConfigs from 'webpack-merge';
-import { ClientCompilation, Compilation } from './compilation';
+import { format } from 'prettier';
+import { SnowpackUserConfig, startDevServer } from 'snowpack';
+import { clientEntryPointTemplate } from './code-gen';
 import type { RenderToString } from './render';
+import { getConfig, getSnowpackUrlForFile } from './snowpack';
 import type {
   DevServerActions,
   FileMap,
   PageMap,
   TemplateConfig,
-  WebpackConfig,
 } from './types';
-import { cleanWebpackConfig, getAssets, getEntryAssets } from './utils';
-import { createClientConfig } from './webpack';
 
 // Patch polkas types - there should be a server field on polka instances.
 declare module 'polka' {
@@ -27,8 +23,6 @@ declare module 'polka' {
     server: HttpServer;
   }
 }
-
-let defaultDevPublicPath = '/';
 
 async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
   return new Promise((resolve, reject) => {
@@ -42,71 +36,66 @@ async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
   });
 }
 
-/**
- * webpack-dev-middleware stores the compilation stats in the ServerResponse
- * object. For more info, see
- * https://github.com/webpack/webpack-dev-middleware#server-side-rendering.
- */
-function getDevWebpackStatsFromLocals(locals: {
-  webpackStats?: WebpackStats;
-  webpack?: { devMiddleware: { stats: WebpackStats } };
-}): WebpackStats | undefined {
-  return locals.webpackStats || locals.webpack?.devMiddleware.stats;
-}
-
 export class Server<Component, Templates extends TemplateConfig> {
+  cwd: string;
   files: FileMap;
   pages: PageMap<keyof Templates>;
   renderToString: RenderToString<Component>;
   runtime: string;
   templates: Templates;
-  webpackConfig: WebpackConfig | null;
+  snowpackConfig: SnowpackUserConfig | null;
 
   constructor({
+    cwd,
     files,
     pages,
     renderToString,
     runtime,
     templates,
-    webpackConfig,
+    snowpackConfig,
   }: {
+    cwd: string;
     files: FileMap;
     pages: PageMap<keyof Templates>;
     renderToString: RenderToString<Component>;
     runtime: string;
     templates: Templates;
-    webpackConfig?: WebpackConfig;
+    snowpackConfig?: SnowpackUserConfig;
   }) {
+    this.cwd = cwd;
     this.files = files;
     this.pages = pages;
     this.renderToString = renderToString;
     this.runtime = runtime;
     this.templates = templates;
-    this.webpackConfig = webpackConfig ?? null;
+    this.snowpackConfig = snowpackConfig ?? null;
   }
 
   async start({ port }: { port: number }): Promise<DevServerActions> {
     let {
+      cwd,
       files,
       pages,
       renderToString,
-      templates,
       runtime,
-      webpackConfig: baseWebpackConfig,
+      snowpackConfig: userSnowpackConfig,
+      templates,
     } = this;
 
-    let clientWebpackConfig = mergeWebpackConfigs(
-      cleanWebpackConfig(baseWebpackConfig?.client ?? {}),
-      createClientConfig({
-        __experimentalIncludeStaticModules: true,
-        mode: 'development',
-        publicPath: defaultDevPublicPath,
-        runtime,
-        templates,
-      }),
-    );
+    let snowpackPort = 3333;
 
-    let clientWebpackCompiler = webpack(clientWebpackConfig);
+    let snowpackConfig = getConfig({
+      cwd,
+      port: snowpackPort,
+      userConfig: userSnowpackConfig,
+      runtime,
+    });
+
+    let snowpackServer = await startDevServer({
+      cwd,
+      config: snowpackConfig,
+      lockfile: null,
+    });
 
     let api = polka();
 
@@ -170,29 +159,6 @@ export class Server<Component, Templates extends TemplateConfig> {
       sendType(res, 200, data, headers);
     });
 
-    let devMiddleware = webpackDevMiddleware(clientWebpackCompiler, {
-      serverSideRender: true,
-      stats: 'errors-warnings',
-
-      /*
-       * webpack-dev-middleware v4 logging configuration.
-       */
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      infrastructureLogging: { level: 'error' },
-
-      /*
-       * webpack-dev-middleware v3 logging configuration
-       */
-      logLevel: 'error',
-    });
-    let hotMiddleware = webpackHotMiddleware(clientWebpackCompiler, {
-      log: false,
-    });
-
-    app.use(devMiddleware, hotMiddleware);
-
     /**
      * Server render page requests. This skips rendering the template on the
      * server and instead does a client-side only rendering.
@@ -206,20 +172,6 @@ export class Server<Component, Templates extends TemplateConfig> {
         return next();
       }
 
-      let stats = getDevWebpackStatsFromLocals(res.locals);
-
-      if (!stats) {
-        send(res, 500, 'Something went wrong with the webpack compilation.');
-        return;
-      }
-
-      let info = stats.toJson();
-
-      if (info.assetsByChunkName === undefined) {
-        send(res, 500, 'Webpack compilation is missing asset information.');
-        return;
-      }
-
       if (pageAction.type === 'remove') {
         send(res, 404, 'Not found');
         return;
@@ -229,45 +181,75 @@ export class Server<Component, Templates extends TemplateConfig> {
 
       let page = await getPage();
 
-      let { namedChunkGroups } = info;
+      let templateUrl = getSnowpackUrlForFile(
+        snowpackConfig,
+        cwd,
+        templates[page.template],
+      );
 
-      if (namedChunkGroups === undefined) {
-        send(res, 500, 'Invalid webpack compilation: missing namedChunkGroups');
+      if (!templateUrl) {
+        return send(
+          res,
+          500,
+          `Could not find Snowpack URL for template '${page.template}'`,
+        );
+      }
+
+      let runtimeUrl = getSnowpackUrlForFile(snowpackConfig, cwd, runtime);
+
+      if (runtimeUrl === null) {
+        send(res, 500, `Could not find Snowpack URL for runtime ${runtime}`);
         return;
       }
 
-      let entryAssets = getEntryAssets(namedChunkGroups);
-
-      let clientCompilation = new ClientCompilation({
-        entryAssets,
-        hash: 'fake-dev-hash',
-        publicPath: defaultDevPublicPath,
-        warnings: info.warnings,
+      let entryPoint = clientEntryPointTemplate({
+        dev: true,
+        hydrate: false,
+        runtime: runtimeUrl,
+        template: templateUrl,
       });
 
-      let compilation = new Compilation({
-        client: clientCompilation,
-        server: null,
-      });
-
-      let templateAssets =
-        compilation.client.templateAssets[page.template as string];
-
-      let { scripts, stylesheets } = getAssets(templateAssets);
+      let scripts = [
+        {
+          content: `window.HMR_WEBSOCKET_URL = 'ws://localhost:${snowpackPort}'`,
+        },
+        { type: 'module', src: '/__snowpack__/hmr-client.js' },
+        { content: entryPoint, type: 'module' },
+      ];
 
       let renderedPage = await renderToString({
         props: page.props,
         scripts,
-        stylesheets,
+        stylesheets: [],
         template: {
           name: page.template as string,
           component: null,
         },
       });
 
-      send(res, 200, renderedPage, {
+      let formattedPage = format(renderedPage, { parser: 'html' });
+
+      send(res, 200, formattedPage, {
         'Content-Type': 'text/html;charset=utf-8',
       });
+    });
+
+    app.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      if (!req.url) {
+        next();
+        return;
+      }
+
+      try {
+        const result = await snowpackServer.loadUrl(req.url);
+        if (result.contentType) {
+          res.setHeader('Content-Type', result.contentType);
+        }
+
+        return res.end(result.contents);
+      } catch (err) {
+        next();
+      }
     });
 
     app.use('__julienne__', api);
@@ -275,16 +257,16 @@ export class Server<Component, Templates extends TemplateConfig> {
     let server = await startApp(app, port);
 
     let actions = {
-      close: () => {
-        devMiddleware.close();
-        server.close();
+      close: async () => {
+        await Promise.allSettled([
+          new Promise((resolve) => {
+            server.close(resolve);
+          }),
+          snowpackServer.shutdown(),
+        ]);
       },
     };
 
-    return new Promise((resolve) => {
-      devMiddleware.waitUntilValid(() => {
-        resolve(actions);
-      });
-    });
+    return actions;
   }
 }

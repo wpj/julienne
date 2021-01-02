@@ -1,3 +1,4 @@
+import type { SnowpackUserConfig } from 'snowpack';
 import type * as webpack from 'webpack';
 import mergeWebpackConfigs from 'webpack-merge';
 import type { Compilation } from './compilation';
@@ -23,6 +24,7 @@ export interface Options<Templates extends TemplateConfig> {
   cwd?: string;
   output: CompilerOutput;
   runtime: string;
+  snowpackConfig?: SnowpackUserConfig;
   templates: Templates;
   webpackConfig?: WebpackConfig;
 }
@@ -71,12 +73,16 @@ export class Compiler<Templates extends TemplateConfig> {
       webpackConfig: baseWebpackConfig,
     } = this;
 
+    // NOTE: If the decision is made to use Snowpack to build the server files,
+    // there are two steps to take:
+    // - use getSnowpackUrlForFile to find each templates' path in the snowpack build directory
+    // - build the snowpack files with buildProject
+
     let webpackConfig = {
       client: mergeWebpackConfigs(
         cleanWebpackConfig(baseWebpackConfig.client),
         createClientConfig({
           __experimentalIncludeStaticModules,
-          mode: 'production',
           outputPath: output.client,
           publicPath: output.publicPath,
           runtime,
@@ -87,7 +93,6 @@ export class Compiler<Templates extends TemplateConfig> {
         cleanWebpackConfig(baseWebpackConfig.server),
         createServerConfig({
           __experimentalIncludeStaticModules,
-          mode: 'production',
           outputPath: output.server,
           publicPath: output.publicPath,
           templates,

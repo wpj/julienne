@@ -14,7 +14,9 @@ function createPlugins() {
     resolve({ extensions }),
     commonjs(),
     svelte({
-      generate: 'ssr',
+      compilerOptions: {
+        generate: 'ssr',
+      },
       preprocess: svelteAutoPreprocess(),
     }),
     babel({ extensions, babelHelpers: 'bundled' }),

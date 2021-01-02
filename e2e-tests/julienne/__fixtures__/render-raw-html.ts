@@ -1,4 +1,4 @@
-import type { RenderToString } from '../../src';
+import type { RenderToString } from 'julienne';
 
 import type { Component } from './types';
 
@@ -15,9 +15,18 @@ export const renderToString: RenderToString<Component> = ({
     (href) => `<link rel="stylesheet" href="${href}" type="text/css" />`,
   );
 
-  let scriptTags = scripts.map(
-    (src) => `<script type="text/javascript" src="${src}"></script>`,
-  );
+  let scriptTags = scripts
+    .map(({ content, type = 'text/javascript', ...attrs }) => {
+      let attributes = Object.entries({ ...attrs, type }).reduce((acc, [key, val]) => {
+            let kv =
+              typeof val === 'boolean' ? (val ? key : '') : `${key}="${val}"`;
+
+            return acc.length > 0 ? `${acc} ${kv}` : kv;
+          }, '')
+
+      return `<script ${attributes}>${content ? content : ''}</script>`;
+    })
+    .join('\n');
 
   let templateHtml =
     template.component !== null ? template.component(props) : null;

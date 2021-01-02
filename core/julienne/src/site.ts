@@ -38,6 +38,7 @@ export type Options<Component, Templates extends TemplateConfig> = Omit<
 
 export class Site<Component, Templates extends TemplateConfig> {
   compilerOptions: CompilerOptions<Templates>;
+  cwd: string;
   output: Output;
   renderToString: RenderToString<Component>;
 
@@ -50,6 +51,7 @@ export class Site<Component, Templates extends TemplateConfig> {
     let output = getOutputWithDefaults({ cwd, ...outputConfig });
 
     this.compilerOptions = { cwd, output: output.compiler, ...compilerOptions };
+    this.cwd = cwd;
     this.output = output;
     this.renderToString = renderToString;
   }
@@ -82,17 +84,18 @@ export class Site<Component, Templates extends TemplateConfig> {
     port?: number;
     store: Store<Templates>;
   }): Promise<DevServerActions> {
-    let { compilerOptions, renderToString } = this;
-    let { runtime, templates, webpackConfig } = compilerOptions;
+    let { compilerOptions, cwd, renderToString } = this;
+    let { runtime, snowpackConfig, templates } = compilerOptions;
     let { files, pages } = store;
 
     let devServer = new DevServer<Component, Templates>({
+      cwd,
       files,
       pages,
       renderToString,
       runtime,
+      snowpackConfig,
       templates,
-      webpackConfig,
     });
 
     let serverActions = await devServer.start({ port });

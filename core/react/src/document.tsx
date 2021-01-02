@@ -10,7 +10,13 @@ export default function Document({
   body: string | null;
   head: string | null;
   pageData: unknown;
-  scripts: string[];
+  // TODO: Fix this type.
+  scripts: {
+    content?: string;
+    nomodule?: boolean;
+    src?: string;
+    type?: string;
+  }[];
   stylesheets: string[];
 }): JSX.Element {
   let stylesheetTags = stylesheets
@@ -43,9 +49,19 @@ export default function Document({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }}
         />
 
-        {scripts.map((src) => (
-          <script key={src} type="text/javascript" src={src} />
-        ))}
+        {scripts.map(
+          ({ content, type = 'text/javascript', ...attributes }, index) => {
+            let scriptProps = content
+              ? {
+                  ...attributes,
+                  type,
+                  dangerouslySetInnerHTML: { __html: content },
+                }
+              : { ...attributes, type };
+
+            return <script key={attributes.src ?? index} {...scriptProps} />;
+          },
+        )}
       </body>
     </html>
   );

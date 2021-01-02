@@ -124,7 +124,11 @@ export class Generator<Component, Templates extends TemplateConfig> {
       throw new Error(`Render error: assets for "${template}" not found.`);
     }
 
-    let { scripts, stylesheets } = getAssets(templateAssets);
+    let { scripts: scriptSrcs, stylesheets } = getAssets(templateAssets);
+
+    let scripts = scriptSrcs.map((src) => ({
+      src,
+    }));
 
     return internalRenderToString({
       props,

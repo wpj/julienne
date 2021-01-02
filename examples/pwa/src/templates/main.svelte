@@ -6,8 +6,6 @@
   <title>Home</title>
 </svelte:head>
 
-<p>
-  Hello {name}.
-</p>
+<p>Hello {name}.</p>
 
 <a href="/alt">Alt</a>

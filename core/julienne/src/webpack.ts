@@ -3,37 +3,27 @@ import webpack, {
   Stats as WebpackStats,
 } from 'webpack';
 import VirtualModulesPlugin from 'webpack-virtual-modules';
+import { clientEntryPointTemplate, moduleMapTemplate } from './code-gen';
 import {
   ClientCompilation,
   Compilation,
   CompilationWarnings,
   ServerCompilation,
 } from './compilation';
-import type { Mode, CompilerOutput, WebpackConfig } from './types';
+import type { CompilerOutput, WebpackConfig } from './types';
 import { EntryAssets, TemplateConfig } from './types';
-import { getEntryAssets, moduleMapTemplate } from './utils';
+import { getEntryAssets } from './utils';
 
-const hotMiddlewareEntryPath = require.resolve('webpack-hot-middleware/client');
-const hotMiddlewareEntry = `${hotMiddlewareEntryPath}?reload=true`;
-
-const filenames = {
-  development: '_julienne/static/chunks/[name].js',
-  production: '_julienne/static/chunks/[name]-[contenthash].js',
-};
-
-const chunkFilenames = {
-  development: '_julienne/static/chunks/[name].chunk.js',
-  production: '_julienne/static/chunks/[name].[contenthash].js',
-};
+let filename = '_julienne/static/chunks/[name]-[contenthash].js';
+let chunkFilename = '_julienne/static/chunks/[name].[contenthash].js';
+let mode = 'production' as const;
 
 export function createServerConfig({
-  mode,
   outputPath,
   publicPath,
   templates,
 }: {
   __experimentalIncludeStaticModules: boolean;
-  mode: Mode;
   outputPath: string;
   publicPath: string;
   templates: TemplateConfig;
@@ -73,43 +63,19 @@ export interface Manifest {
   [entryName: string]: { source: string; path: string };
 }
 
-function clientPageRuntimeTemplate({
-  dev,
-  entryPath,
-  hydrate,
-  runtime,
-}: {
-  dev: boolean;
-  entryPath: string;
-  hydrate: boolean;
-  runtime: string;
-}) {
-  return `
-import Template from "${entryPath}";
-import runtime from "${runtime}";
-
-runtime({ dev: ${dev}, hydrate: ${hydrate}, template: Template });
-`;
-}
-
 export function createClientConfig({
   __experimentalIncludeStaticModules = true,
-  mode,
   outputPath,
   publicPath,
   runtime,
   templates,
 }: {
   __experimentalIncludeStaticModules: boolean;
-  mode: Mode;
-  // Optional because the dev config has no output.
-  outputPath?: string;
+  outputPath: string;
   publicPath: string;
   runtime: string;
   templates: TemplateConfig;
 }): webpack.Configuration {
-  let dev = mode === 'development';
-
   // Creates virtual entries in cwd so that relative imports of template modules
   // work correctly.
   let virtualTemplateManifest = __experimentalIncludeStaticModules
@@ -133,13 +99,7 @@ export function createClientConfig({
       ? Object.fromEntries(
           Object.entries(virtualTemplateManifest).map(
             ([templateName, { virtualPath }]) => {
-              let entryChunks = [virtualPath];
-
-              if (dev) {
-                entryChunks.push(hotMiddlewareEntry);
-              }
-
-              return [templateName, entryChunks];
+              return [templateName, [virtualPath]];
             },
           ),
         )
@@ -155,11 +115,11 @@ export function createClientConfig({
             ({ importPath, virtualPath }) => {
               return [
                 virtualPath,
-                clientPageRuntimeTemplate({
-                  dev,
-                  entryPath: importPath,
-                  hydrate: !dev,
+                clientEntryPointTemplate({
+                  dev: false,
+                  hydrate: true,
                   runtime,
+                  template: importPath,
                 }),
               ];
             },
@@ -168,13 +128,6 @@ export function createClientConfig({
       ),
     );
   }
-
-  if (dev) {
-    plugins.push(new webpack.HotModuleReplacementPlugin());
-  }
-
-  let filename = filenames[mode];
-  let chunkFilename = chunkFilenames[mode];
 
   return {
     entry,
@@ -259,17 +212,13 @@ export class Compiler {
     this.webpackConfig = webpackConfig;
   }
 
-  getWebpackCompiler(): { client: webpack.Compiler; server: webpack.Compiler } {
-    return {
-      client: webpack(this.webpackConfig.client),
-      server: webpack(this.webpackConfig.server),
-    };
-  }
-
   async compile(): Promise<Compilation> {
-    let { compileServer, webpackConfig } = this;
+    let { webpackConfig } = this;
 
-    let clientResult = await runWebpackCompiler(webpack(webpackConfig.client));
+    let [clientResult, serverResult] = await Promise.all([
+      runWebpackCompiler(webpack(webpackConfig.client)),
+      runWebpackCompiler(webpack(webpackConfig.server)),
+    ]);
 
     let clientCompilation = new ClientCompilation({
       entryAssets: clientResult.entryAssets,
@@ -278,21 +227,12 @@ export class Compiler {
       warnings: clientResult.warnings,
     });
 
-    let serverCompilation;
-    if (compileServer) {
-      let serverResult = await runWebpackCompiler(
-        webpack(webpackConfig.server),
-      );
-
-      serverCompilation = new ServerCompilation({
-        entryAssets: serverResult.entryAssets,
-        hash: serverResult.hash,
-        outputPath: this.output.server,
-        warnings: serverResult.warnings,
-      });
-    } else {
-      serverCompilation = null;
-    }
+    let serverCompilation = new ServerCompilation({
+      entryAssets: serverResult.entryAssets,
+      hash: serverResult.hash,
+      outputPath: this.output.server,
+      warnings: serverResult.warnings,
+    });
 
     return new Compilation({
       client: clientCompilation,

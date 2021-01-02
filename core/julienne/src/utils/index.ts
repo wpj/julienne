@@ -23,19 +23,6 @@ export function pathToName({
     .replace(/-/g, '_');
 }
 
-export function moduleMapTemplate(
-  entryMap: { [exportName: string]: string },
-  writeExports: boolean,
-): string {
-  return Object.entries(entryMap)
-    .map(([identifier, modulePath]) =>
-      writeExports
-        ? `export { default as ${identifier} } from "${modulePath}";`
-        : `import ${identifier} from "${modulePath}"`,
-    )
-    .join('\n');
-}
-
 export function identity<T>(val: T): T {
   return val;
 }

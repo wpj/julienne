@@ -23,6 +23,14 @@ class SvelteSite<Templates extends TemplateConfig> extends Site<
     super({
       renderToString,
       runtime,
+      snowpackConfig: {
+        plugins: [
+          [
+            require.resolve('@snowpack/plugin-svelte'),
+            { hmrOptions: { preserveLocalState: true } },
+          ],
+        ],
+      },
       webpackConfig: createWebpackConfig({ dev }),
       ...options,
     });

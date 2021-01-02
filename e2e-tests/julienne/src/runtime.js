@@ -1,7 +1,7 @@
 // @ts-check
 import { getPage, getRoot } from '@julienne/runtime';
 
-/** @typedef { import('./types').Component } Component */
+/** @typedef { import('../__fixtures__/types').Component } Component */
 
 /**
  * @template C
@@ -22,6 +22,11 @@ const runtime = ({ template }) => {
   let rendered = template(page.props) + '__generated';
 
   root.innerHTML = rendered;
+
+  // Used with Page.waitForSelector in playwright-driven tests.
+  let loadedSignal = document.createElement('div');
+  loadedSignal.classList.add('runtime-loaded');
+  document.body.appendChild(loadedSignal);
 };
 
 export default runtime;

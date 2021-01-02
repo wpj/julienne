@@ -21,11 +21,7 @@ export let clientAssets = [...clientScripts, ...clientStylesheets];
 
 export let defaultPublicPath = '/';
 
-export function createTestCompilation({
-  includeServerCompilation,
-}: {
-  includeServerCompilation: boolean;
-}): Compilation {
+export function createTestCompilation(): Compilation {
   let client = new ClientCompilation({
     entryAssets: { main: clientAssets },
     hash: 'fake-hash',
@@ -33,14 +29,12 @@ export function createTestCompilation({
     warnings: null,
   });
 
-  let server = includeServerCompilation
-    ? new ServerCompilation({
-        entryAssets: { server: ['server.js'] },
-        hash: 'fake-hash',
-        outputPath: pathJoin(__dirname),
-        warnings: null,
-      })
-    : null;
+  let server = new ServerCompilation({
+    entryAssets: { server: ['server.js'] },
+    hash: 'fake-hash',
+    outputPath: pathJoin(__dirname),
+    warnings: null,
+  });
 
   return new Compilation({ client, server });
 }

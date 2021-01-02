@@ -25,8 +25,6 @@ export interface Output {
   public: string;
 }
 
-export type Mode = 'development' | 'production';
-
 export type Props = {
   [key: string]: unknown;
 };

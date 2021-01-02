@@ -2,7 +2,7 @@
   import { createJsonSlug } from '../helpers';
 
   async function importTemplate(template: string) {
-    return import(`./${template}.svelte`).then(mod => mod.default)
+    return import(`./${template}.svelte`).then((mod) => mod.default);
   }
 
   async function fetchPage(pageUrl: string) {

@@ -3,34 +3,38 @@ import http from 'http';
 import { join as pathJoin } from 'path';
 import rimraf from 'rimraf';
 import serve from 'serve-handler';
-import { Site, Store } from '../src';
-import { DevServerActions } from '../src/types';
+import { Site, Store } from 'julienne';
 import { renderToString } from './__fixtures__/render-raw-html';
 import type { Component } from './__fixtures__/types';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type _ from 'jest-playwright-preset/types/global';
 
+type Await<T> = T extends PromiseLike<infer U> ? U : T;
+
+let templates = {
+  main: pathJoin(process.cwd(), 'src/template-raw-html.js'),
+} as const;
+
+let runtime = require.resolve('./src/runtime.js');
+
 describe('Site', () => {
   describe('generate', () => {
     let port = 8080;
-    let internalOutputDirectory = pathJoin(__dirname, '.julienne-generate');
-    let publicOutputDirectory = pathJoin(__dirname, 'public');
+    let internalOutputDirectory = pathJoin(process.cwd(), '.julienne-generate');
+    let publicOutputDirectory = pathJoin(process.cwd(), 'public');
 
     function readGeneratedFile(path: string) {
       return fs.readFile(pathJoin(publicOutputDirectory, path), 'utf8');
     }
 
     beforeAll(async () => {
-      let templates = {
-        main: pathJoin(__dirname, '__fixtures__/template-raw-html.js'),
-      };
       let site = new Site({
         output: {
           internal: internalOutputDirectory,
           public: publicOutputDirectory,
         },
         renderToString,
-        runtime: pathJoin(__dirname, '__fixtures__/runtime-set-inner-html.js'),
+        runtime,
         templates,
       });
 
@@ -74,7 +78,12 @@ describe('Site', () => {
         });
       });
 
-      await page.goto(`http://localhost:${port}/test`);
+      await page.goto(`http://localhost:${port}/test`, {
+        waitUntil: 'load',
+      });
+      await page.waitForSelector('.runtime-loaded', {
+        state: 'attached',
+      });
 
       let rootHtml = await page.$eval(
         '#julienne-root',
@@ -88,20 +97,16 @@ describe('Site', () => {
   });
 
   describe('dev', () => {
-    let templates = {
-      main: pathJoin(__dirname, '__fixtures__/template-raw-html.js'),
-    } as const;
-
     let port = 5000;
 
     let site: Site<Component, typeof templates>;
 
-    let serverActions: DevServerActions;
+    let serverActions: Await<ReturnType<typeof site.dev>>;
 
     beforeAll(async () => {
       site = new Site({
         renderToString,
-        runtime: pathJoin(__dirname, '__fixtures__/runtime-set-inner-html.js'),
+        runtime,
         templates,
       });
 
@@ -115,13 +120,16 @@ describe('Site', () => {
       serverActions = await site.dev({ port, store });
     });
 
-    afterAll(() => {
-      serverActions.close();
+    afterAll(async () => {
+      await serverActions.close();
     });
 
-    test('serves pages with webpack assets for local development', async () => {
+    test('serves pages with snowpack for local development', async () => {
       await page.goto(`http://localhost:${port}/test`, {
         waitUntil: 'load',
+      });
+      await page.waitForSelector('.runtime-loaded', {
+        state: 'attached',
       });
 
       let rootHtml = await page.$eval(

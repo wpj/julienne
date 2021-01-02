@@ -6,8 +6,6 @@ module.exports = {
   // Don't mock in e2e tests.
   modulePathIgnorePatterns: ['<rootDir>/__mocks__'],
   preset: 'jest-playwright-preset',
-  rootDir: path.resolve(__dirname, '../../'),
-  testMatch: ['<rootDir>/e2e-tests/**/*.[jt]s?(x)'],
-  testPathIgnorePatterns: ['__fixtures__', '.julienne-generate'],
+  testPathIgnorePatterns: ['__fixtures__', 'src', '.julienne-generate'],
   watchPathIgnorePatterns: ['.julienne-generate'],
 };
