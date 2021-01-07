@@ -218,6 +218,7 @@ export class Server<Component, Templates extends TemplateConfig> {
       ];
 
       let renderedPage = await renderToString({
+        dev: true,
         props: page.props,
         scripts,
         stylesheets: [],

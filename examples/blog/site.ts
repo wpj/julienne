@@ -140,7 +140,7 @@ prog.command('build').action(async () => {
 });
 
 prog.command('dev').action(async () => {
-  let site = new Site({ dev: true, templates });
+  let site = new Site({ templates });
 
   let store = await getStore();
 

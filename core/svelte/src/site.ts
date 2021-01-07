@@ -10,16 +10,13 @@ class SvelteSite<Templates extends TemplateConfig> extends Site<
   Templates
 > {
   constructor({
-    dev = false,
     renderToString = defaultRenderToString,
     runtime = '@julienne/svelte-runtime',
     ...options
   }: Optional<
     SiteOptions<SvelteComponent, Templates>,
     'renderToString' | 'runtime'
-  > & {
-    dev?: boolean;
-  }) {
+  >) {
     super({
       renderToString,
       runtime,
@@ -31,7 +28,7 @@ class SvelteSite<Templates extends TemplateConfig> extends Site<
           ],
         ],
       },
-      webpackConfig: createWebpackConfig({ dev }),
+      webpackConfig: createWebpackConfig(),
       ...options,
     });
   }

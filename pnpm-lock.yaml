@@ -131,10 +131,11 @@ importers:
       '@babel/preset-env': 7.12.11_@babel+core@7.12.10
       '@babel/preset-react': 7.12.10_@babel+core@7.12.10
       '@babel/preset-typescript': 7.12.7_@babel+core@7.12.10
+      '@snowpack/plugin-react-refresh': 2.3.9
       babel-loader: 8.2.2_cb0b35cdd86d43ae111e54bfa48070d7
       css-loader: 4.3.0_webpack@4.44.2
       mini-css-extract-plugin: 0.11.3_webpack@4.44.2
-      style-loader: 1.3.0_webpack@4.44.2
+      react-refresh: 0.9.0
       webpack: 4.44.2
     devDependencies:
       '@types/babel__core': 7.1.12
@@ -147,7 +148,7 @@ importers:
       '@typescript-eslint/parser': 4.11.1_eslint@7.16.0+typescript@4.1.3
       eslint: 7.16.0
       julienne: 'link:../julienne'
-      microbundle: 0.13.0_@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__core@7.1.12
+      microbundle: 0.13.0_@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__core@7.1.12
       rimraf: 3.0.2
       typescript: 4.1.3
     specifiers:
@@ -158,6 +159,7 @@ importers:
       '@babel/preset-env': ^7.11.0
       '@babel/preset-react': ^7.10.4
       '@babel/preset-typescript': ^7.10.4
+      '@snowpack/plugin-react-refresh': ^2.3.9
       '@types/babel__core': ^7.1.9
       '@types/mini-css-extract-plugin': ^0.9.1
       '@types/node': ^14.10.1
@@ -172,8 +174,8 @@ importers:
       julienne: 'workspace:^0.2.0'
       microbundle: ^0.13.0
       mini-css-extract-plugin: ^0.11.0
+      react-refresh: ^0.9.0
       rimraf: ^3.0.2
-      style-loader: ^1.2.1
       typescript: ^4.1.3
       webpack: ^4.44.1
   core/react-runtime:
@@ -225,7 +227,6 @@ importers:
       babel-loader: 8.2.2_cb0b35cdd86d43ae111e54bfa48070d7
       css-loader: 4.3.0_webpack@4.44.2
       mini-css-extract-plugin: 0.11.3_webpack@4.44.2
-      style-loader: 1.3.0_webpack@4.44.2
       svelte-loader: 2.13.6_svelte@3.31.1
       svelte-preprocess: 4.6.1_6546e9b833c9517b116b149073de568e
       webpack: 4.44.2
@@ -274,7 +275,6 @@ importers:
       rimraf: ^3.0.2
       rollup: ^2.26.7
       rollup-plugin-svelte: ^7.0.0
-      style-loader: ^1.2.1
       svelte: ^3.31.1
       svelte-check: ^1.0.41
       svelte-loader: ^2.13.6
@@ -2206,6 +2206,17 @@ packages:
     dev: false
     resolution:
       integrity: sha512-v4Kcmu8x0C5iqPbI8w1vMyT6ZVVeh/Z4LTFeTJx+nLm5VKdQJsLyLarI2YhOuQEGB/RZeR4PxvAJBZn1xcH6Bw==
+  /@snowpack/plugin-react-refresh/2.3.9:
+    dependencies:
+      '@babel/core': 7.12.10
+      '@babel/plugin-syntax-class-properties': 7.12.1_@babel+core@7.12.10
+      react-refresh: 0.9.0
+    dev: false
+    peerDependencies:
+      react: '>=16.9.0'
+      react-dom: '>=16.9.0'
+    resolution:
+      integrity: sha512-QBsK1SQPmwxD3BKuLfbOa2oYKJKyRtBaL4CmkB+XNINia+TUKD8+m9cjbvO0QBRHDNhr6++9M5LDg41Jzm74tw==
   /@snowpack/plugin-run-script/2.2.1:
     dependencies:
       execa: 4.1.0
@@ -8071,7 +8082,7 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-d5glQP8nWoaZhgNF7pxmBpSI/zYMn0NfjH5tOjLudfgoceWiiq+5crwIHGqWKFDbaTcyMjD9HKowy3hNWJCHow==
-  /microbundle/0.13.0_@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__core@7.1.12:
+  /microbundle/0.13.0_@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__@types+babel__core@7.1.12:
     dependencies:
       '@babel/core': 7.12.10
       '@babel/plugin-proposal-class-properties': 7.12.1_@babel+core@7.12.10
@@ -9900,6 +9911,12 @@ packages:
     dev: true
     resolution:
       integrity: sha512-NAnt2iGDXohE5LI7uBnLnqvLQMtzhkiAOLXTmv+qnF9Ky7xAPcX8Up/xWIhxvLVGJvuLiNc4xQLtuqDRzb4fSA==
+  /react-refresh/0.9.0:
+    dev: false
+    engines:
+      node: '>=0.10.0'
+    resolution:
+      integrity: sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
   /react/17.0.1:
     dependencies:
       loose-envify: 1.4.0
@@ -11250,18 +11267,6 @@ packages:
     dev: true
     resolution:
       integrity: sha512-IezA2qp+vcdlhJaVm5SOdPPTUu0FCEqfNSli2vRuSIBbu5Nq5UvygTk/VzeCqfLz2Atj3dVII5QBKGZRZ0edzw==
-  /style-loader/1.3.0_webpack@4.44.2:
-    dependencies:
-      loader-utils: 2.0.0
-      schema-utils: 2.7.1
-      webpack: 4.44.2
-    dev: false
-    engines:
-      node: '>= 8.9.0'
-    peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0
-    resolution:
-      integrity: sha512-V7TCORko8rs9rIqkSrlMfkqA63DfoGBBJmK1kKGCcSi+BWb4cqz0SRsnp4l6rU5iwOEd0/2ePv68SV22VXon4Q==
   /stylehacks/4.0.3:
     dependencies:
       browserslist: 4.16.0

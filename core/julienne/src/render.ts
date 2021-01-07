@@ -16,6 +16,7 @@ export type ScriptAttributes = Partial<
 >;
 
 export type RenderToString<Component> = (options: {
+  dev: boolean;
   props: Props;
   scripts: ScriptAttributes[];
   stylesheets: string[];

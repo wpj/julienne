@@ -45,7 +45,6 @@ prog.command('build').action(async () => {
 
 prog.command('dev').action(async () => {
   let site = new Site({
-    dev: true,
     runtime,
     templates,
   });

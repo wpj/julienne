@@ -71,25 +71,13 @@ const getRules = {
       exclude: /node_modules/,
     };
   },
-  css({
-    dev,
-    isServer,
-    modules,
-  }: {
-    dev: boolean;
-    isServer: boolean;
-    modules: boolean;
-  }) {
+  css({ isServer, modules }: { isServer: boolean; modules: boolean }) {
     let loaders = [];
 
     if (!isServer) {
-      if (dev) {
-        loaders.push({ loader: require.resolve('style-loader') });
-      } else {
-        loaders.push({
-          loader: MiniCssExtractPlugin.loader,
-        });
-      }
+      loaders.push({
+        loader: MiniCssExtractPlugin.loader,
+      });
     }
 
     loaders.push({
@@ -115,10 +103,8 @@ const cssChunkFilename = 'static/css/[contenthash].css';
 
 function server({
   cssModules,
-  dev,
 }: {
   cssModules: boolean;
-  dev: boolean;
 }): webpack.Configuration {
   let resolve = {
     extensions: ['.js', '.jsx', '.mjs', '.ts', '.tsx', '.json'],
@@ -130,7 +116,7 @@ function server({
     module: {
       rules: [
         getRules.js(),
-        getRules.css({ dev, isServer: true, modules: cssModules }),
+        getRules.css({ isServer: true, modules: cssModules }),
       ],
     },
     resolve,
@@ -139,10 +125,8 @@ function server({
 
 function client({
   cssModules,
-  dev,
 }: {
   cssModules: boolean;
-  dev: boolean;
 }): webpack.Configuration {
   let resolve = {
     extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.json'],
@@ -153,19 +137,15 @@ function client({
 
   let rules: webpack.RuleSetRule[] = [
     getRules.js(),
-    getRules.css({ dev, isServer: false, modules: cssModules }),
+    getRules.css({ isServer: false, modules: cssModules }),
   ];
 
-  let plugins = [];
-
-  if (!dev) {
-    plugins.push(
-      new MiniCssExtractPlugin({
-        filename: cssFilename,
-        chunkFilename: cssChunkFilename,
-      }),
-    );
-  }
+  let plugins = [
+    new MiniCssExtractPlugin({
+      filename: cssFilename,
+      chunkFilename: cssChunkFilename,
+    }),
+  ];
 
   return {
     module: {
@@ -192,13 +172,11 @@ function client({
 
 export function createWebpackConfig({
   cssModules = false,
-  dev = false,
 }: {
   cssModules?: boolean;
-  dev?: boolean;
 } = {}): { client: webpack.Configuration; server: webpack.Configuration } {
   return {
-    client: client({ cssModules, dev }),
-    server: server({ cssModules, dev }),
+    client: client({ cssModules }),
+    server: server({ cssModules }),
   };
 }

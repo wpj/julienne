@@ -34,10 +34,6 @@ export class Generator<Component, Templates extends TemplateConfig> {
     output: string;
     renderToString: RenderToString<Component>;
   }) {
-    if (!compilation.server?.asset) {
-      throw new Error('Server module not found');
-    }
-
     this.compilation = compilation;
     this.internalRenderToString = renderToString;
     this.output = output;
@@ -131,6 +127,7 @@ export class Generator<Component, Templates extends TemplateConfig> {
     }));
 
     return internalRenderToString({
+      dev: false,
       props,
       scripts,
       stylesheets,

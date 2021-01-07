@@ -57,14 +57,14 @@ export class ServerCompilation {
 
 export class Compilation {
   client: ClientCompilation;
-  server: ServerCompilation | null;
+  server: ServerCompilation;
 
   constructor({
     client,
     server,
   }: {
     client: ClientCompilation;
-    server: ServerCompilation | null;
+    server: ServerCompilation;
   }) {
     this.client = client;
     this.server = server;
