@@ -97,3 +97,7 @@ export type Stream = {
 export type File = Copy | Generated | Stream;
 
 export type EntryAssets = Record<string, string[]>;
+
+export type OnLookup = (
+  path: string,
+) => MaybePromise<void | (() => MaybePromise<void>)>;

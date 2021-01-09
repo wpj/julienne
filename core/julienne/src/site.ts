@@ -7,6 +7,7 @@ import { Server as DevServer } from './server';
 import { Store } from './store';
 import type {
   DevServerActions,
+  OnLookup,
   Output,
   OutputConfig,
   TemplateConfig,
@@ -78,27 +79,27 @@ export class Site<Component, Templates extends TemplateConfig> {
   }
 
   async dev({
+    onLookup,
     port = 3000,
     store,
   }: {
+    onLookup?: OnLookup;
     port?: number;
     store: Store<Templates>;
   }): Promise<DevServerActions> {
     let { compilerOptions, cwd, renderToString } = this;
     let { runtime, snowpackConfig, templates } = compilerOptions;
-    let { files, pages } = store;
 
     let devServer = new DevServer<Component, Templates>({
       cwd,
-      files,
-      pages,
       renderToString,
       runtime,
+      store,
       snowpackConfig,
       templates,
     });
 
-    let serverActions = await devServer.start({ port });
+    let serverActions = await devServer.start({ onLookup, port });
 
     return serverActions;
   }

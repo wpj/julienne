@@ -10,12 +10,8 @@ import { SnowpackUserConfig, startDevServer } from 'snowpack';
 import { clientEntryPointTemplate } from './code-gen';
 import type { RenderToString } from './render';
 import { getConfig, getSnowpackUrlForFile } from './snowpack';
-import type {
-  DevServerActions,
-  FileMap,
-  PageMap,
-  TemplateConfig,
-} from './types';
+import type { Store } from './store';
+import type { DevServerActions, OnLookup, TemplateConfig } from './types';
 
 // Patch polkas types - there should be a server field on polka instances.
 declare module 'polka' {
@@ -38,47 +34,48 @@ async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
 
 export class Server<Component, Templates extends TemplateConfig> {
   cwd: string;
-  files: FileMap;
-  pages: PageMap<keyof Templates>;
   renderToString: RenderToString<Component>;
   runtime: string;
+  store: Store<Templates>;
   templates: Templates;
   snowpackConfig: SnowpackUserConfig | null;
 
   constructor({
     cwd,
-    files,
-    pages,
     renderToString,
     runtime,
+    store,
     templates,
     snowpackConfig,
   }: {
     cwd: string;
-    files: FileMap;
-    pages: PageMap<keyof Templates>;
     renderToString: RenderToString<Component>;
     runtime: string;
+    store: Store<Templates>;
     templates: Templates;
     snowpackConfig?: SnowpackUserConfig;
   }) {
     this.cwd = cwd;
-    this.files = files;
-    this.pages = pages;
     this.renderToString = renderToString;
     this.runtime = runtime;
+    this.store = store;
     this.templates = templates;
     this.snowpackConfig = snowpackConfig ?? null;
   }
 
-  async start({ port }: { port: number }): Promise<DevServerActions> {
+  async start({
+    onLookup,
+    port,
+  }: {
+    onLookup?: OnLookup;
+    port: number;
+  }): Promise<DevServerActions> {
     let {
       cwd,
-      files,
-      pages,
       renderToString,
       runtime,
       snowpackConfig: userSnowpackConfig,
+      store,
       templates,
     } = this;
 
@@ -111,7 +108,11 @@ export class Server<Component, Templates extends TemplateConfig> {
         return;
       }
 
-      let pageAction = pages.get(path);
+      let lookupTeardown = onLookup ? await onLookup(path) : undefined;
+      let pageAction = store.pages.get(path);
+      if (lookupTeardown) {
+        await lookupTeardown();
+      }
 
       let getPage = pageAction?.type === 'create' ? pageAction.getData : null;
 
@@ -132,7 +133,11 @@ export class Server<Component, Templates extends TemplateConfig> {
     app.use(async (req, res, next) => {
       let { path } = req;
 
-      let fileAction = files.get(path);
+      let lookupTeardown = onLookup ? await onLookup(path) : undefined;
+      let fileAction = store.files.get(path);
+      if (lookupTeardown) {
+        await lookupTeardown();
+      }
 
       if (fileAction === undefined) {
         next();
@@ -166,7 +171,11 @@ export class Server<Component, Templates extends TemplateConfig> {
     app.use(async (req, res, next) => {
       let { path } = req;
 
-      let pageAction = pages.get(path);
+      let lookupTeardown = onLookup ? await onLookup(path) : undefined;
+      let pageAction = store.pages.get(path);
+      if (lookupTeardown) {
+        await lookupTeardown();
+      }
 
       if (pageAction === undefined) {
         return next();
@@ -235,23 +244,25 @@ export class Server<Component, Templates extends TemplateConfig> {
       });
     });
 
-    app.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-      if (!req.url) {
-        next();
-        return;
-      }
-
-      try {
-        const result = await snowpackServer.loadUrl(req.url);
-        if (result.contentType) {
-          res.setHeader('Content-Type', result.contentType);
+    app.use(
+      async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (!req.url) {
+          next();
+          return;
         }
 
-        return res.end(result.contents);
-      } catch (err) {
-        next();
-      }
-    });
+        try {
+          const result = await snowpackServer.loadUrl(req.url);
+          if (result.contentType) {
+            res.setHeader('Content-Type', result.contentType);
+          }
+
+          return res.end(result.contents);
+        } catch (err) {
+          next();
+        }
+      },
+    );
 
     app.use('__julienne__', api);
 
