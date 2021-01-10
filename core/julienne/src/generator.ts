@@ -1,12 +1,12 @@
+import AggregateError from 'aggregate-error';
 import * as fs from 'fs-extra';
 import { join as pathJoin } from 'path';
 import { Compilation } from './compilation';
 import type { RenderToString } from './render';
-import type { Store } from './store';
+import type { FileAction, PageAction, Store } from './store';
 import type { Props, TemplateConfig } from './types';
 import { getAssets } from './utils';
 import { writeFile } from './utils/file';
-import AggregateError from 'aggregate-error';
 
 function normalizePagePath(pagePath: string) {
   if (pagePath.endsWith('.html')) {
@@ -45,19 +45,28 @@ export class Generator<Component, Templates extends TemplateConfig> {
    */
   async generate({ store }: { store: Store<Templates> }): Promise<void> {
     let { output } = this;
-    let { files, pages } = store;
-
     let errors: Error[] = [];
+
+    let storeEntries = Array.from(store.entries());
+
+    let pageEntries = storeEntries.filter(
+      (entry): entry is [string, PageAction<keyof Templates>] =>
+        entry[1].type === 'page',
+    );
+
+    let fileEntries = storeEntries.filter(
+      (entry): entry is [string, FileAction] => entry[1].type === 'file',
+    );
 
     // Pages need to be rendered first so that any files created during the
     // page creation process are ready to be processed.
     let pageResults = await Promise.allSettled(
-      Array.from(pages.entries()).map(async ([pagePath, pageAction]) => {
+      pageEntries.map(async ([pagePath, { action }]) => {
         let normalizedPagePath = normalizePagePath(pagePath);
         let outputPath = pathJoin(output, normalizedPagePath);
 
-        if (pageAction.type === 'create') {
-          let getPage = pageAction.getData;
+        if (action.type === 'create') {
+          let getPage = action.getData;
 
           let page = await getPage();
 
@@ -74,11 +83,11 @@ export class Generator<Component, Templates extends TemplateConfig> {
     );
 
     let fileResults = await Promise.allSettled(
-      Array.from(files.entries()).map(async ([filePath, fileAction]) => {
+      fileEntries.map(async ([filePath, { action }]) => {
         let outputPath = pathJoin(output, filePath);
 
-        if (fileAction.type === 'create') {
-          let getFile = fileAction.getData;
+        if (action.type === 'create') {
+          let getFile = action.getData;
 
           let file = await getFile();
 

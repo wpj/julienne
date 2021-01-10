@@ -41,32 +41,6 @@ export type PageUpdater<Template> = (page: Page<Template>) => Teardown;
 
 export type MaybePromise<T> = T | Promise<T>;
 
-/**
- * A lazy, potentially async page.
- */
-export type GetPage<Template> = () => MaybePromise<Page<Template>>;
-
-/**
- * Lazy, potentially async file data.
- */
-export type GetData = () => MaybePromise<string | Readable | Buffer>;
-
-export type FileCreateAction<T> = { type: 'create'; getData: T };
-export type FileRemoveAction = { type: 'remove' };
-export type OutputFileAction<T> = FileCreateAction<T> | FileRemoveAction;
-
-export type PageMap<Template> = Map<
-  string,
-  OutputFileAction<GetPage<Template>>
->;
-
-export type FileMap = Map<string, OutputFileAction<GetFile>>;
-
-/**
- * A lazy, potentially async file.
- */
-export type GetFile = () => MaybePromise<File>;
-
 export type WebpackConfig = {
   client: webpack.Configuration;
   server: webpack.Configuration;
