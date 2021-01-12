@@ -32,7 +32,7 @@ async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
   });
 }
 
-export class Server<Component, Templates extends TemplateConfig> {
+export class DevServer<Component, Templates extends TemplateConfig> {
   cwd: string;
   renderToString: RenderToString<Component>;
   runtime: string;
