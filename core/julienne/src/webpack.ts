@@ -159,7 +159,7 @@ function runWebpackCompiler(
   warnings: CompilationWarnings | null;
 }> {
   return new Promise((resolve, reject) => {
-    compiler.run((err: Error, stats: WebpackStats) => {
+    compiler.run((err: Error | undefined | null, stats: WebpackStats) => {
       if (err) {
         reject(err);
       } else {

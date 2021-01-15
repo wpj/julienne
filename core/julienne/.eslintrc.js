@@ -13,6 +13,10 @@ module.exports = {
     },
   ],
   parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: `${__dirname}/tsconfig.json`,
+  },
+  root: true,
   rules: {
     '@typescript-eslint/no-namespace': [
       'error',
@@ -20,6 +24,7 @@ module.exports = {
         allowDeclarations: true,
       },
     ],
+    '@typescript-eslint/no-unnecessary-condition': ['error'],
     'prefer-const': 'off',
   },
 };

@@ -22,7 +22,7 @@ declare module 'polka' {
 
 async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
   return new Promise((resolve, reject) => {
-    app.listen(port, (err: Error) => {
+    app.listen(port, (err: Error | undefined | null) => {
       if (err) {
         reject(err);
       } else {

@@ -110,7 +110,7 @@ export class Compiler<Templates extends TemplateConfig> {
 
     let compilation = await compiler.compile();
 
-    if (compilation.server?.warnings) {
+    if (compilation.server.warnings) {
       compilation.server.warnings.forEach(console.warn.bind(console));
     }
 

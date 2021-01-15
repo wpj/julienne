@@ -31,7 +31,7 @@ describe('Store', () => {
 
       let resource = store.get('/a');
       let cachedGetPage =
-        resource?.type === 'page' && resource?.action.type === 'create'
+        resource?.type === 'page' && resource.action.type === 'create'
           ? resource.action.getData
           : getNull;
 

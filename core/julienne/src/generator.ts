@@ -125,6 +125,7 @@ export class Generator<Component, Templates extends TemplateConfig> {
 
     let templateAssets = compilation.client.templateAssets[template as string];
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!templateAssets) {
       throw new Error(`Render error: assets for "${template}" not found.`);
     }
