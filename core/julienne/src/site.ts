@@ -1,9 +1,9 @@
 import { join as pathJoin } from 'path';
 import { Builder } from './builder';
 import { Compiler, Options as CompilerOptions } from './compiler';
+import { DevServer } from './dev-server';
 import { Generator } from './generator';
 import type { RenderToString } from './render';
-import { DevServer } from './dev-server';
 import { Store } from './store';
 import type {
   DevServerActions,

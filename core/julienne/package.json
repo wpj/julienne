@@ -71,7 +71,7 @@
     "mime-types": "^2.1.27",
     "polka": "^0.5.2",
     "prettier": "^2.2.1",
-    "snowpack": "^3.0.0-rc.2",
+    "snowpack": "^3.0.11",
     "snowpack-plugin-known-entrypoints": "^0.1.0",
     "webpack": "^4.44.1",
     "webpack-merge": "^5.1.4",

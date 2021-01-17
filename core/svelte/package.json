@@ -54,7 +54,7 @@
     "@babel/plugin-proposal-optional-chaining": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-typescript": "^7.10.4",
-    "@snowpack/plugin-svelte": "^3.4.1",
+    "@snowpack/plugin-svelte": "^3.5.0",
     "babel-loader": "^8.1.0",
     "css-loader": "^4.3.0",
     "mini-css-extract-plugin": "^0.11.0",

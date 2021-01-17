@@ -1,4 +1,3 @@
-import AggregateError from 'aggregate-error';
 import { builtinModules } from 'module';
 import {
   isAbsolute as isAbsolutePath,
@@ -17,6 +16,9 @@ function isDefinitelyNodeModule(path: string) {
     !path.startsWith('./') && !path.startsWith('../') && !isAbsolutePath(path)
   );
 }
+
+export const META_URL_PATH = '_snowpack';
+export const PKG_URL_PATH = `/${META_URL_PATH}/pkg`;
 
 export function getConfig({
   cwd,
@@ -45,6 +47,7 @@ export function getConfig({
   let unvalidatedConfig: SnowpackUserConfig = {
     buildOptions: {
       clean: true,
+      metaUrlPath: META_URL_PATH,
       out: '.julienne/staging',
     },
     devOptions: {
@@ -55,37 +58,29 @@ export function getConfig({
     },
     exclude: [pathJoin(cwd, 'src/build/**/*')],
     // NOTE: If the decision is made to build server files with snowpack, set experiments.ssr to true.
-    installOptions: {
-      externalPackage: [...builtinModules],
+    packageOptions: {
+      external: [...builtinModules],
     },
     mount: {
       [pathJoin(cwd, 'src')]: { url: '/_src_' },
     },
     plugins,
+    root: cwd,
   };
 
-  const [errs, config] = createConfiguration(unvalidatedConfig);
-
-  if (errs) {
-    throw new AggregateError(errs);
-
-    // TODO: Figure out why this check is necessary, given that
-    // createConfiguration returns a tuple.
-  } else if (!config) {
-    throw new Error('Could not load snowpack configuration');
-  }
+  const config = createConfiguration(unvalidatedConfig);
 
   return config;
 }
 
 /**
- * Converts a path to a Snowpack URL in web_modules or a mounted directory.
+ * Converts a path to a Snowpack URL in PKG_URL_PATH or a mounted directory.
  */
 export function getSnowpackUrlForFile(
   snowpackConfig: SnowpackConfig,
-  cwd: string,
   path: string,
 ): string | null {
+  let cwd = snowpackConfig.root;
   let nodeModulesPath = pathJoin(cwd, 'node_modules');
 
   let resolvedPath = pathResolve(path);
@@ -93,11 +88,11 @@ export function getSnowpackUrlForFile(
   let snowpackUrl;
 
   if (isDefinitelyNodeModule(path)) {
-    // If path is in node_modules, we need to convert that to a web_modules URL.
-    snowpackUrl = pathJoin('/web_modules', path);
+    // If path is in node_modules, we need to convert that to a PKG_URL_PATH URL.
+    snowpackUrl = pathJoin(PKG_URL_PATH, path);
   } else {
     snowpackUrl = resolvedPath.startsWith(nodeModulesPath)
-      ? pathJoin('/web_modules', resolvedPath.replace(nodeModulesPath, ''))
+      ? pathJoin(PKG_URL_PATH, resolvedPath.replace(nodeModulesPath, ''))
       : getUrlForFile(path, snowpackConfig);
   }
 

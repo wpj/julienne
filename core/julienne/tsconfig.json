@@ -13,5 +13,5 @@
     "target": "esnext"
   },
   "exclude": ["dist"],
-  "include": ["src", "e2e-tests", "tests", "types"]
+  "include": ["src", "e2e-tests", "tests", "types", "__mocks__"]
 }

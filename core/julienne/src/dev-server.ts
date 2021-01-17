@@ -6,10 +6,10 @@ import mime from 'mime-types';
 import { basename } from 'path';
 import polka from 'polka';
 import { format } from 'prettier';
-import { SnowpackUserConfig, startDevServer } from 'snowpack';
+import { SnowpackUserConfig, startServer } from 'snowpack';
 import { clientEntryPointTemplate } from './code-gen';
 import type { RenderToString } from './render';
-import { getConfig, getSnowpackUrlForFile } from './snowpack';
+import { getConfig, getSnowpackUrlForFile, META_URL_PATH } from './snowpack';
 import type { Store } from './store';
 import type { DevServerActions, OnLookup, TemplateConfig } from './types';
 
@@ -88,8 +88,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
       runtime,
     });
 
-    let snowpackServer = await startDevServer({
-      cwd,
+    let snowpackServer = await startServer({
       config: snowpackConfig,
       lockfile: null,
     });
@@ -211,7 +210,6 @@ export class DevServer<Component, Templates extends TemplateConfig> {
 
           let templateUrl = getSnowpackUrlForFile(
             snowpackConfig,
-            cwd,
             templates[page.template],
           );
 
@@ -223,7 +221,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
             );
           }
 
-          let runtimeUrl = getSnowpackUrlForFile(snowpackConfig, cwd, runtime);
+          let runtimeUrl = getSnowpackUrlForFile(snowpackConfig, runtime);
 
           if (runtimeUrl === null) {
             send(
@@ -245,7 +243,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
             {
               content: `window.HMR_WEBSOCKET_URL = 'ws://localhost:${snowpackPort}'`,
             },
-            { type: 'module', src: '/__snowpack__/hmr-client.js' },
+            { type: 'module', src: `/${META_URL_PATH}/hmr-client.js` },
             { content: entryPoint, type: 'module' },
           ];
 
