@@ -6,6 +6,7 @@ import {
 } from 'react-dom/server';
 import Document from './document';
 import { promises as fs } from 'fs';
+import { format } from 'prettier';
 
 /*
  * react-refresh integration adapated @snowpack/plugin-react-refresh
@@ -71,7 +72,7 @@ export const renderToString: RenderToString<ComponentType> = async ({
   let html = reactRenderToString(<Template {...props} />);
 
   // TODO: handle head
-  return (
+  let renderedPage =
     DOCTYPE +
     renderToStaticMarkup(
       <Document
@@ -81,6 +82,10 @@ export const renderToString: RenderToString<ComponentType> = async ({
         scripts={scripts}
         stylesheets={stylesheets}
       />,
-    )
-  );
+    );
+
+  return format(renderedPage, {
+    parser: 'html',
+    embeddedLanguageFormatting: 'off',
+  });
 };

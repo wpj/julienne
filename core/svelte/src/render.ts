@@ -1,5 +1,6 @@
 import type { RenderToString } from 'julienne';
 import type { SvelteComponent } from 'svelte';
+import { format } from 'prettier';
 import Document from './document.svelte';
 
 const DOCTYPE = '<!doctype html>\n';
@@ -29,7 +30,7 @@ export const renderToString: RenderToString<SvelteComponent> = ({
 
   let { head, html } = Template.render(props);
 
-  return (
+  let renderedPage =
     DOCTYPE +
     ((Document as unknown) as SvelteComponent).render({
       body: html,
@@ -37,6 +38,10 @@ export const renderToString: RenderToString<SvelteComponent> = ({
       pageData,
       scripts,
       stylesheets,
-    }).html
-  );
+    }).html;
+
+  return format(renderedPage, {
+    parser: 'html',
+    embeddedLanguageFormatting: 'off',
+  });
 };

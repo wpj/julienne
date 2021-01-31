@@ -1,11 +1,9 @@
 import AggregateError from 'aggregate-error';
 import * as fs from 'fs-extra';
 import { join as pathJoin } from 'path';
-import { Compilation } from './compilation';
-import type { RenderToString } from './render';
+import { Renderer } from './renderer';
 import type { FileAction, PageAction, Store } from './store';
-import type { Props, TemplateConfig } from './types';
-import { getAssets } from './utils';
+import type { TemplateConfig } from './types';
 import { writeFile } from './utils/file';
 
 function normalizePagePath(pagePath: string) {
@@ -20,31 +18,24 @@ function normalizePagePath(pagePath: string) {
  * When `generate` is invoked, all known files and pages will be generate and written to the filesystem.
  */
 export class Generator<Component, Templates extends TemplateConfig> {
-  compilation: Compilation;
-  internalRenderToString: RenderToString<Component>;
+  renderer: Renderer<Component, Templates>;
   output: string;
-  serverModulePath: string;
-
   constructor({
-    compilation,
     output,
-    renderToString,
+    renderer,
   }: {
-    compilation: Compilation;
     output: string;
-    renderToString: RenderToString<Component>;
+    renderer: Renderer<Component, Templates>;
   }) {
-    this.compilation = compilation;
-    this.internalRenderToString = renderToString;
     this.output = output;
-    this.serverModulePath = compilation.server.asset;
+    this.renderer = renderer;
   }
 
   /**
    * Write the site's pages and files to disk.
    */
   async generate({ store }: { store: Store<Templates> }): Promise<void> {
-    let { output } = this;
+    let { output, renderer } = this;
     let errors: Error[] = [];
 
     let storeEntries = Array.from(store.entries());
@@ -70,7 +61,7 @@ export class Generator<Component, Templates extends TemplateConfig> {
 
           let page = await getPage();
 
-          let renderedPage = await this.renderToString({
+          let renderedPage = await renderer.renderToString({
             template: page.template,
             props: page.props,
           });
@@ -107,44 +98,5 @@ export class Generator<Component, Templates extends TemplateConfig> {
     if (errors.length > 0) {
       throw new AggregateError(errors);
     }
-  }
-
-  /**
-   * Render `template` with `props` as input and return the rendered string.
-   */
-  async renderToString({
-    props,
-    template,
-  }: {
-    props: Props;
-    template: keyof Templates;
-  }): Promise<string> {
-    let { compilation, internalRenderToString, serverModulePath } = this;
-
-    let serverModule = await import(serverModulePath);
-
-    let templateAssets = compilation.client.templateAssets[template as string];
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!templateAssets) {
-      throw new Error(`Render error: assets for "${template}" not found.`);
-    }
-
-    let { scripts: scriptSrcs, stylesheets } = getAssets(templateAssets);
-
-    let scripts = scriptSrcs.map((src) => ({
-      src,
-    }));
-
-    return internalRenderToString({
-      dev: false,
-      props,
-      scripts,
-      stylesheets,
-      template: {
-        name: template as string,
-        component: serverModule[template],
-      },
-    });
   }
 }

@@ -5,7 +5,6 @@ import { IncomingMessage, Server as HttpServer, ServerResponse } from 'http';
 import mime from 'mime-types';
 import { basename } from 'path';
 import polka from 'polka';
-import { format } from 'prettier';
 import { SnowpackUserConfig, startServer } from 'snowpack';
 import { clientEntryPointTemplate } from './code-gen';
 import type { RenderToString } from './render';
@@ -258,9 +257,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
             },
           });
 
-          let formattedPage = format(renderedPage, { parser: 'html' });
-
-          send(res, 200, formattedPage, {
+          send(res, 200, renderedPage, {
             'Content-Type': 'text/html;charset=utf-8',
           });
         }

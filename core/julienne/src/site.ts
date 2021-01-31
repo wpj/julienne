@@ -4,6 +4,7 @@ import { Compiler, Options as CompilerOptions } from './compiler';
 import { DevServer } from './dev-server';
 import { Generator } from './generator';
 import type { RenderToString } from './render';
+import { Renderer } from './renderer';
 import { Store } from './store';
 import type {
   DevServerActions,
@@ -64,10 +65,11 @@ export class Site<Component, Templates extends TemplateConfig> {
 
     let compilation = await compiler.compile();
 
+    let renderer = new Renderer({ compilation, renderToString });
+
     let generator = new Generator<Component, Templates>({
-      compilation,
       output: output.public,
-      renderToString,
+      renderer,
     });
 
     return new Builder({ compilation, generator, output });
