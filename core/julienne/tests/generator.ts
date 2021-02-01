@@ -2,9 +2,8 @@ import { join as pathJoin } from 'path';
 import { Readable } from 'stream';
 import { Generator } from '../src/generator';
 import { Renderer } from '../src/renderer';
-import type { RenderToString as RenderToStringType } from '../src/render';
 import { Store } from '../src/store';
-import type { Props } from '../src/types';
+import type { Props, RenderToString as RenderToStringType } from '../src/types';
 import { writeFile } from '../src/utils/file';
 import { createTestCompilation, templates } from './__fixtures__/compilation';
 

@@ -1,6 +1,5 @@
 import { Compilation } from './compilation';
-import type { RenderToString } from './render';
-import type { Props, TemplateConfig } from './types';
+import type { Props, RenderToString, TemplateConfig } from './types';
 import { getAssets } from './utils';
 
 export class Renderer<Component, Templates extends TemplateConfig> {

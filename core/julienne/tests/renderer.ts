@@ -1,7 +1,6 @@
 import { join as pathJoin } from 'path';
 import { Renderer } from '../src/renderer';
-import type { RenderToString as RenderToStringType } from '../src/render';
-import type { Props } from '../src/types';
+import type { Props, RenderToString as RenderToStringType } from '../src/types';
 import {
   clientScripts,
   clientStylesheets,

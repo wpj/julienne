@@ -7,10 +7,14 @@ import { basename } from 'path';
 import polka from 'polka';
 import { SnowpackUserConfig, startServer } from 'snowpack';
 import { clientEntryPointTemplate } from './code-gen';
-import type { RenderToString } from './render';
 import { getConfig, getSnowpackUrlForFile, META_URL_PATH } from './snowpack';
 import type { Store } from './store';
-import type { DevServerActions, OnLookup, TemplateConfig } from './types';
+import type {
+  DevServerActions,
+  OnLookup,
+  RenderToString,
+  TemplateConfig,
+} from './types';
 
 // Patch polkas types - there should be a server field on polka instances.
 declare module 'polka' {

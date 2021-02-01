@@ -3,7 +3,7 @@ import { Builder } from './builder';
 import { Compiler, Options as CompilerOptions } from './compiler';
 import { DevServer } from './dev-server';
 import { Generator } from './generator';
-import type { RenderToString } from './render';
+import type { RenderToString } from './types';
 import { Renderer } from './renderer';
 import { Store } from './store';
 import type {

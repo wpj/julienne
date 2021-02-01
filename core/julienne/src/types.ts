@@ -75,3 +75,29 @@ export type EntryAssets = Record<string, string[]>;
 export type OnLookup = (
   path: string,
 ) => MaybePromise<void | (() => MaybePromise<void>)>;
+
+// TODO: Fix this type.
+export type ScriptAttributes = Partial<
+  Pick<
+    HTMLScriptElement,
+    | 'async'
+    | 'crossOrigin'
+    | 'defer'
+    | 'integrity'
+    | 'noModule'
+    | 'referrerPolicy'
+    | 'src'
+    | 'type'
+  > & { content: string }
+>;
+
+export type RenderToString<Component> = (options: {
+  dev: boolean;
+  props: Props;
+  scripts: ScriptAttributes[];
+  stylesheets: string[];
+  template: {
+    name: string;
+    component: Component | null;
+  };
+}) => MaybePromise<string>;
