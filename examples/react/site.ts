@@ -8,17 +8,21 @@ let templates = {
 
 type Templates = typeof templates;
 
-function getStore(): Store<Templates> {
-  let store = new Store();
+function createOnLookup(store: Store<Templates>) {
+  return function onLookup(path: string) {
+    switch (path) {
+      case '/': {
+        store.createPage('/', async () => {
+          return {
+            template: 'main',
+            props: {},
+          };
+        });
 
-  store.createPage('/', async () => {
-    return {
-      template: 'main',
-      props: {},
-    };
-  });
-
-  return store;
+        break;
+      }
+    }
+  };
 }
 
 let prog = sade('julienne-site');
@@ -26,7 +30,12 @@ let prog = sade('julienne-site');
 prog.command('build').action(async () => {
   let site = new Site({ templates });
 
-  let store = getStore();
+  let store = new Store();
+
+  let onLookup = createOnLookup(store);
+
+  let paths = ['/'];
+  await Promise.all(paths.map(onLookup));
 
   await site.build({ store });
 });
@@ -34,10 +43,12 @@ prog.command('build').action(async () => {
 prog.command('dev').action(async () => {
   let site = new Site({ templates });
 
-  let store = getStore();
+  let store = new Store();
+
+  let onLookup = createOnLookup(store);
 
   let port = 3000;
-  await site.dev({ port, store });
+  await site.dev({ onLookup, port, store });
 
   console.log(`Started on http://localhost:${port}`);
 });
