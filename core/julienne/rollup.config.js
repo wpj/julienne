@@ -15,12 +15,15 @@ let external = [
   ...Object.keys(pkg.peerDependencies || []),
 ].map((pkgName) => new RegExp(`^${pkgName}`));
 
-export default {
+/**
+ * @type {import('rollup').RollupOptions}
+ */
+const config = {
   input: 'src/index.ts',
   external,
   output: [
-    { file: pkg.module, format: 'es' },
-    { file: pkg.main, format: 'cjs' },
+    { file: pkg.module, format: 'es', sourcemap: true },
+    { file: pkg.main, format: 'cjs', sourcemap: true },
   ],
   plugins: [
     resolve({ extensions }),
@@ -29,3 +32,5 @@ export default {
     json(),
   ],
 };
+
+export default config;

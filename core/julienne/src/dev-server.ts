@@ -1,13 +1,12 @@
-import send from '@polka/send';
-import sendType from '@polka/send-type';
+import { App } from '@tinyhttp/app';
 import { createReadStream } from 'fs';
-import { IncomingMessage, Server as HttpServer, ServerResponse } from 'http';
+import { Server as HttpServer } from 'http';
 import mime from 'mime-types';
 import { basename } from 'path';
-import polka from 'polka';
-import { SnowpackUserConfig, startServer } from 'snowpack';
-import { clientEntryPointTemplate } from './code-gen';
-import { getConfig, getSnowpackUrlForFile, META_URL_PATH } from './snowpack';
+import {
+  createServer as createViteServer,
+  UserConfig as ViteUserConfig,
+} from 'vite';
 import type { Store } from './store';
 import type {
   DevServerActions,
@@ -15,22 +14,18 @@ import type {
   RenderToString,
   TemplateConfig,
 } from './types';
+import {
+  getTemplateManifest,
+  getVirtualEntriesFromManifest,
+  virtualPlugin,
+} from './utils';
 
-// Patch polkas types - there should be a server field on polka instances.
-declare module 'polka' {
-  interface Polka {
-    server: HttpServer;
-  }
-}
+type Await<T> = T extends PromiseLike<infer U> ? U : T;
 
-async function startApp(app: polka.Polka, port: number): Promise<HttpServer> {
-  return new Promise((resolve, reject) => {
-    app.listen(port, (err: Error | undefined | null) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(app.server);
-      }
+async function startApp(app: App, port: number): Promise<HttpServer> {
+  return new Promise((resolve) => {
+    let server = app.listen(port, () => {
+      resolve(server);
     });
   });
 }
@@ -41,7 +36,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
   runtime: string;
   store: Store<Templates>;
   templates: Templates;
-  snowpackConfig: SnowpackUserConfig | null;
+  viteConfig: ViteUserConfig;
 
   constructor({
     cwd,
@@ -49,21 +44,21 @@ export class DevServer<Component, Templates extends TemplateConfig> {
     runtime,
     store,
     templates,
-    snowpackConfig,
+    viteConfig = {},
   }: {
     cwd: string;
     renderToString: RenderToString<Component>;
     runtime: string;
     store: Store<Templates>;
     templates: Templates;
-    snowpackConfig?: SnowpackUserConfig;
+    viteConfig?: ViteUserConfig;
   }) {
     this.cwd = cwd;
     this.renderToString = renderToString;
     this.runtime = runtime;
     this.store = store;
     this.templates = templates;
-    this.snowpackConfig = snowpackConfig ?? null;
+    this.viteConfig = viteConfig;
   }
 
   async start({
@@ -77,26 +72,40 @@ export class DevServer<Component, Templates extends TemplateConfig> {
       cwd,
       renderToString,
       runtime,
-      snowpackConfig: userSnowpackConfig,
+      viteConfig: viteUserConfig,
       store,
       templates,
     } = this;
 
-    let snowpackPort = 3333;
-
-    let snowpackConfig = getConfig({
+    let entryManifest = getTemplateManifest({
       cwd,
-      port: snowpackPort,
-      userConfig: userSnowpackConfig,
+      dev: true,
+      hydrate: true,
       runtime,
+      templates,
     });
 
-    let snowpackServer = await startServer({
-      config: snowpackConfig,
-      lockfile: null,
+    let virtualEntries = getVirtualEntriesFromManifest(entryManifest);
+
+    let viteConfig: ViteUserConfig = {
+      ...viteUserConfig,
+      logLevel: viteUserConfig.logLevel ?? 'silent',
+      root: cwd,
+      plugins: [
+        virtualPlugin(virtualEntries),
+        ...(viteUserConfig.plugins ?? []),
+      ],
+    };
+
+    let vite = await createViteServer({
+      ...viteConfig,
+      configFile: false,
+      server: {
+        middlewareMode: true,
+      },
     });
 
-    let api = polka();
+    let api = new App();
 
     /**
      * Returns the props for the page specified by the path query string
@@ -106,7 +115,8 @@ export class DevServer<Component, Templates extends TemplateConfig> {
       let { path } = req.query;
 
       if (typeof path !== 'string') {
-        sendType(res, 400, 'Invalid path param');
+        res.status(400).send('Invalid path param');
+
         return;
       }
 
@@ -117,12 +127,13 @@ export class DevServer<Component, Templates extends TemplateConfig> {
       }
 
       if (resource === undefined || resource.action.type === 'remove') {
-        sendType(res, 404, { error: 'Not found' });
+        res.status(404).json({ error: 'Not found' });
+
         return;
       }
 
       if (resource.type !== 'page') {
-        sendType(res, 500, {
+        res.status(500).json({
           error: `Expected to find page at ${path}, found file instead`,
         });
         return;
@@ -130,37 +141,15 @@ export class DevServer<Component, Templates extends TemplateConfig> {
 
       let getPage = resource.action.getData;
       let page = await getPage();
-      sendType(res, 200, page);
+      res.json(page);
     });
 
-    let app = polka();
+    let app = new App();
 
-    /**
-     * Serve requests for application assets from Snowpack.
-     */
-    app.use(
-      async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-        if (!req.url) {
-          next();
-          return;
-        }
-
-        try {
-          const result = await snowpackServer.loadUrl(req.url);
-          if (result.contentType) {
-            res.setHeader('Content-Type', result.contentType);
-          }
-
-          return res.end(result.contents);
-        } catch (err) {
-          next();
-        }
-      },
-    );
+    app.use(vite.middlewares);
 
     app.use(async (req, res, next) => {
-      let { path } = req;
-
+      let { path, originalUrl: url } = req;
       let lookupTeardown = onLookup ? await onLookup(path) : undefined;
       let resource = store.get(path);
       if (lookupTeardown) {
@@ -173,7 +162,7 @@ export class DevServer<Component, Templates extends TemplateConfig> {
       }
 
       if (resource.action.type === 'remove') {
-        send(res, 404, 'File Not found');
+        res.status(404).send('File not found');
         return;
       }
 
@@ -194,11 +183,12 @@ export class DevServer<Component, Templates extends TemplateConfig> {
             path.endsWith('/') ? 'index.html' : basename(path),
           );
 
-          let headers = contentType
-            ? { 'Content-Type': contentType }
-            : undefined;
+          if (contentType) {
+            res.set('Content-Type', contentType);
+          }
 
-          sendType(res, 200, data, headers);
+          res.send(data);
+
           return;
         }
 
@@ -211,59 +201,49 @@ export class DevServer<Component, Templates extends TemplateConfig> {
 
           let page = await getPage();
 
-          let templateUrl = getSnowpackUrlForFile(
-            snowpackConfig,
-            templates[page.template],
-          );
+          try {
+            let templateMod: Await<ReturnType<typeof vite.ssrLoadModule>>;
+            try {
+              templateMod = await vite.ssrLoadModule(templates[page.template]);
+            } catch (e) {
+              return res
+                .status(500)
+                .send(
+                  `Could not find server module for template '${page.template}'`,
+                );
+            }
 
-          if (!templateUrl) {
-            return send(
-              res,
-              500,
-              `Could not find Snowpack URL for template '${page.template}'`,
+            let scripts = [
+              {
+                type: 'module',
+                src: entryManifest[page.template as string].path,
+              },
+            ];
+
+            let renderedPage = await renderToString({
+              dev: true,
+              links: [],
+              props: page.props,
+              scripts,
+              template: {
+                name: page.template as string,
+                component: templateMod.default,
+              },
+            });
+
+            let transformedPage = await vite.transformIndexHtml(
+              url,
+              renderedPage,
             );
-          }
 
-          let runtimeUrl = getSnowpackUrlForFile(snowpackConfig, runtime);
+            res.type('text/html;charset=utf-8').send(transformedPage);
 
-          if (runtimeUrl === null) {
-            send(
-              res,
-              500,
-              `Could not find Snowpack URL for runtime ${runtime}`,
-            );
             return;
+          } catch (e) {
+            vite.ssrFixStacktrace(e);
+            console.error(e);
+            res.status(500).end(e.message);
           }
-
-          let entryPoint = clientEntryPointTemplate({
-            dev: true,
-            hydrate: false,
-            runtime: runtimeUrl,
-            template: templateUrl,
-          });
-
-          let scripts = [
-            {
-              content: `window.HMR_WEBSOCKET_URL = 'ws://localhost:${snowpackPort}'`,
-            },
-            { type: 'module', src: `/${META_URL_PATH}/hmr-client.js` },
-            { content: entryPoint, type: 'module' },
-          ];
-
-          let renderedPage = await renderToString({
-            dev: true,
-            props: page.props,
-            scripts,
-            stylesheets: [],
-            template: {
-              name: page.template as string,
-              component: null,
-            },
-          });
-
-          send(res, 200, renderedPage, {
-            'Content-Type': 'text/html;charset=utf-8',
-          });
         }
       }
     });
@@ -274,12 +254,8 @@ export class DevServer<Component, Templates extends TemplateConfig> {
 
     let actions = {
       close: async () => {
-        await Promise.allSettled([
-          new Promise((resolve) => {
-            server.close(resolve);
-          }),
-          snowpackServer.shutdown(),
-        ]);
+        server.close();
+        await vite.close();
       },
     };
 

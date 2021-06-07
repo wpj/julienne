@@ -6,9 +6,9 @@ import Document from './document.svelte';
 const DOCTYPE = '<!doctype html>\n';
 
 export const renderToString: RenderToString<SvelteComponent> = ({
+  links,
   props,
   scripts,
-  stylesheets,
   template,
 }) => {
   let pageData = { props, template: template.name };
@@ -19,9 +19,9 @@ export const renderToString: RenderToString<SvelteComponent> = ({
       ((Document as unknown) as SvelteComponent).render({
         body: null,
         head: null,
+        links,
         pageData,
         scripts,
-        stylesheets,
       }).html
     );
   }
@@ -35,9 +35,9 @@ export const renderToString: RenderToString<SvelteComponent> = ({
     ((Document as unknown) as SvelteComponent).render({
       body: html,
       head,
+      links,
       pageData,
       scripts,
-      stylesheets,
     }).html;
 
   return format(renderedPage, {

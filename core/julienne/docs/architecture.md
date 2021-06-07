@@ -141,7 +141,7 @@ assets that don't exist in the public directory yet.
 
 ### Service worker updates
 
-In order for a service worker to, its contents _must_ be changed. This is why
+In order to update a service worker, its contents _must_ be changed. This is why
 workbox creates a revision ID based on the hash of the cached files contents for
 each precached resource and includes that revision ID in the service worker
 script.

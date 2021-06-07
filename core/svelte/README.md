@@ -1,6 +1,6 @@
 # @julienne/svelte
 
-Svelte server renderer and webpack configuration for julienne sites.
+Svelte configuration and server renderer for julienne sites.
 
 ## License
 

@@ -1,8 +1,7 @@
 import { Site, SiteOptions, TemplateConfig } from 'julienne';
 import type { ComponentType } from 'react';
 import { renderToString as defaultRenderToString } from './render';
-import { createWebpackConfig } from './webpack';
-import { createSnowpackConfig } from './snowpack';
+import reactRefresh from '@vitejs/plugin-react-refresh';
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -21,8 +20,9 @@ class ReactSite<Templates extends TemplateConfig> extends Site<
     super({
       renderToString,
       runtime,
-      snowpackConfig: createSnowpackConfig(),
-      webpackConfig: createWebpackConfig(),
+      viteConfig: {
+        plugins: [reactRefresh()],
+      },
       ...options,
     });
   }

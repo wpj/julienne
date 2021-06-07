@@ -5,7 +5,7 @@ import { Renderer } from '../src/renderer';
 import { Store } from '../src/store';
 import type { Props, RenderToString as RenderToStringType } from '../src/types';
 import { writeFile } from '../src/utils/file';
-import { createTestCompilation, templates } from './__fixtures__/compilation';
+import { createTestBuild, templates } from './__fixtures__/build';
 
 // This doesn't need to be declared prior to importing modules that depend on
 // this mocked module because jest hoists all mock declarations to the top under
@@ -33,7 +33,7 @@ describe('Generator', () => {
       return component(props);
     };
 
-    let compilation = createTestCompilation();
+    let build = createTestBuild();
 
     test('renders and writes pages to the filesystem', async () => {
       let store = new Store<Templates>();
@@ -48,7 +48,7 @@ describe('Generator', () => {
         props: { name: 'Universe' },
       }));
 
-      let renderer = new Renderer({ compilation, renderToString });
+      let renderer = new Renderer({ build, renderToString });
 
       let generator = new Generator<Component, Templates>({
         output: defaultOutput,
@@ -80,7 +80,7 @@ describe('Generator', () => {
 
       store.copyFile('/text/mock.txt', pathJoin(__dirname, 'mock.txt'));
 
-      let renderer = new Renderer({ compilation, renderToString });
+      let renderer = new Renderer({ build, renderToString });
 
       let generator = new Generator<Component, Templates>({
         output: defaultOutput,

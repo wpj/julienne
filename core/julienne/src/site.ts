@@ -1,9 +1,13 @@
 import { join as pathJoin } from 'path';
+import {
+  buildClient,
+  buildServer,
+  Options as ApplicationBuildOptions,
+} from './application';
+import { Build } from './build';
 import { Builder } from './builder';
-import { Compiler, Options as CompilerOptions } from './compiler';
 import { DevServer } from './dev-server';
 import { Generator } from './generator';
-import type { RenderToString } from './types';
 import { Renderer } from './renderer';
 import { Store } from './store';
 import type {
@@ -11,35 +15,34 @@ import type {
   OnLookup,
   Output,
   OutputConfig,
+  RenderToString,
   TemplateConfig,
 } from './types';
 
 function getOutputWithDefaults({
+  base = '/',
   cwd,
   internal: internalOutputPath = pathJoin(cwd, '.julienne'),
   public: publicOutputPath = pathJoin(cwd, 'public'),
-  publicPath = '/',
-}: OutputConfig & { cwd: string }): Output {
+}: OutputConfig & { cwd: string }): Output & { base: string } {
   return {
-    compiler: {
-      client: pathJoin(internalOutputPath, 'client'),
-      publicPath,
-      server: pathJoin(internalOutputPath, 'server'),
-    },
+    base,
+    client: pathJoin(internalOutputPath, 'client'),
+    server: pathJoin(internalOutputPath, 'server'),
     public: publicOutputPath,
   };
 }
 
 export type Options<Component, Templates extends TemplateConfig> = Omit<
-  CompilerOptions<Templates>,
-  'output'
+  ApplicationBuildOptions<Templates>,
+  'output' | 'base' | 'outDir'
 > & {
   output?: OutputConfig;
   renderToString: RenderToString<Component>;
 };
 
 export class Site<Component, Templates extends TemplateConfig> {
-  compilerOptions: CompilerOptions<Templates>;
+  applicationBuildOptions: Omit<ApplicationBuildOptions<Templates>, 'outDir'>;
   cwd: string;
   output: Output;
   renderToString: RenderToString<Component>;
@@ -48,36 +51,50 @@ export class Site<Component, Templates extends TemplateConfig> {
     cwd = process.cwd(),
     output: outputConfig,
     renderToString,
-    ...compilerOptions
+    ...applicationBuildOptions
   }: Options<Component, Templates>) {
     let output = getOutputWithDefaults({ cwd, ...outputConfig });
 
-    this.compilerOptions = { cwd, output: output.compiler, ...compilerOptions };
+    this.applicationBuildOptions = {
+      cwd,
+      base: output.base,
+      ...applicationBuildOptions,
+    };
     this.cwd = cwd;
     this.output = output;
     this.renderToString = renderToString;
   }
 
   async compile(): Promise<Builder<Component, Templates>> {
-    let { compilerOptions, output, renderToString } = this;
+    let { applicationBuildOptions, output, renderToString } = this;
 
-    let compiler = new Compiler(compilerOptions);
+    let clientBuild = await buildClient({
+      ...applicationBuildOptions,
+      outDir: output.client,
+    });
+    let serverBuild = await buildServer({
+      ...applicationBuildOptions,
+      outDir: output.server,
+    });
 
-    let compilation = await compiler.compile();
+    let build = new Build({
+      client: clientBuild,
+      server: serverBuild,
+    });
 
-    let renderer = new Renderer({ compilation, renderToString });
+    let renderer = new Renderer({ build, renderToString });
 
     let generator = new Generator<Component, Templates>({
       output: output.public,
       renderer,
     });
 
-    return new Builder({ compilation, generator, output });
+    return new Builder({ build, generator, output });
   }
 
   async build({ store }: { store: Store<Templates> }): Promise<void> {
     let builder = await this.compile();
-    await builder.build({ store });
+    await builder.write({ store });
   }
 
   async dev({
@@ -89,15 +106,15 @@ export class Site<Component, Templates extends TemplateConfig> {
     port?: number;
     store: Store<Templates>;
   }): Promise<DevServerActions> {
-    let { compilerOptions, cwd, renderToString } = this;
-    let { runtime, snowpackConfig, templates } = compilerOptions;
+    let { applicationBuildOptions, cwd, renderToString } = this;
+    let { runtime, viteConfig, templates } = applicationBuildOptions;
 
     let devServer = new DevServer<Component, Templates>({
       cwd,
       renderToString,
       runtime,
       store,
-      snowpackConfig,
+      viteConfig,
       templates,
     });
 

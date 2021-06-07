@@ -4,9 +4,9 @@ import type { Props, RenderToString as RenderToStringType } from '../src/types';
 import {
   clientScripts,
   clientStylesheets,
-  createTestCompilation,
+  createTestBuild,
   templates,
-} from './__fixtures__/compilation';
+} from './__fixtures__/build';
 
 type Templates = typeof templates;
 
@@ -21,12 +21,12 @@ describe('Renderer', () => {
     test('calls the configured render function with the correct data and returns its output', async () => {
       let props = { name: 'World' };
 
-      let compilation = createTestCompilation();
+      let build = createTestBuild();
 
       let renderToString: RenderToStringFunc = ({
+        links,
         props,
         scripts: clientScripts,
-        stylesheets,
         template,
       }) => {
         let component = template.component as (p: typeof props) => string;
@@ -35,13 +35,13 @@ describe('Renderer', () => {
           props,
           rendered: component(props),
           scripts: clientScripts,
-          stylesheets,
+          links,
           templateName: template.name,
         });
       };
 
       let generator = new Renderer<Component, Templates>({
-        compilation,
+        build,
         renderToString,
       });
 
@@ -50,19 +50,22 @@ describe('Renderer', () => {
         template: 'main',
       });
 
-      expect(rendered).toEqual(
-        JSON.stringify({
-          props,
-          rendered: 'Hello, World',
-          scripts: clientScripts.map((script) => ({
-            src: pathJoin('/', script),
-          })),
-          stylesheets: clientStylesheets.map((stylesheet) =>
-            pathJoin('/', stylesheet),
-          ),
-          templateName: 'main',
+      expect(JSON.parse(rendered)).toStrictEqual({
+        props,
+        rendered: 'Hello, World',
+        links: clientStylesheets.map((stylesheet) => {
+          return {
+            href: pathJoin('/', stylesheet),
+            rel: 'stylesheet',
+            type: 'text/css',
+          };
         }),
-      );
+        scripts: clientScripts.map((script) => ({
+          src: pathJoin('/', script),
+          type: 'module',
+        })),
+        templateName: 'main',
+      });
     });
   });
 });

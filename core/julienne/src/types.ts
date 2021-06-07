@@ -1,5 +1,4 @@
 import type { Readable } from 'stream';
-import type * as webpack from 'webpack';
 
 /**
  * A mapping of template names to file paths.
@@ -9,20 +8,15 @@ export interface TemplateConfig {
 }
 
 export interface OutputConfig {
+  base?: string;
   internal?: string;
   public?: string;
-  publicPath?: string;
-}
-
-export interface CompilerOutput {
-  client: string;
-  publicPath: string;
-  server: string;
 }
 
 export interface Output {
-  compiler: CompilerOutput;
+  client: string;
   public: string;
+  server: string;
 }
 
 export type Props = {
@@ -30,8 +24,8 @@ export type Props = {
 };
 
 export interface Page<Template> {
-  template: Template;
   props: Props;
+  template: Template;
   update?: PageUpdater<Template>;
 }
 
@@ -40,11 +34,6 @@ export type Teardown = () => void;
 export type PageUpdater<Template> = (page: Page<Template>) => Teardown;
 
 export type MaybePromise<T> = T | Promise<T>;
-
-export type WebpackConfig = {
-  client: webpack.Configuration;
-  server: webpack.Configuration;
-};
 
 export interface DevServerActions {
   close: () => void;
@@ -76,26 +65,13 @@ export type OnLookup = (
   path: string,
 ) => MaybePromise<void | (() => MaybePromise<void>)>;
 
-// TODO: Fix this type.
-export type ScriptAttributes = Partial<
-  Pick<
-    HTMLScriptElement,
-    | 'async'
-    | 'crossOrigin'
-    | 'defer'
-    | 'integrity'
-    | 'noModule'
-    | 'referrerPolicy'
-    | 'src'
-    | 'type'
-  > & { content: string }
->;
+type Attributes = Record<string, string | undefined | null>;
 
 export type RenderToString<Component> = (options: {
   dev: boolean;
+  links: Attributes[];
   props: Props;
-  scripts: ScriptAttributes[];
-  stylesheets: string[];
+  scripts: Attributes[];
   template: {
     name: string;
     component: Component | null;

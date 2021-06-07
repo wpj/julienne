@@ -1,7 +1,8 @@
 import { Site, SiteOptions, TemplateConfig } from 'julienne';
 import type { SvelteComponent } from 'svelte';
 import { renderToString as defaultRenderToString } from './render';
-import { createWebpackConfig } from './webpack';
+import svelte, { PreprocessorGroup } from '@sveltejs/vite-plugin-svelte';
+import svelteAutoPreprocess from 'svelte-preprocess';
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -20,15 +21,13 @@ class SvelteSite<Templates extends TemplateConfig> extends Site<
     super({
       renderToString,
       runtime,
-      snowpackConfig: {
+      viteConfig: {
         plugins: [
-          [
-            require.resolve('@snowpack/plugin-svelte'),
-            { hmrOptions: { preserveLocalState: true } },
-          ],
+          svelte({
+            preprocess: svelteAutoPreprocess() as PreprocessorGroup,
+          }),
         ],
       },
-      webpackConfig: createWebpackConfig(),
       ...options,
     });
   }

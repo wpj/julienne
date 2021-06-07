@@ -31,14 +31,17 @@ let external = [
   ...Object.keys(pkg.peerDependencies || []),
 ].map((pkgName) => new RegExp(`^${pkgName}`));
 
-export default [
-  {
-    input: 'src/index.ts',
-    external,
-    output: [
-      { file: pkg.module, format: 'es' },
-      { file: pkg.main, format: 'cjs', exports: 'default' },
-    ],
-    plugins: createPlugins(),
-  },
-];
+/**
+ * @type {import('rollup').RollupOptions}
+ */
+const config = {
+  input: 'src/index.ts',
+  external,
+  output: [
+    { file: pkg.module, format: 'es', sourcemap: true },
+    { file: pkg.main, format: 'cjs', exports: 'default', sourcemap: true },
+  ],
+  plugins: createPlugins(),
+};
+
+export default config;

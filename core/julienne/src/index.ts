@@ -1,6 +1,5 @@
-export type { Compilation } from './compilation';
-export { Compiler } from './compiler';
-export type { Options as CompilerOptions } from './compiler';
+export type { Build } from './build';
+export type { Options as BuildOptions } from './application';
 export { DevServer } from './dev-server';
 export { Generator } from './generator';
 export { Site } from './site';

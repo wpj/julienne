@@ -3,7 +3,7 @@ import { Store } from 'julienne';
 import sade from 'sade';
 
 let templates = {
-  main: require.resolve('./src/templates/main.tsx'),
+  main: './src/templates/main.tsx',
 } as const;
 
 type Templates = typeof templates;

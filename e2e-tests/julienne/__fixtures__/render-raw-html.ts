@@ -6,23 +6,26 @@ import type { Component } from './types';
  * Render function components returning strings and generate basic HTML markup.
  */
 export const renderToString: RenderToString<Component> = ({
+  links,
   props,
   scripts,
-  stylesheets,
   template,
 }) => {
-  let stylesheetTags = stylesheets.map(
-    (href) => `<link rel="stylesheet" href="${href}" type="text/css" />`,
+  let stylesheetTags = links.map(
+    ({ href }) => `<link rel="stylesheet" href="${href}" type="text/css" />`,
   );
 
   let scriptTags = scripts
     .map(({ content, type = 'text/javascript', ...attrs }) => {
-      let attributes = Object.entries({ ...attrs, type }).reduce((acc, [key, val]) => {
-            let kv =
-              typeof val === 'boolean' ? (val ? key : '') : `${key}="${val}"`;
+      let attributes = Object.entries({ ...attrs, type }).reduce(
+        (acc, [key, val]) => {
+          let kv =
+            typeof val === 'boolean' ? (val ? key : '') : `${key}="${val}"`;
 
-            return acc.length > 0 ? `${acc} ${kv}` : kv;
-          }, '')
+          return acc.length > 0 ? `${acc} ${kv}` : kv;
+        },
+        '',
+      );
 
       return `<script ${attributes}>${content ? content : ''}</script>`;
     })

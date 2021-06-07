@@ -14,8 +14,8 @@ import unified from 'unified';
 import { remarkImages } from './src/build/remark-images';
 
 const templates = {
-  post: require.resolve('./src/templates/post.svelte'),
-  postIndex: require.resolve('./src/templates/post-index.svelte'),
+  post: './src/templates/post.svelte',
+  postIndex: './src/templates/post-index.svelte',
 };
 
 type Templates = typeof templates;

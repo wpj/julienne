@@ -1,19 +1,19 @@
-import { Compilation } from './compilation';
+import { Build } from './build';
 import type { Props, RenderToString, TemplateConfig } from './types';
 import { getAssets } from './utils';
 
 export class Renderer<Component, Templates extends TemplateConfig> {
-  compilation: Compilation;
+  build: Build;
   internalRenderToString: RenderToString<Component>;
 
   constructor({
-    compilation,
+    build,
     renderToString,
   }: {
-    compilation: Compilation;
+    build: Build;
     renderToString: RenderToString<Component>;
   }) {
-    this.compilation = compilation;
+    this.build = build;
     this.internalRenderToString = renderToString;
   }
 
@@ -27,11 +27,17 @@ export class Renderer<Component, Templates extends TemplateConfig> {
     props: Props;
     template: keyof Templates;
   }): Promise<string> {
-    let { compilation, internalRenderToString } = this;
+    let { build, internalRenderToString } = this;
 
-    let serverModule = await import(compilation.server.asset);
+    let templatePath = build.server.entryAssets[template as string][0];
+    let templateComponent = await import(templatePath).then(
+      (mod) => mod.default,
+    );
+    if (!templateComponent) {
+      throw new Error(`No component for template "${template}" found.`);
+    }
 
-    let templateAssets = compilation.client.templateAssets[template as string];
+    let templateAssets = build.client.templateAssets[template as string];
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!templateAssets) {
@@ -42,16 +48,21 @@ export class Renderer<Component, Templates extends TemplateConfig> {
 
     let scripts = scriptSrcs.map((src) => ({
       src,
+      type: 'module',
     }));
+
+    let links = stylesheets.map((href) => {
+      return { href, type: 'text/css', rel: 'stylesheet' };
+    });
 
     return internalRenderToString({
       dev: false,
+      links,
       props,
       scripts,
-      stylesheets,
       template: {
         name: template as string,
-        component: serverModule[template],
+        component: templateComponent,
       },
     });
   }

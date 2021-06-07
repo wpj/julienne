@@ -2,6 +2,12 @@
   export let posts: { slug: string; title: string }[];
 </script>
 
+<style>
+  ul {
+    color: goldenrod;
+  }
+</style>
+
 <svelte:head>
   <title>Blog example</title>
 </svelte:head>

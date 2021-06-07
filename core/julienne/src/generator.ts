@@ -36,21 +36,17 @@ export class Generator<Component, Templates extends TemplateConfig> {
    */
   async generate({ store }: { store: Store<Templates> }): Promise<void> {
     let { output, renderer } = this;
-    let errors: Error[] = [];
 
-    let storeEntries = Array.from(store.entries());
-
-    let pageEntries = storeEntries.filter(
+    let pageEntries = Array.from(store.entries()).filter(
       (entry): entry is [string, PageAction<keyof Templates>] =>
         entry[1].type === 'page',
     );
 
-    let fileEntries = storeEntries.filter(
-      (entry): entry is [string, FileAction] => entry[1].type === 'file',
-    );
-
-    // Pages need to be rendered first so that any files created during the
+    // Pages need to be processed first so that any files created during the
     // page creation process are ready to be processed.
+    //
+    // After we're done processing the page entry, it may be worth considering
+    // removing it from the store.
     let pageResults = await Promise.allSettled(
       pageEntries.map(async ([pagePath, { action }]) => {
         let normalizedPagePath = normalizePagePath(pagePath);
@@ -73,6 +69,10 @@ export class Generator<Component, Templates extends TemplateConfig> {
       }),
     );
 
+    let fileEntries = Array.from(store.entries()).filter(
+      (entry): entry is [string, FileAction] => entry[1].type === 'file',
+    );
+
     let fileResults = await Promise.allSettled(
       fileEntries.map(async ([filePath, { action }]) => {
         let outputPath = pathJoin(output, filePath);
@@ -89,11 +89,12 @@ export class Generator<Component, Templates extends TemplateConfig> {
       }),
     );
 
-    [...pageResults, ...fileResults].forEach((result) => {
+    let errors: Error[] = [];
+    for (let result of [...pageResults, ...fileResults]) {
       if (result.status === 'rejected') {
-        errors.push(result.reason);
+        errors.push(new Error(result.reason));
       }
-    });
+    }
 
     if (errors.length > 0) {
       throw new AggregateError(errors);

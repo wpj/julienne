@@ -3,12 +3,13 @@
   // `Script`.
   import Skript from './script.svelte';
 
+  type Attributes = Record<string, string | undefined | null>;
+
   export let body: string | undefined;
   export let head: string | undefined;
+  export let links: Attributes[] = [];
   export let pageData: any;
-  // TODO: Fix this type.
-  export let scripts: { [key: string]: string | number | boolean }[] = [];
-  export let stylesheets: string[];
+  export let scripts: Attributes[] = [];
 </script>
 
 <html lang="en">
@@ -20,8 +21,8 @@
       {@html head}
     {/if}
 
-    {#each stylesheets as href}
-      <link rel="stylesheet" {href} type="text/css" />
+    {#each links as link}
+      <link {...link} />
     {/each}
   </head>
   <body>
