@@ -2,6 +2,7 @@ import { join as pathJoin } from 'path';
 import {
   buildClient,
   buildServer,
+  Format,
   Options as ApplicationBuildOptions,
 } from './application';
 import { Build } from './build';
@@ -18,6 +19,18 @@ import type {
   RenderToString,
   TemplateConfig,
 } from './types';
+
+declare global {
+  interface ImportMeta {
+    env: {
+      IS_ESM: boolean;
+    };
+  }
+}
+
+let isEsm = import.meta.env.IS_ESM;
+
+const FORMAT: Format = isEsm ? 'esm' : 'cjs';
 
 function getOutputWithDefaults({
   base = '/',
@@ -74,6 +87,7 @@ export class Site<Component, Templates extends TemplateConfig> {
     });
     let serverBuild = await buildServer({
       ...applicationBuildOptions,
+      format: FORMAT,
       outDir: output.server,
     });
 

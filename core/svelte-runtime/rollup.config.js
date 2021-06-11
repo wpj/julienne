@@ -35,7 +35,7 @@ let external = [
  * @type {import('rollup').RollupOptions}
  */
 const config = {
-  input: 'src/index.ts',
+  input: pkg.source,
   external,
   output: [
     { file: pkg.module, format: 'es', sourcemap: true },

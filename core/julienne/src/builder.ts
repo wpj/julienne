@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import type { Build } from './build';
 import type { Generator } from './generator';
 import type { Store } from './store';
@@ -25,7 +25,7 @@ export class Builder<Component, Templates extends TemplateConfig> {
 
   /**
    * Writes static files and pages to the filesystem and copies the client
-   * compilation assets to the public directory.
+   * build assets to the public directory.
    */
   async write({ store }: { store: Store<Templates> }): Promise<void> {
     let { generator, output } = this;

@@ -37,11 +37,11 @@ let external = [
  * @type {import('rollup').RollupOptions}
  */
 const config = {
-  input: 'src/index.ts',
+  input: pkg.source,
   external,
   output: [
-    { file: pkg.module, format: 'es', sourcemap: true },
-    { file: pkg.main, format: 'cjs', sourcemap: true },
+    { file: pkg.exports.import, format: 'es', sourcemap: true },
+    { file: pkg.exports.require, format: 'cjs', sourcemap: true },
   ],
   plugins: createPlugins(),
 };

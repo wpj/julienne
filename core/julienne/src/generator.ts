@@ -1,5 +1,5 @@
 import AggregateError from 'aggregate-error';
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import { join as pathJoin } from 'path';
 import { Renderer } from './renderer';
 import type { FileAction, PageAction, Store } from './store';
@@ -92,7 +92,9 @@ export class Generator<Component, Templates extends TemplateConfig> {
     let errors: Error[] = [];
     for (let result of [...pageResults, ...fileResults]) {
       if (result.status === 'rejected') {
-        errors.push(new Error(result.reason));
+        let error = new Error(result.reason);
+        error.stack = result.reason.stack;
+        errors.push(error);
       }
     }
 

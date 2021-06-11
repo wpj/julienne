@@ -5,7 +5,7 @@ import {
   renderToString as reactRenderToString,
 } from 'react-dom/server';
 import Document from './document';
-import { format } from 'prettier';
+import prettier from 'prettier';
 
 const DOCTYPE = '<!doctype html>\n';
 
@@ -49,7 +49,7 @@ export const renderToString: RenderToString<ComponentType> = async ({
       />,
     );
 
-  return format(renderedPage, {
+  return prettier.format(renderedPage, {
     parser: 'html',
     embeddedLanguageFormatting: 'off',
   });

@@ -3,14 +3,19 @@
   "version": "0.2.0",
   "description": "Small static site generator",
   "repository": "wpj/julienne",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "type": "module",
+  "source": "src/index.ts",
+  "main": "./dist/index.cjs",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+  },
   "types": "./dist/index.d.ts",
   "author": "Wyatt Johnston",
   "license": "MIT",
   "scripts": {
     "build": "rimraf dist && npm run build-js && npm run build-types",
-    "build-js": "rollup -c --silent",
+    "build-js": "julienne-build build",
     "build-types": "tsc --emitDeclarationOnly --project tsconfig.build.json",
     "lint:ts": "eslint --max-warnings 0 '**/*.ts'",
     "lint": "npm run lint:ts",
@@ -18,23 +23,17 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
-    "watch-js": "rollup -c --watch"
+    "watch-js": "julienne-build watch"
   },
   "files": [
     "dist"
   ],
   "devDependencies": {
     "@babel/core": "^7.14.3",
-    "@babel/plugin-proposal-class-properties": "^7.13.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.14.4",
-    "@babel/plugin-proposal-optional-chaining": "^7.14.2",
     "@babel/preset-env": "^7.14.4",
     "@babel/preset-typescript": "^7.13.0",
+    "@julienne/build": "workspace:*",
     "@julienne/runtime": "workspace:^0.1.1",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-commonjs": "^19.0.0",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.0.0",
     "@types/babel__core": "^7.1.14",
     "@types/fs-extra": "^9.0.11",
     "@types/jest": "^26.0.23",
@@ -54,7 +53,7 @@
     "jest-runner": "^27.0.4",
     "playwright": "~1.11.1",
     "rimraf": "^3.0.2",
-    "rollup": "^2.51.0",
+    "rollup": "^2.51.1",
     "serve-handler": "^6.1.3",
     "typescript": "^4.3.2"
   },

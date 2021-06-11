@@ -2,11 +2,17 @@
   "name": "@julienne/react-runtime",
   "version": "0.1.1",
   "description": "React runtime module for julienne sites",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "source": "./src/index.tsx",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rimraf dist && microbundle build --format es,cjs --jsx React.createElement",
+    "build": "rimraf dist && microbundle build --format es,modern,cjs --jsx React.createElement",
     "lint:ts": "eslint --max-warnings 0 '**/*.tsx'",
     "lint": "npm run lint:ts",
     "typecheck": "tsc --noEmit"
@@ -30,7 +36,7 @@
     "@typescript-eslint/eslint-plugin": "^4.26.0",
     "@typescript-eslint/parser": "^4.26.0",
     "eslint": "^7.28.0",
-    "microbundle": "^0.13.1",
+    "microbundle": "^0.13.2",
     "rimraf": "^3.0.2",
     "typescript": "^4.1.3"
   },

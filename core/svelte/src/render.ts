@@ -1,6 +1,6 @@
 import type { RenderToString } from 'julienne';
 import type { SvelteComponent } from 'svelte';
-import { format } from 'prettier';
+import prettier from 'prettier';
 import Document from './document.svelte';
 
 const DOCTYPE = '<!doctype html>\n';
@@ -40,7 +40,7 @@ export const renderToString: RenderToString<SvelteComponent> = ({
       scripts,
     }).html;
 
-  return format(renderedPage, {
+  return prettier.format(renderedPage, {
     parser: 'html',
     embeddedLanguageFormatting: 'off',
   });

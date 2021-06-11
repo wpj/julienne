@@ -2,11 +2,18 @@
   "name": "@julienne/react",
   "version": "0.2.0",
   "description:": "React configuration and server renderer for julienne sites",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "source": "./src/index.ts",
+  "main": "./dist/index.cjs",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs"
+  },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rimraf dist && microbundle build --no-compress --target node --format es,cjs --jsx React.createElement",
+    "build": "rimraf dist && npm run build-js && npm run build-types",
+    "build-js": "julienne-build build",
+    "build-types": "tsc --emitDeclarationOnly",
     "lint:ts": "eslint --max-warnings 0 '**/*.tsx'",
     "lint": "npm run lint:ts",
     "typecheck": "tsc --noEmit"
@@ -25,6 +32,7 @@
   ],
   "homepage": "https://github.com/wpj/julienne/core/react-render#readme",
   "devDependencies": {
+    "@julienne/build": "workspace:*",
     "@types/node": "^15.12.1",
     "@types/prettier": "^2.2.3",
     "@types/react": "^17.0.9",
@@ -33,7 +41,6 @@
     "@typescript-eslint/parser": "^4.26.0",
     "eslint": "^7.28.0",
     "julienne": "workspace:^0.2.0",
-    "microbundle": "^0.13.1",
     "rimraf": "^3.0.2",
     "typescript": "^4.3.2"
   },

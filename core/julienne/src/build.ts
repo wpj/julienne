@@ -4,7 +4,7 @@ import { makePublicEntryAssets } from './utils';
 type TemplateAssets = EntryAssets;
 
 /**
- * Provides an interface for consumers to query information about a compilation
+ * Provides an interface for consumers to query information about a build
  * result.
  */
 export class ClientBuild {

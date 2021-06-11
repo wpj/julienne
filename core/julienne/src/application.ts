@@ -10,6 +10,8 @@ import {
   virtualPlugin,
 } from './utils';
 
+export type Format = 'esm' | 'cjs';
+
 export interface Options<Templates extends TemplateConfig> {
   base: string;
   cwd?: string;
@@ -25,7 +27,7 @@ export async function buildClient<Templates extends TemplateConfig>({
   outDir,
   runtime,
   templates,
-  viteConfig = {},
+  viteConfig: viteUserConfig = {},
 }: Options<Templates>): Promise<ClientBuild> {
   // Creates virtual entries in cwd so that relative imports of template modules
   // work correctly.
@@ -45,17 +47,16 @@ export async function buildClient<Templates extends TemplateConfig>({
     }),
   );
 
-  viteConfig = {
-    ...viteConfig,
+  const viteConfig = {
+    ...viteUserConfig,
     base,
     build: {
-      ...viteConfig.build,
+      ...viteUserConfig.build,
       cssCodeSplit: true,
       manifest: true,
       outDir,
-      polyfillDynamicImport: false,
       rollupOptions: {
-        ...(viteConfig.build && viteConfig.build.rollupOptions),
+        ...viteUserConfig.build?.rollupOptions,
         input,
         output: {
           entryFileNames: '_julienne/static/[name]-[hash].js',
@@ -64,17 +65,17 @@ export async function buildClient<Templates extends TemplateConfig>({
         },
       },
     },
-    logLevel: viteConfig.logLevel ?? 'silent',
-    plugins: [virtualPlugin(virtualEntries), ...(viteConfig.plugins ?? [])],
+    logLevel: viteUserConfig.logLevel ?? 'silent',
+    plugins: [virtualPlugin(virtualEntries), ...(viteUserConfig.plugins ?? [])],
     resolve: {
-      ...viteConfig.resolve,
+      ...viteUserConfig.resolve,
     },
     root: cwd,
   };
 
   let bundle = await vite.build({
-    configFile: false,
     ...viteConfig,
+    configFile: false,
   });
 
   if (!('output' in bundle)) {
@@ -116,34 +117,39 @@ export async function buildClient<Templates extends TemplateConfig>({
 export async function buildServer<Templates extends TemplateConfig>({
   base,
   cwd = process.cwd(),
+  format,
   outDir,
   templates,
-  viteConfig = {},
-}: Omit<Options<Templates>, 'runtime'>): Promise<ServerBuild> {
-  viteConfig = {
-    ...viteConfig,
+  viteConfig: viteUserConfig = {},
+}: Omit<Options<Templates>, 'runtime'> & {
+  format: Format;
+}): Promise<ServerBuild> {
+  const jsExtension = format === 'esm' ? 'mjs' : 'cjs';
+
+  const viteConfig = {
+    ...viteUserConfig,
     base,
     build: {
-      ...viteConfig.build,
+      ...viteUserConfig.build,
       outDir,
-      polyfillDynamicImport: false,
       rollupOptions: {
-        ...(viteConfig.build && viteConfig.build.rollupOptions),
+        ...viteUserConfig.build?.rollupOptions,
         input: templates,
         output: {
-          entryFileNames: '[name].js',
+          ...viteUserConfig.build?.rollupOptions?.output,
+          format,
+          entryFileNames: `[name].${jsExtension}`,
+          chunkFileNames: `chunks/[name]-[hash].${jsExtension}`,
+          assetFileNames: 'assets/[name]-[hash][extname]',
+          inlineDynamicImports: true,
         },
       },
-      target: 'esnext',
       ssr: true,
     },
-    esbuild: {
-      format: 'esm',
-    },
-    logLevel: viteConfig.logLevel ?? 'silent',
-    plugins: [...(viteConfig.plugins ?? [])],
+    logLevel: viteUserConfig.logLevel ?? 'silent',
+    plugins: [...(viteUserConfig.plugins ?? [])],
     resolve: {
-      ...viteConfig.resolve,
+      ...viteUserConfig.resolve,
     },
     root: cwd,
   };
