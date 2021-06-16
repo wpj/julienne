@@ -141,7 +141,6 @@ export async function buildServer<Templates extends TemplateConfig>({
           entryFileNames: `[name].${jsExtension}`,
           chunkFileNames: `chunks/[name]-[hash].${jsExtension}`,
           assetFileNames: 'assets/[name]-[hash][extname]',
-          inlineDynamicImports: true,
         },
       },
       ssr: true,
