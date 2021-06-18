@@ -29,9 +29,11 @@ describe('Store', () => {
 
       store.createPage('/a', getPage);
 
-      let pageAction = store.pages.get('/a');
+      let resource = store.get('/a');
       let cachedGetPage =
-        pageAction?.type === 'create' ? pageAction.getData : getNull;
+        resource?.type === 'page' && resource.action.type === 'create'
+          ? resource.action.getData
+          : getNull;
 
       expect(await cachedGetPage()).toEqual(getPage());
     });
@@ -63,24 +65,24 @@ describe('Store', () => {
 
       store.createFile('/stream.txt', getStreamFile);
 
-      let actions = {
-        generatedString: store.files.get('/generated-string.json'),
-        generatedBuffer: store.files.get('/generated-buffer.json'),
-        stream: store.files.get('/stream.txt'),
+      let resources = {
+        generatedString: store.get('/generated-string.json'),
+        generatedBuffer: store.get('/generated-buffer.json'),
+        stream: store.get('/stream.txt'),
       };
 
-      let generatedStringFile = (await (actions.generatedString?.type ===
-        'create'
-        ? actions.generatedString.getData
+      let generatedStringFile = (await (resources.generatedString?.action
+        .type === 'create'
+        ? resources.generatedString.action.getData
         : getNull)()) as Generated;
 
-      let generatedBufferFile = (await (actions.generatedBuffer?.type ===
-        'create'
-        ? actions.generatedBuffer.getData
+      let generatedBufferFile = (await (resources.generatedBuffer?.action
+        .type === 'create'
+        ? resources.generatedBuffer.action.getData
         : getNull)()) as Generated;
 
-      let streamFile = (await (actions.stream?.type === 'create'
-        ? actions.stream.getData
+      let streamFile = (await (resources.stream?.action.type === 'create'
+        ? resources.stream.action.getData
         : getNull)()) as Stream;
 
       expect(generatedStringFile.type).toBe('generated');
@@ -106,10 +108,10 @@ describe('Store', () => {
 
       store.copyFile('/fake.txt', './fake.txt');
 
-      let fileAction = store.files.get('/fake.txt');
+      let resource = store.get('/fake.txt');
 
       let getFile =
-        fileAction?.type === 'create' ? fileAction.getData : getNull;
+        resource?.action.type === 'create' ? resource.action.getData : getNull;
 
       expect(getFile()).toEqual({
         type: 'copy',

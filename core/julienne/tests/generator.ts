@@ -1,16 +1,11 @@
 import { join as pathJoin } from 'path';
 import { Readable } from 'stream';
 import { Generator } from '../src/generator';
+import { Renderer } from '../src/renderer';
 import { Store } from '../src/store';
-import type { Props } from '../src/types';
-import type { RenderToString as RenderToStringType } from '../src/render';
+import type { Props, RenderToString as RenderToStringType } from '../src/types';
 import { writeFile } from '../src/utils/file';
-import {
-  clientScripts,
-  clientStylesheets,
-  createTestCompilation,
-  templates,
-} from './__fixtures__/compilation';
+import { createTestBuild, templates } from './__fixtures__/build';
 
 // This doesn't need to be declared prior to importing modules that depend on
 // this mocked module because jest hoists all mock declarations to the top under
@@ -32,79 +27,13 @@ function getPublicPath(path: string) {
 type Component = (props: Props) => string;
 
 describe('Generator', () => {
-  test('throws an error when created without a server compilation', () => {
-    let compilation = createTestCompilation({
-      includeServerCompilation: false,
-    });
-
-    expect(() => {
-      new Generator<Component, Templates>({
-        compilation,
-        output: defaultOutput,
-        renderToString: () => 'html',
-      });
-    }).toThrow();
-  });
-
-  describe('renderToString', () => {
-    test('calls the configured render function with the correct data and returns its output', async () => {
-      let props = { name: 'World' };
-
-      let compilation = createTestCompilation({
-        includeServerCompilation: true,
-      });
-
-      let renderToString: RenderToStringFunc = ({
-        props,
-        scripts: clientScripts,
-        stylesheets,
-        template,
-      }) => {
-        let component = template.component as (p: typeof props) => string;
-
-        return JSON.stringify({
-          props,
-          rendered: component(props),
-          scripts: clientScripts,
-          stylesheets,
-          templateName: template.name,
-        });
-      };
-
-      let generator = new Generator<Component, Templates>({
-        compilation,
-        output: defaultOutput,
-        renderToString,
-      });
-
-      let rendered = await generator.renderToString({
-        props,
-        template: 'main',
-      });
-
-      expect(rendered).toEqual(
-        JSON.stringify({
-          props,
-          rendered: 'Hello, World',
-          scripts: clientScripts.map((script) => pathJoin('/', script)),
-          stylesheets: clientStylesheets.map((stylesheet) =>
-            pathJoin('/', stylesheet),
-          ),
-          templateName: 'main',
-        }),
-      );
-    });
-  });
-
   describe('generate', () => {
     let renderToString: RenderToStringFunc = ({ props, template }) => {
       let component = template.component as (p: typeof props) => string;
       return component(props);
     };
 
-    let compilation = createTestCompilation({
-      includeServerCompilation: true,
-    });
+    let build = createTestBuild();
 
     test('renders and writes pages to the filesystem', async () => {
       let store = new Store<Templates>();
@@ -119,10 +48,11 @@ describe('Generator', () => {
         props: { name: 'Universe' },
       }));
 
+      let renderer = new Renderer({ build, renderToString });
+
       let generator = new Generator<Component, Templates>({
-        compilation,
         output: defaultOutput,
-        renderToString,
+        renderer,
       });
 
       await generator.generate({ store });
@@ -150,10 +80,11 @@ describe('Generator', () => {
 
       store.copyFile('/text/mock.txt', pathJoin(__dirname, 'mock.txt'));
 
+      let renderer = new Renderer({ build, renderToString });
+
       let generator = new Generator<Component, Templates>({
-        compilation,
         output: defaultOutput,
-        renderToString,
+        renderer,
       });
 
       await generator.generate({ store });

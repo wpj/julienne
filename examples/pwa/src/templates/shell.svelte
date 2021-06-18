@@ -2,7 +2,9 @@
   import { createJsonSlug } from '../helpers';
 
   async function importTemplate(template: string) {
-    return import(`./${template}.svelte`).then(mod => mod.default)
+    // Rollup dynamic import doesn't handle same-directory imports, so this is a
+    // hack to get around that.
+    return import(`../templates/${template}.svelte`).then((mod) => mod.default);
   }
 
   async function fetchPage(pageUrl: string) {

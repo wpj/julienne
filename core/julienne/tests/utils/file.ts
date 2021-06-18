@@ -1,7 +1,7 @@
 import type { Readable } from 'stream';
 import { dirname, join as pathJoin } from 'path';
 import { createWriteStream, promises as fs } from 'fs';
-import { ensureDir } from 'fs-extra';
+import fse from 'fs-extra';
 
 import { writeFile } from '../../src/utils/file';
 
@@ -17,7 +17,7 @@ describe('writeFile', () => {
       data: 'Test',
     });
 
-    expect(ensureDir).toHaveBeenCalledWith(dirname(path));
+    expect(fse.ensureDir).toHaveBeenCalledWith(dirname(path));
 
     expect(fs.writeFile).toHaveBeenCalledWith(path, 'Test', 'utf8');
   });
@@ -31,7 +31,7 @@ describe('writeFile', () => {
       from,
     });
 
-    expect(ensureDir).toHaveBeenCalledWith(dirname(to));
+    expect(fse.ensureDir).toHaveBeenCalledWith(dirname(to));
 
     expect(fs.copyFile).toHaveBeenCalledWith(from, to);
   });
@@ -46,7 +46,7 @@ describe('writeFile', () => {
       data: html,
     });
 
-    expect(ensureDir).toHaveBeenCalledWith(dirname(path));
+    expect(fse.ensureDir).toHaveBeenCalledWith(dirname(path));
 
     expect(fs.writeFile).toHaveBeenCalledWith(path, html, 'utf8');
   });
@@ -64,14 +64,14 @@ describe('writeFile', () => {
 
     let path = pathJoin(__dirname, 'test.html');
 
-    let stream = ({ pipe: jest.fn() } as unknown) as Readable;
+    let stream = { pipe: jest.fn() } as unknown as Readable;
 
     await writeFile(path, {
       type: 'stream',
       data: stream,
     });
 
-    expect(ensureDir).toHaveBeenCalledWith(dirname(path));
+    expect(fse.ensureDir).toHaveBeenCalledWith(dirname(path));
 
     expect(createWriteStream).toHaveBeenCalledWith(path);
 

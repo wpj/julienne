@@ -4,11 +4,11 @@ import type { Props } from 'julienne';
 import sade from 'sade';
 import { createJsonSlug } from './src/helpers';
 
-let runtime = require.resolve('./src/runtime.ts');
+let runtime = './src/runtime.ts';
 
 let templates = {
-  alt: require.resolve('./src/templates/alt.svelte'),
-  main: require.resolve('./src/templates/main.svelte'),
+  alt: './src/templates/alt.svelte',
+  main: './src/templates/main.svelte',
 };
 
 type Templates = typeof templates;
@@ -45,7 +45,6 @@ prog.command('build').action(async () => {
 
 prog.command('dev').action(async () => {
   let site = new Site({
-    dev: true,
     runtime,
     templates,
   });

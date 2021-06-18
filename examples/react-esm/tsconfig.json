@@ -1,0 +1,12 @@
+{
+  "include": ["src", "site.ts"],
+  "exclude": ["node_modules", ".julienne"],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "skipLibCheck": true
+  }
+}

@@ -5,13 +5,14 @@ import {
   renderToString as reactRenderToString,
 } from 'react-dom/server';
 import Document from './document';
+import prettier from 'prettier';
 
 const DOCTYPE = '<!doctype html>\n';
 
-export const renderToString: RenderToString<ComponentType> = ({
+export const renderToString: RenderToString<ComponentType> = async ({
+  links,
   props,
   scripts,
-  stylesheets,
   template,
 }) => {
   let pageData = { props, template: template.name };
@@ -23,9 +24,9 @@ export const renderToString: RenderToString<ComponentType> = ({
         <Document
           body={null}
           head={null}
+          links={links}
           pageData={pageData}
           scripts={scripts}
-          stylesheets={stylesheets}
         />,
       )
     );
@@ -36,16 +37,20 @@ export const renderToString: RenderToString<ComponentType> = ({
   let html = reactRenderToString(<Template {...props} />);
 
   // TODO: handle head
-  return (
+  let renderedPage =
     DOCTYPE +
     renderToStaticMarkup(
       <Document
         body={html}
         head={null}
+        links={links}
         pageData={pageData}
         scripts={scripts}
-        stylesheets={stylesheets}
       />,
-    )
-  );
+    );
+
+  return prettier.format(renderedPage, {
+    parser: 'html',
+    embeddedLanguageFormatting: 'off',
+  });
 };

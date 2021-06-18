@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let posts: { slug: string, title: string }[];
+  export let posts: { slug: string; title: string }[];
 </script>
 
 <svelte:head>
@@ -8,8 +8,12 @@
 
 <ul>
   {#each posts as post}
-    <li>
-      <a href={post.slug}>{post.title}</a>
-    </li>
+    <li><a href={post.slug}>{post.title}</a></li>
   {/each}
 </ul>
+
+<style>
+  ul {
+    color: goldenrod;
+  }
+</style>

@@ -9,7 +9,7 @@ export default function loader(
 ): string {
   let options = getLoaderOptions(this);
 
-  let store: Store = (options.store as unknown) as Store;
+  let store: Store = options.store as unknown as Store;
   let flag = options.flag as Flag;
 
   if (isFlagged(content, flag)) {

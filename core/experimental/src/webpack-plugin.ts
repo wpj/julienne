@@ -154,8 +154,8 @@ export class FlaggedModulePlugin {
           );
 
           try {
-            let childCompilation: webpack.compilation.Compilation = await new Promise(
-              (resolve, reject) => {
+            let childCompilation: webpack.compilation.Compilation =
+              await new Promise((resolve, reject) => {
                 childCompiler.runAsChild(
                   (
                     err: Error,
@@ -171,8 +171,7 @@ export class FlaggedModulePlugin {
                     }
                   },
                 );
-              },
-            );
+              });
 
             // Replace the parent compilation's assets with those of the child
             // compilation.

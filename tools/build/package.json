@@ -1,0 +1,17 @@
+{
+  "name": "@julienne/build",
+  "private": "true",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "exports": "./build.mjs",
+  "bin": {
+    "julienne-build": "./bin.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.12.8",
+    "sade": "^1.7.4"
+  }
+}

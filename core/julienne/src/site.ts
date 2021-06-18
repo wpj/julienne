@@ -1,43 +1,62 @@
 import { join as pathJoin } from 'path';
+import {
+  buildClient,
+  buildServer,
+  Format,
+  Options as ApplicationBuildOptions,
+} from './application';
+import { Build } from './build';
 import { Builder } from './builder';
-import { Compiler, Options as CompilerOptions } from './compiler';
+import { DevServer } from './dev-server';
 import { Generator } from './generator';
-import type { RenderToString } from './render';
-import { Server as DevServer } from './server';
+import { Renderer } from './renderer';
 import { Store } from './store';
 import type {
   DevServerActions,
+  OnLookup,
   Output,
   OutputConfig,
+  RenderToString,
   TemplateConfig,
 } from './types';
 
+declare global {
+  interface ImportMeta {
+    env: {
+      IS_ESM: boolean;
+    };
+  }
+}
+
+let isEsm = import.meta.env.IS_ESM;
+
+const FORMAT: Format = isEsm ? 'esm' : 'cjs';
+
 function getOutputWithDefaults({
+  base = '/',
   cwd,
   internal: internalOutputPath = pathJoin(cwd, '.julienne'),
   public: publicOutputPath = pathJoin(cwd, 'public'),
-  publicPath = '/',
-}: OutputConfig & { cwd: string }): Output {
+}: OutputConfig & { cwd: string }): Output & { base: string } {
   return {
-    compiler: {
-      client: pathJoin(internalOutputPath, 'client'),
-      publicPath,
-      server: pathJoin(internalOutputPath, 'server'),
-    },
+    base,
+    client: pathJoin(internalOutputPath, 'client'),
+    server: pathJoin(internalOutputPath, 'server'),
     public: publicOutputPath,
   };
 }
 
 export type Options<Component, Templates extends TemplateConfig> = Omit<
-  CompilerOptions<Templates>,
-  'output'
+  ApplicationBuildOptions<Templates>,
+  'output' | 'base' | 'outDir'
 > & {
   output?: OutputConfig;
   renderToString: RenderToString<Component>;
 };
 
 export class Site<Component, Templates extends TemplateConfig> {
-  compilerOptions: CompilerOptions<Templates>;
+  applicationBuildOptions: Omit<ApplicationBuildOptions<Templates>, 'outDir'>;
+  cwd: string;
   output: Output;
   renderToString: RenderToString<Component>;
 
@@ -45,57 +64,75 @@ export class Site<Component, Templates extends TemplateConfig> {
     cwd = process.cwd(),
     output: outputConfig,
     renderToString,
-    ...compilerOptions
+    ...applicationBuildOptions
   }: Options<Component, Templates>) {
     let output = getOutputWithDefaults({ cwd, ...outputConfig });
 
-    this.compilerOptions = { cwd, output: output.compiler, ...compilerOptions };
+    this.applicationBuildOptions = {
+      cwd,
+      base: output.base,
+      ...applicationBuildOptions,
+    };
+    this.cwd = cwd;
     this.output = output;
     this.renderToString = renderToString;
   }
 
   async compile(): Promise<Builder<Component, Templates>> {
-    let { compilerOptions, output, renderToString } = this;
+    let { applicationBuildOptions, output, renderToString } = this;
 
-    let compiler = new Compiler(compilerOptions);
-
-    let compilation = await compiler.compile();
-
-    let generator = new Generator<Component, Templates>({
-      compilation,
-      output: output.public,
-      renderToString,
+    let clientBuild = await buildClient({
+      ...applicationBuildOptions,
+      outDir: output.client,
+    });
+    let serverBuild = await buildServer({
+      ...applicationBuildOptions,
+      format: FORMAT,
+      outDir: output.server,
     });
 
-    return new Builder({ compilation, generator, output });
+    let build = new Build({
+      client: clientBuild,
+      server: serverBuild,
+    });
+
+    let renderer = new Renderer({ build, renderToString });
+
+    let generator = new Generator<Component, Templates>({
+      output: output.public,
+      renderer,
+    });
+
+    return new Builder({ build, generator, output });
   }
 
   async build({ store }: { store: Store<Templates> }): Promise<void> {
     let builder = await this.compile();
-    await builder.build({ store });
+    await builder.write({ store });
   }
 
   async dev({
+    onLookup,
     port = 3000,
     store,
   }: {
+    onLookup?: OnLookup;
     port?: number;
     store: Store<Templates>;
   }): Promise<DevServerActions> {
-    let { compilerOptions, renderToString } = this;
-    let { runtime, templates, webpackConfig } = compilerOptions;
-    let { files, pages } = store;
+    let { applicationBuildOptions, cwd, renderToString } = this;
+    let { runtime, viteConfig, templates } = applicationBuildOptions;
 
     let devServer = new DevServer<Component, Templates>({
-      files,
-      pages,
+      cwd,
       renderToString,
       runtime,
+      store,
+      viteConfig,
       templates,
-      webpackConfig,
     });
 
-    let serverActions = await devServer.start({ port });
+    let serverActions = await devServer.start({ onLookup, port });
 
     return serverActions;
   }

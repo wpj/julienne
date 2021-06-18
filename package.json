@@ -2,21 +2,23 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@changesets/cli": "^2.12.0",
-    "husky": "^4.3.6",
-    "lint-staged": "^10.5.3",
-    "prettier": "^2.2.1",
-    "prettier-plugin-svelte": "^1.4.2",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "svelte": "^3.31.0"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "@changesets/cli": "^2.16.0",
+    "husky": "^6.0.0",
+    "lint-staged": "^11.0.0",
+    "prettier": "^2.3.1",
+    "prettier-plugin-svelte": "^2.3.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "svelte": "^3.38.2"
   },
   "lint-staged": {
-    "*.{js,css,md}": "prettier --write"
+    "*.{js,jsx,ts,tsx,css,md,svelte,html}": "prettier --write --plugin-search-dir=."
+  },
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "volta": {
+    "node": "14.17.1",
+    "npm": "7.17.0"
   }
 }

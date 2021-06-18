@@ -1,20 +1,36 @@
 import React from 'react';
 
+function cleanAttrs(
+  attrs: Record<string, string | undefined | null>,
+): Record<string, string | null> {
+  return Object.fromEntries(
+    Object.entries(attrs).map(([key, val]) => {
+      return [key, val === undefined ? null : val];
+    }),
+  );
+}
+
+type Attributes = Record<string, string | undefined | null>;
+
 export default function Document({
   body,
   head,
+  links,
   pageData,
   scripts,
-  stylesheets,
 }: {
   body: string | null;
   head: string | null;
+  links: Attributes[];
   pageData: unknown;
-  scripts: string[];
-  stylesheets: string[];
+  scripts: Attributes[];
 }): JSX.Element {
-  let stylesheetTags = stylesheets
-    .map((href) => `<link rel="stylesheet" href="${href}" type="text/css" />`)
+  let linkTags = links
+    .map(({ href, rel, type }) => {
+      return `<link rel=${JSON.stringify(rel)} href=${JSON.stringify(
+        href,
+      )} type=${JSON.stringify(type)}/>`;
+    })
     .join('\n');
 
   let headHtml = `
@@ -25,7 +41,7 @@ export default function Document({
     headHtml += head;
   }
 
-  headHtml += stylesheetTags;
+  headHtml += linkTags;
 
   return (
     <html lang="en">
@@ -43,9 +59,29 @@ export default function Document({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(pageData) }}
         />
 
-        {scripts.map((src) => (
-          <script key={src} type="text/javascript" src={src} />
-        ))}
+        {scripts.map(({ content, ...attributes }, index) => {
+          const key = attributes.src ?? index;
+          const type = attributes.type ?? 'text/javascript';
+
+          if (content) {
+            return (
+              <script
+                key={key}
+                type={type}
+                dangerouslySetInnerHTML={{ __html: content }}
+                {...cleanAttrs(attributes)}
+              />
+            );
+          }
+
+          return (
+            <script
+              key={attributes.src ?? index}
+              type={type}
+              {...cleanAttrs(attributes)}
+            />
+          );
+        })}
       </body>
     </html>
   );

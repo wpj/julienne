@@ -1,3 +1,5 @@
 packages:
   - 'core/**'
   - 'examples/**'
+  - 'e2e-tests/**'
+  - 'tools/**'

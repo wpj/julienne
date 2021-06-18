@@ -1,12 +1,33 @@
 import isStream from 'is-stream';
-import type {
-  FileMap,
-  GetData,
-  GetFile,
-  GetPage,
-  PageMap,
-  TemplateConfig,
-} from './types';
+import type { Readable } from 'stream';
+import type { MaybePromise, File, Page, TemplateConfig } from './types';
+
+/**
+ * A lazy, potentially async page.
+ */
+type GetPage<Template> = () => MaybePromise<Page<Template>>;
+
+/**
+ * Lazy, potentially async file data.
+ */
+type GetData = () => MaybePromise<string | Readable | Buffer>;
+
+/**
+ * A lazy, potentially async file.
+ */
+type GetFile = () => MaybePromise<File>;
+
+export type ActionFileCreate<T> = { type: 'create'; getData: T };
+export type ActionFileRemove = { type: 'remove' };
+
+export type PageAction<Template> = {
+  type: 'page';
+  action: ActionFileCreate<GetPage<Template>> | ActionFileRemove;
+};
+export type FileAction = {
+  type: 'file';
+  action: ActionFileCreate<GetFile> | ActionFileRemove;
+};
 
 function validatePath(path: string, entity: string) {
   if (!path.startsWith('/')) {
@@ -14,20 +35,30 @@ function validatePath(path: string, entity: string) {
   }
 }
 
+class ResourceMap<Template> extends Map<
+  string,
+  PageAction<Template> | FileAction
+> {}
+
 /**
  * Stores a site's pages and files.
  */
-export class Store<Templates extends TemplateConfig> {
-  public files: FileMap = new Map();
-  public pages: PageMap<keyof Templates> = new Map();
-
+export class Store<Templates extends TemplateConfig> extends ResourceMap<
+  keyof Templates
+> {
   /**
    * Creates a page using the given path and template configuration returned by
    * `getPage`.
    */
   createPage(path: string, getPage: GetPage<keyof Templates>): void {
     validatePath(path, 'Page');
-    this.pages.set(path, { type: 'create', getData: getPage });
+    this.set(path, {
+      type: 'page',
+      action: {
+        type: 'create',
+        getData: getPage,
+      },
+    });
   }
 
   /**
@@ -35,7 +66,7 @@ export class Store<Templates extends TemplateConfig> {
    */
   removePage(path: string): void {
     validatePath(path, 'Page');
-    this.pages.set(path, { type: 'remove' });
+    this.set(path, { type: 'page', action: { type: 'remove' } });
   }
 
   /**
@@ -53,7 +84,13 @@ export class Store<Templates extends TemplateConfig> {
       }
     };
 
-    this.files.set(path, { type: 'create', getData: getFile });
+    this.set(path, {
+      type: 'file',
+      action: {
+        type: 'create',
+        getData: getFile,
+      },
+    });
   }
 
   /**
@@ -63,7 +100,7 @@ export class Store<Templates extends TemplateConfig> {
     validatePath(to, 'File');
     let getData = () => ({ type: 'copy', from } as const);
 
-    this.files.set(to, { type: 'create', getData });
+    this.set(to, { type: 'file', action: { type: 'create', getData } });
   }
 
   /**
@@ -72,6 +109,6 @@ export class Store<Templates extends TemplateConfig> {
   removeFile(path: string): void {
     validatePath(path, 'File');
 
-    this.files.set(path, { type: 'remove' });
+    this.set(path, { type: 'file', action: { type: 'remove' } });
   }
 }

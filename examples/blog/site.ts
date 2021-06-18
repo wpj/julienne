@@ -14,8 +14,8 @@ import unified from 'unified';
 import { remarkImages } from './src/build/remark-images';
 
 const templates = {
-  post: require.resolve('./src/templates/post.svelte'),
-  postIndex: require.resolve('./src/templates/post-index.svelte'),
+  post: './src/templates/post.svelte',
+  postIndex: './src/templates/post-index.svelte',
 };
 
 type Templates = typeof templates;
@@ -26,9 +26,9 @@ function extractFrontmatter<T>(node: Root) {
       ? (node.children.shift() as YamlNode)
       : null;
 
-  return (frontmatterNode !== null
-    ? safeLoad(frontmatterNode.value)
-    : {}) as Partial<T>;
+  return (
+    frontmatterNode !== null ? safeLoad(frontmatterNode.value) : {}
+  ) as Partial<T>;
 }
 
 /*
@@ -140,7 +140,7 @@ prog.command('build').action(async () => {
 });
 
 prog.command('dev').action(async () => {
-  let site = new Site({ dev: true, templates });
+  let site = new Site({ templates });
 
   let store = await getStore();
 

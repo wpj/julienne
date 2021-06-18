@@ -1,5 +1,5 @@
 import { createWriteStream, promises as fs } from 'fs';
-import { ensureDir } from 'fs-extra';
+import fse from 'fs-extra';
 import { dirname } from 'path';
 import type { File } from '../file';
 
@@ -13,7 +13,7 @@ export async function writeFile(
 ): Promise<void> {
   let outputDir = dirname(path);
 
-  await ensureDir(outputDir);
+  await fse.ensureDir(outputDir);
 
   if (file.type === 'copy') {
     return fs.copyFile(file.from, path);

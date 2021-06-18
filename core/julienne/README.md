@@ -38,9 +38,9 @@ Type:
 
 ```typescript
 {
+  base: string;
   internal: string;
   public: string;
-  publicPath: string;
 }
 ```
 
@@ -55,23 +55,24 @@ directory structure will be created:
 └── public
 ```
 
-`public` is the directory that the site's webpack bundle, static pages, and
-files will be written to. `internal` contains files internal to julienne used
-during static rendering.
+`public` is the directory that the site's bundled application bundle, static
+pages, and files will be written to. `internal` contains files internal to
+julienne used during rendering.
 
-#### options.render
+#### options.renderToString
 
 Function to use when rendering components on the server. The function must
-conform to the following signature:
+implement the following signature:
 
 ```typescript
-type Render = (options: {
-  props: { [key: string]: unknown };
-  scripts: string[];
-  stylesheets: string[];
+export type RenderToString<Component> = (options: {
+  dev: boolean;
+  links: Record<string, string | undefined | null>[];
+  props: Props;
+  scripts: Record<string, string | undefined | null>[];
   template: {
     name: string;
-    component: null | unknown;
+    component: Component | null;
   };
 }) => string | Promise<string>;
 ```
@@ -98,12 +99,11 @@ Type: `{ [name: string]: string }`
 
 An object that maps template names to file paths.
 
-#### options.webpackConfig (optional)
+#### options.viteConfig (optional)
 
-Type: `{ client: webpack.Configuration, server: webpack.Configuration }`
+Type: `vite.UserConfig`
 
-Custom webpack configuration. julienne generates entries internally, so entries
-should not be included in custom webpack configuration.
+Custom vite configuration.
 
 ### createPage(path, getPage)
 
@@ -187,9 +187,9 @@ Example usage:
 let builder = await site.compile();
 ```
 
-Compiles the site's Webpack bundle and returns a `Builder` object, which can be
-used to inspect the result of the compilation and write the pages, files, and
-compilation to the public output directory.
+Builds the site's application bundle and returns a `Builder` object, which can
+be used to inspect the result of the build and write the pages, files, and
+client application bundle to the public output directory.
 
 ### build()
 
@@ -199,8 +199,8 @@ Example usage:
 await builder.build();
 ```
 
-Compiles and writes the site's Webpack bundle, pages, and files to the public
-output directory.
+Compiles and writes the site's application bundle, pages, and files to the
+public output directory.
 
 ### dev(options)
 
@@ -221,32 +221,18 @@ The port to use to start the development server on; defaults to `3000`.
 
 ### Builder
 
-#### compilation
+#### build
 
-The site's compilation manifest.
+The site's build manifest.
 
-#### build()
+#### write()
 
-Writes the site's pages, files, and compilation to the public output directory.
+Writes the site's pages, files, and application bundle to the public output
+directory.
 
-### Compilation
+### Build
 
-A compilation manifest returned by `Site.compile`.
-
-## Polyfills
-
-If you're targeting browsers that require polyfills of JavaScript features (i.e.
-async function), you need to add `core-js` and `regenerator-runtime` as
-dependencies, define a custom runtime, and import those modules in it.
-
-As an example:
-
-```typescript
-import 'core-js';
-import 'regenerator-runtime';
-
-// Define custom runtime here.
-```
+A build manifest returned by `Site.compile`.
 
 ## License
 

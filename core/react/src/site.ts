@@ -1,7 +1,7 @@
 import { Site, SiteOptions, TemplateConfig } from 'julienne';
 import type { ComponentType } from 'react';
 import { renderToString as defaultRenderToString } from './render';
-import { createWebpackConfig } from './webpack';
+import reactRefresh from '@vitejs/plugin-react-refresh';
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<T>;
 
@@ -10,20 +10,19 @@ class ReactSite<Templates extends TemplateConfig> extends Site<
   Templates
 > {
   constructor({
-    dev = false,
     renderToString = defaultRenderToString,
     runtime = '@julienne/react-runtime',
     ...options
   }: Optional<
     SiteOptions<ComponentType, Templates>,
     'renderToString' | 'runtime'
-  > & {
-    dev?: boolean;
-  }) {
+  >) {
     super({
       renderToString,
       runtime,
-      webpackConfig: createWebpackConfig({ dev }),
+      viteConfig: {
+        plugins: [reactRefresh()],
+      },
       ...options,
     });
   }

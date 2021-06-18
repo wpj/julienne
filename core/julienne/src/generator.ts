@@ -1,12 +1,10 @@
-import * as fs from 'fs-extra';
-import { join as pathJoin } from 'path';
-import { Compilation } from './compilation';
-import type { RenderToString } from './render';
-import type { Store } from './store';
-import type { Props, TemplateConfig } from './types';
-import { getAssets } from './utils';
-import { writeFile } from './utils/file';
 import AggregateError from 'aggregate-error';
+import fs from 'fs-extra';
+import { join as pathJoin } from 'path';
+import { Renderer } from './renderer';
+import type { FileAction, PageAction, Store } from './store';
+import type { TemplateConfig } from './types';
+import { writeFile } from './utils/file';
 
 function normalizePagePath(pagePath: string) {
   if (pagePath.endsWith('.html')) {
@@ -20,52 +18,46 @@ function normalizePagePath(pagePath: string) {
  * When `generate` is invoked, all known files and pages will be generate and written to the filesystem.
  */
 export class Generator<Component, Templates extends TemplateConfig> {
-  compilation: Compilation;
-  internalRenderToString: RenderToString<Component>;
+  renderer: Renderer<Component, Templates>;
   output: string;
-  serverModulePath: string;
-
   constructor({
-    compilation,
     output,
-    renderToString,
+    renderer,
   }: {
-    compilation: Compilation;
     output: string;
-    renderToString: RenderToString<Component>;
+    renderer: Renderer<Component, Templates>;
   }) {
-    if (!compilation.server?.asset) {
-      throw new Error('Server module not found');
-    }
-
-    this.compilation = compilation;
-    this.internalRenderToString = renderToString;
     this.output = output;
-    this.serverModulePath = compilation.server.asset;
+    this.renderer = renderer;
   }
 
   /**
    * Write the site's pages and files to disk.
    */
   async generate({ store }: { store: Store<Templates> }): Promise<void> {
-    let { output } = this;
-    let { files, pages } = store;
+    let { output, renderer } = this;
 
-    let errors: Error[] = [];
+    let pageEntries = Array.from(store.entries()).filter(
+      (entry): entry is [string, PageAction<keyof Templates>] =>
+        entry[1].type === 'page',
+    );
 
-    // Pages need to be rendered first so that any files created during the
+    // Pages need to be processed first so that any files created during the
     // page creation process are ready to be processed.
+    //
+    // After we're done processing the page entry, it may be worth considering
+    // removing it from the store.
     let pageResults = await Promise.allSettled(
-      Array.from(pages.entries()).map(async ([pagePath, pageAction]) => {
+      pageEntries.map(async ([pagePath, { action }]) => {
         let normalizedPagePath = normalizePagePath(pagePath);
         let outputPath = pathJoin(output, normalizedPagePath);
 
-        if (pageAction.type === 'create') {
-          let getPage = pageAction.getData;
+        if (action.type === 'create') {
+          let getPage = action.getData;
 
           let page = await getPage();
 
-          let renderedPage = await this.renderToString({
+          let renderedPage = await renderer.renderToString({
             template: page.template,
             props: page.props,
           });
@@ -77,12 +69,16 @@ export class Generator<Component, Templates extends TemplateConfig> {
       }),
     );
 
+    let fileEntries = Array.from(store.entries()).filter(
+      (entry): entry is [string, FileAction] => entry[1].type === 'file',
+    );
+
     let fileResults = await Promise.allSettled(
-      Array.from(files.entries()).map(async ([filePath, fileAction]) => {
+      fileEntries.map(async ([filePath, { action }]) => {
         let outputPath = pathJoin(output, filePath);
 
-        if (fileAction.type === 'create') {
-          let getFile = fileAction.getData;
+        if (action.type === 'create') {
+          let getFile = action.getData;
 
           let file = await getFile();
 
@@ -93,47 +89,17 @@ export class Generator<Component, Templates extends TemplateConfig> {
       }),
     );
 
-    [...pageResults, ...fileResults].forEach((result) => {
+    let errors: Error[] = [];
+    for (let result of [...pageResults, ...fileResults]) {
       if (result.status === 'rejected') {
-        errors.push(result.reason);
+        let error = new Error(result.reason);
+        error.stack = result.reason.stack;
+        errors.push(error);
       }
-    });
+    }
 
     if (errors.length > 0) {
       throw new AggregateError(errors);
     }
-  }
-
-  /**
-   * Render `template` with `props` as input and return the rendered string.
-   */
-  async renderToString({
-    props,
-    template,
-  }: {
-    props: Props;
-    template: keyof Templates;
-  }): Promise<string> {
-    let { compilation, internalRenderToString, serverModulePath } = this;
-
-    let serverModule = await import(serverModulePath);
-
-    let templateAssets = compilation.client.templateAssets[template as string];
-
-    if (!templateAssets) {
-      throw new Error(`Render error: assets for "${template}" not found.`);
-    }
-
-    let { scripts, stylesheets } = getAssets(templateAssets);
-
-    return internalRenderToString({
-      props,
-      scripts,
-      stylesheets,
-      template: {
-        name: template as string,
-        component: serverModule[template],
-      },
-    });
   }
 }

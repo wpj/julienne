@@ -14,7 +14,9 @@ function createPlugins() {
     resolve({ extensions }),
     commonjs(),
     svelte({
-      generate: 'ssr',
+      compilerOptions: {
+        generate: 'ssr',
+      },
       preprocess: svelteAutoPreprocess(),
     }),
     babel({ extensions, babelHelpers: 'bundled' }),
@@ -31,14 +33,17 @@ let external = [
   ...Object.keys(pkg.peerDependencies || []),
 ].map((pkgName) => new RegExp(`^${pkgName}`));
 
-export default [
-  {
-    input: 'src/index.ts',
-    external,
-    output: [
-      { file: pkg.module, format: 'es' },
-      { file: pkg.main, format: 'cjs' },
-    ],
-    plugins: createPlugins(),
-  },
-];
+/**
+ * @type {import('rollup').RollupOptions}
+ */
+const config = {
+  input: pkg.source,
+  external,
+  output: [
+    { file: pkg.exports.import, format: 'es', sourcemap: true },
+    { file: pkg.exports.require, format: 'cjs', sourcemap: true },
+  ],
+  plugins: createPlugins(),
+};
+
+export default config;
