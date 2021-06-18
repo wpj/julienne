@@ -469,6 +469,45 @@ importers:
       ts-node: 10.0.0_10b86ec3e0ae69831b5d57b396c86e38
       typescript: 4.3.2
 
+  examples/react-esm:
+    specifiers:
+      '@julienne/react': workspace:^0.2.0
+      '@julienne/react-runtime': ^0.1.1
+      '@types/node': ^15.12.1
+      '@types/react': ^17.0.9
+      '@types/react-dom': ^17.0.6
+      '@types/sade': ^1.7.2
+      '@typescript-eslint/eslint-plugin': ^4.26.0
+      '@typescript-eslint/parser': ^4.26.0
+      eslint: ^7.28.0
+      eslint-plugin-react-hooks: ^4.1.2
+      julienne: workspace:^0.2.0
+      react: ^17.0.2
+      react-dom: ^17.0.2
+      sade: ^1.7.3
+      serve: ^11.3.2
+      ts-node: ^10.0.0
+      typescript: ^4.3.2
+    dependencies:
+      '@julienne/react-runtime': link:../../core/react-runtime
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    devDependencies:
+      '@julienne/react': link:../../core/react
+      '@types/node': 15.12.1
+      '@types/react': 17.0.9
+      '@types/react-dom': 17.0.6
+      '@types/sade': 1.7.2
+      '@typescript-eslint/eslint-plugin': 4.26.0_20402444dce539b9a5aa61b9d15feae1
+      '@typescript-eslint/parser': 4.26.0_eslint@7.28.0+typescript@4.3.2
+      eslint: 7.28.0
+      eslint-plugin-react-hooks: 4.2.0_eslint@7.28.0
+      julienne: link:../../core/julienne
+      sade: 1.7.4
+      serve: 11.3.2
+      ts-node: 10.0.0_10b86ec3e0ae69831b5d57b396c86e38
+      typescript: 4.3.2
+
   tools/build:
     specifiers:
       esbuild: ^0.12.8
