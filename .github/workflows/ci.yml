@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [15.x]
+        node-version: [14.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,23 +30,28 @@ jobs:
           CI: true
           PLAYWRIGHT_BROWSERS_PATH: 0
 
-      - name: Build packages
-        run: pnpm recursive run build
+      - name: Build core packages
+        run: pnpm run build:core
         env:
           CI: true
-
-      - name: Run tests
-        run: pnpm recursive run test
-        env:
-          CI: true
-          PLAYWRIGHT_BROWSERS_PATH: 0
 
       - name: Lint files
-        run: pnpm recursive run lint
+        run: pnpm run lint
         env:
           CI: true
 
       - name: Check types
-        run: pnpm recursive run typecheck
+        run: pnpm run typecheck
+        env:
+          CI: true
+
+      - name: Run tests
+        run: pnpm run test
+        env:
+          CI: true
+          PLAYWRIGHT_BROWSERS_PATH: 0
+
+      - name: Build examples
+        run: pnpm run build:core
         env:
           CI: true
