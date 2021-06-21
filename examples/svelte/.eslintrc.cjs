@@ -14,7 +14,7 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   rules: {
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
     'prefer-const': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
   },
 };

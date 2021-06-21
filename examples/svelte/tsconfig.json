@@ -1,13 +1,12 @@
 {
+  "extends": "@tsconfig/svelte/tsconfig.json",
   "include": ["src", "types", "app.js", "build.js", "config.js"],
   "exclude": ["node_modules", ".julienne"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "jsx": "react",
     "module": "esnext",
-    "moduleResolution": "node",
     "skipLibCheck": true,
     "strict": true
   }

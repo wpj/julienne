@@ -9,5 +9,5 @@
  * @param {Props} props
  */
 export default function template({ name }) {
-  return `Hello, ${name}`;
+  return `<div>Hello, ${name}</div>`;
 }

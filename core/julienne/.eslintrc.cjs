@@ -9,11 +9,14 @@ module.exports = {
       files: ['tests/**/*'],
       rules: {
         '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
       },
     },
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
+    jsxPragma: 'h',
+    jsxFragmentName: 'Fragment',
     project: `${__dirname}/tsconfig.json`,
   },
   root: true,

@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "jsx": "preserve",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -13,5 +16,5 @@
     "target": "esnext"
   },
   "exclude": ["dist"],
-  "include": ["src", "e2e-tests", "tests", "types", "__mocks__"]
+  "include": ["src", "tests", "types"]
 }

@@ -1,71 +1,158 @@
-import { join as pathJoin } from 'path';
+import * as td from 'testdouble';
+import { suite } from 'uvu';
+import * as assert from 'uvu/assert';
 import { Renderer } from '../src/renderer';
-import type { Props, RenderToString as RenderToStringType } from '../src/types';
-import {
-  clientScripts,
-  clientStylesheets,
-  createTestBuild,
-  templates,
-} from './__fixtures__/build';
+import type { RenderDocument, ServerContext } from '../src/types';
 
-type Templates = typeof templates;
+type Props = Record<string, unknown>;
+type Component = (props: Record<string, unknown>) => string;
 
-type RenderToStringFunc = RenderToStringType<
-  (props: { [key: string]: unknown }) => string
->;
+function render(component: Component, props: Props) {
+  return component(props);
+}
 
-type Component = (props: Props) => string;
+type GetComponent = (path: string) => Promise<Component>;
 
-describe('Renderer', () => {
-  describe('renderToString', () => {
-    test('calls the configured render function with the correct data and returns its output', async () => {
-      let props = { name: 'World' };
+type GetResourcesForTemplate = (template: string) => {
+  scripts: Record<string, string | boolean | undefined | null>[];
+  links: Record<string, string | boolean | undefined | null>[];
+};
 
-      let build = createTestBuild();
+let test = suite<{
+  getComponent: GetComponent;
+  getResourcesForTemplate: GetResourcesForTemplate;
+}>('Renderer');
 
-      let renderToString: RenderToStringFunc = ({
-        links,
-        props,
-        scripts: clientScripts,
-        template,
-      }) => {
-        let component = template.component as (p: typeof props) => string;
+test.before((context) => {
+  context.getComponent = td.func<(path: string) => Promise<Component>>();
 
-        return JSON.stringify({
-          props,
-          rendered: component(props),
-          scripts: clientScripts,
-          links,
-          templateName: template.name,
-        });
-      };
-
-      let generator = new Renderer<Component, Templates>({
-        build,
-        renderToString,
-      });
-
-      let rendered = await generator.renderToString({
-        props,
-        template: 'main',
-      });
-
-      expect(JSON.parse(rendered)).toStrictEqual({
-        props,
-        rendered: 'Hello, World',
-        links: clientStylesheets.map((stylesheet) => {
-          return {
-            href: pathJoin('/', stylesheet),
-            rel: 'stylesheet',
-            type: 'text/css',
-          };
-        }),
-        scripts: clientScripts.map((script) => ({
-          src: pathJoin('/', script),
-          type: 'module',
-        })),
-        templateName: 'main',
-      });
-    });
-  });
+  context.getResourcesForTemplate = td.func<GetResourcesForTemplate>();
 });
+
+test.after.each(() => {
+  td.reset();
+});
+
+test('renders a template', async ({
+  getComponent,
+  getResourcesForTemplate,
+}) => {
+  td.when(getComponent('main')).thenResolve(({ name }: { name: string }) => {
+    return `<div>Hello, <span>${name}</span></div>`;
+  });
+
+  td.when(getResourcesForTemplate('main')).thenReturn({
+    scripts: [{ src: '/main.js', type: 'module' }],
+    links: [{ href: '/main.css', rel: 'stylesheet', type: 'text/css' }],
+  });
+
+  let renderer = new Renderer<Component, { main: string }>({
+    getComponent,
+    getResourcesForTemplate,
+    render: render,
+  });
+
+  let rendered = await renderer.render('main', { name: 'Test' });
+
+  assert.type(rendered, 'string');
+});
+
+let testResources = {
+  scripts: [{ src: '/main.js', type: 'module' }],
+  links: [{ href: '/main.css', rel: 'stylesheet', type: 'text/css' }],
+};
+
+test('renders a custom document', async ({
+  getComponent,
+  getResourcesForTemplate,
+}) => {
+  let renderedTemplate = 'rendered';
+
+  td.when(getComponent('main')).thenResolve(() => renderedTemplate);
+  td.when(getResourcesForTemplate('main')).thenReturn(testResources);
+
+  let renderDocument = td.func<RenderDocument>();
+
+  let renderer = new Renderer<Component, { main: string }>({
+    getComponent,
+    getResourcesForTemplate,
+    render: render,
+    renderDocument,
+  });
+
+  td.when(
+    renderDocument({
+      ...testResources,
+      body: renderedTemplate,
+      head: undefined,
+      pageData: { template: 'main', props: { name: 'Test' } },
+    }),
+  ).thenReturn('rendered document');
+
+  assert.is(
+    await renderer.render('main', { name: 'Test' }),
+    'rendered document',
+  );
+});
+
+test('post-processes rendered HTML', async ({
+  getComponent,
+  getResourcesForTemplate,
+}) => {
+  td.when(getComponent('main')).thenResolve(() => 'rendered');
+  td.when(getResourcesForTemplate('main')).thenReturn(testResources);
+
+  let postProcessHtml =
+    td.func<(html: string, context?: ServerContext) => Promise<string>>();
+
+  let renderer = new Renderer<Component, { main: string }>({
+    getComponent,
+    getResourcesForTemplate,
+    render: render,
+    renderDocument: () => 'rendered',
+    postProcessHtml,
+  });
+
+  let context = {};
+
+  await renderer.render('main', { name: 'Test' }, context);
+
+  td.verify(postProcessHtml('rendered', context));
+});
+
+test('passes exceptions to `handleError`', async ({
+  getComponent,
+  getResourcesForTemplate,
+}) => {
+  let renderError = new Error('Render error');
+  let component = () => {
+    throw renderError;
+  };
+
+  td.when(getComponent('main')).thenResolve(component);
+  td.when(getResourcesForTemplate('main')).thenReturn(testResources);
+
+  const handleError = td.func<(e: Error) => void>();
+
+  function render(component: Component, props: Props): Promise<string> {
+    return Promise.resolve(component(props));
+  }
+
+  let renderer = new Renderer<Component, { main: string }>({
+    getComponent,
+    getResourcesForTemplate,
+    handleError,
+    render,
+  });
+
+  try {
+    await renderer.render('main', { name: 'Test' });
+    assert.unreachable();
+  } catch (e) {
+    assert.is(e, renderError);
+  }
+
+  td.verify(handleError(renderError));
+});
+
+test.run();

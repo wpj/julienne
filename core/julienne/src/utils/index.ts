@@ -1,9 +1,12 @@
 import { join as pathJoin, parse as parsePath, sep as pathSep } from 'path';
-import { clientEntryPointTemplate } from '../code-gen';
-import type { EntryAssets } from '../types';
 import type { Plugin as VitePlugin } from 'vite';
-
-export const internalDirName = `${process.cwd()}/__build__`;
+import { clientEntryPointTemplate } from '../code-gen';
+import type {
+  Attributes,
+  ClientManifest,
+  Output,
+  OutputConfig,
+} from '../types';
 
 /**
  * Converts a file path to a name suitable as an entry.
@@ -28,61 +31,64 @@ export function identity<T>(val: T): T {
 }
 
 export function getAssets(templateAssets: string[]): {
-  scripts: string[];
-  stylesheets: string[];
+  links: Attributes[];
+  scripts: Attributes[];
 } {
-  let scripts = templateAssets.filter((asset: string) => asset.endsWith('.js'));
+  let scripts = templateAssets
+    .filter((asset: string) => asset.endsWith('.js'))
+    .map((src) => {
+      return { type: 'module', src };
+    });
 
-  let stylesheets = templateAssets.filter((asset: string) =>
-    asset.endsWith('.css'),
-  );
+  let links = templateAssets
+    .filter((asset: string) => asset.endsWith('.css'))
+    .map((href) => {
+      return { href, type: 'text/css', rel: 'stylesheet' };
+    });
 
-  return { scripts, stylesheets };
+  return { links, scripts };
 }
 
-export type Manifest = {
+export type VirtualManifest = {
   [key: string]: {
     code: string;
-    filename: string;
     path: string;
   };
 };
 
+export function getTemplateFilename(name: string): string {
+  return `___julienne_${name}___.js`;
+}
+
 export function getTemplateManifest<Templates>({
   cwd,
-  dev,
-  hydrate,
   templates,
-  runtime,
+  render,
 }: {
   cwd: string;
-  dev: boolean;
-  hydrate: boolean;
-  runtime: string;
+  render: string;
   templates: Templates;
-}): Manifest {
+}): VirtualManifest {
   return Object.fromEntries(
     Object.entries(templates).map(([templateName, templatePath]) => {
-      let filename = `___julienne_${templateName}___.js`;
-      let path = pathJoin(cwd, filename);
+      let filename = getTemplateFilename(templateName);
+      let entryPath = pathJoin(cwd, filename);
+
       return [
         templateName,
         {
           code: clientEntryPointTemplate({
-            dev,
-            hydrate,
-            runtime,
-            template: templatePath,
+            component: templatePath,
+            render,
           }),
-          filename,
-          path,
+          path: entryPath,
         },
       ];
     }),
   );
 }
 
-export function getVirtualEntriesFromManifest(manifest: Manifest): {
+export function getVirtualEntriesFromManifest(manifest: VirtualManifest): {
   [path: string]: string;
 } {
   return Object.fromEntries(
@@ -102,11 +108,9 @@ export function virtualPlugin(virtualEntries: {
         return id;
       }
     },
-    async load(id) {
+    load(id) {
       if (id in virtualEntries) {
-        const mod = virtualEntries[id];
-
-        return mod;
+        return virtualEntries[id];
       }
     },
   };
@@ -115,14 +119,26 @@ export function virtualPlugin(virtualEntries: {
 /**
  * Prepends the public path onto the path of each asset in the entry.
  */
-export function makePublicEntryAssets(
-  entryAssets: EntryAssets,
+export function makeClientAssets(
+  clientManifest: ClientManifest,
   publicPath: string,
-): EntryAssets {
+): ClientManifest {
   return Object.fromEntries(
-    Object.entries(entryAssets).map(([name, assets]) => [
+    Object.entries(clientManifest).map(([name, assets]) => [
       name,
       assets.map((asset) => pathJoin(publicPath, asset)),
     ]),
   );
+}
+
+export function getOutputWithDefaults({
+  cwd,
+  internal: internalOutputPath = pathJoin(cwd, '.julienne'),
+  public: publicOutputPath = pathJoin(cwd, 'public'),
+}: OutputConfig & { cwd: string }): Output {
+  return {
+    client: pathJoin(internalOutputPath, 'client'),
+    server: pathJoin(internalOutputPath, 'server'),
+    public: publicOutputPath,
+  };
 }

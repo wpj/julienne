@@ -3,26 +3,36 @@
 ## Usage
 
 ```typescript
-import { Site } from 'julienne';
+import { createRenderer, createDevRenderer } from 'julienne';
 
-let site = new Site({
+function render(component, props, context) {
+  // render component as a string;
+  let renderedResult = '...';
+
+  return renderedResult;
+}
+
+let renderer = await createRenderer({
+  render,
+  runtime: '/path/to/runtime.js',
   templates: {
-    main: require.resolve('./path/to/template'),
+    main: require.resolve('./path/to/component.js'),
   },
 });
 
-// Build the site
-await site.build();
-
-// Start a local development server
-await site.dev();
+renderer.render('main', propsForMain, context);
 ```
 
 ## API
 
-### Site(options)
+### createRenderer(options) / createDevRenderer(options)
 
-Construct a Site instance.
+Create a renderer instance.
+
+#### options.base (optional)
+
+The base public path to serve bundled assets from. See the Vite
+[documentation](https://vitejs.dev/config/#base) for more information.
 
 #### options.cwd (optional)
 
@@ -38,7 +48,6 @@ Type:
 
 ```typescript
 {
-  base: string;
   internal: string;
   public: string;
 }
@@ -55,26 +64,36 @@ directory structure will be created:
 └── public
 ```
 
-`public` is the directory that the site's bundled application bundle, static
-pages, and files will be written to. `internal` contains files internal to
-julienne used during rendering.
+`public` is the directory that the site's bundled application bundle and files
+will be written to. `internal` contains files internal to julienne used during
+rendering.
 
-#### options.renderToString
+#### options.render
 
 Function to use when rendering components on the server. The function must
 implement the following signature:
 
 ```typescript
-export type RenderToString<Component> = (options: {
-  dev: boolean;
-  links: Record<string, string | undefined | null>[];
-  props: Props;
-  scripts: Record<string, string | undefined | null>[];
-  template: {
-    name: string;
-    component: Component | null;
-  };
-}) => string | Promise<string>;
+type Render<Component> = (
+  component: Component,
+  props: Record<string, unknown>,
+  context?: ServerContext,
+) => string | Promise<string>;
+```
+
+#### options.renderDocument (optional)
+
+Function to use to render the document HTML. The function must implement the
+following signature:
+
+```typescript
+type RenderDocument = (props: {
+  body?: string;
+  head?: string;
+  links?: Attributes[];
+  pageData?: unknown;
+  scripts?: Attributes[];
+}) => string;
 ```
 
 #### options.runtime
@@ -105,134 +124,83 @@ Type: `vite.UserConfig`
 
 Custom vite configuration.
 
-### createPage(path, getPage)
+### build(options)
+
+Compiles and writes the application's bundle, to the public output directory.
 
 Example usage:
 
 ```typescript
-site.createPage('/', () => ({
-  template: 'main',
-  props: {
-    name: 'World',
-  },
-}));
+import { build } from 'julienne';
+await builder.build(options);
 ```
 
-#### path
+#### options.base (optional)
 
-Type: `string`
+The base public path to serve bundled assets from. See the Vite
+[documentation](https://vitejs.dev/config/#base) for more information.
 
-The path/URL to create the page at. This path must start with a forward slash.
+#### options.cwd (optional)
 
-#### getPage
+Set the cwd when compiling and generating the site. It's only necessary to set
+this when your build script is not in the directory you're generating your site
+from.
 
-Function that returns page configuration. This is where you specify what
-template to use to generate the page and the props to pass to the template.
-julienne will `await` values returned from `getPage`, so you can use
-`async`/`await`.
+If no value is passed, `process.cwd()` is used by default.
 
-Template configuration has the following type:
+#### options.output (optional)
+
+Type:
 
 ```typescript
 {
-
-  template: string;
-  props: { [key: string]: unknown };
+  internal: string;
+  public: string;
 }
 ```
 
-### createFile(path, getFile)
+Directories to write the output to. If no output is provided, the following
+directory structure will be created:
 
-Example usage:
-
-```typescript
-site.createFile('/index.json', () => JSON.stringify({ key: 'value' }));
+```
+.
+├── .julienne
+│   ├── client
+│   └── server
+└── public
 ```
 
-#### path
+`public` is the directory that the site's bundled application bundle and files
+will be written to. `internal` contains files internal to julienne used during
+rendering.
 
-The path/URL to create the file at. This path must start with a forward slash.
-
-#### getFile
-
-Function that returns file data, which can be a string, a Buffer, or a stream.
-julienne will `await` values returned from `getFile`, so you can use
-`async`/`await`.
-
-### copyFile(to, from)
-
-Example usage:
-
-```typescript
-site.copyFile("/robots.txt", path.join(__dirname, "robots.txt"));`
-```
-
-#### to
+#### options.runtime
 
 Type: `string`
 
-The path/URL to copy the file to. This path must start with a forward slash.
-
-#### from
-
-Type: `string`
-
-The path of the file to copy.
-
-### compile()
-
-Example usage:
+Path to a module to use as the runtime in the browser. The module must export a
+function as the default export with the following signature:
 
 ```typescript
-let builder = await site.compile();
+function({ dev, template }: { dev: boolean, template: typeof SvelteComponent }): void | Promise<void>;
 ```
 
-Builds the site's application bundle and returns a `Builder` object, which can
-be used to inspect the result of the build and write the pages, files, and
-client application bundle to the public output directory.
+The runtime function should handle mounting the `template` component to the
+`#julienne-root` element.
 
-### build()
+If creating a custom runtime, see [@julienne/runtime](../runtime) documentation.
 
-Example usage:
+#### options.templates
 
-```typescript
-await builder.build();
-```
+Type: `{ [name: string]: string }`
 
-Compiles and writes the site's application bundle, pages, and files to the
-public output directory.
+An object that maps template names to file paths.
 
-### dev(options)
+#### options.viteConfig (optional)
 
-Example usage:
+Type: `vite.UserConfig`
 
-```typescript
-await site.dev();
-```
-
-Starts a server for local development. Returns a promise that resolves to an
-object with a `close` method for stopping the server.
-
-#### options.port
-
-Type: `number`
-
-The port to use to start the development server on; defaults to `3000`.
-
-### Builder
-
-#### build
-
-The site's build manifest.
-
-#### write()
-
-Writes the site's pages, files, and application bundle to the public output
-directory.
-
-### Build
-
-A build manifest returned by `Site.compile`.
+Custom vite configuration.
 
 ## License
 
