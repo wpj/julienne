@@ -15,8 +15,8 @@
     "*.{js,jsx,ts,tsx,css,md,svelte,html}": "prettier --write --plugin-search-dir=."
   },
   "scripts": {
-    "build:core": "pnpm recursive --filter 'julienne' --filter '@julienne/*' run build",
     "build:examples": "pnpm recursive --filter 'example-*' run build",
+    "build:packages": "pnpm recursive --filter 'julienne' --filter '@julienne/*' run build",
     "lint": "pnpm recursive run lint",
     "test": "pnpm recursive run test",
     "typecheck": "pnpm recursive run typecheck",

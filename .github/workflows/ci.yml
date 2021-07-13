@@ -33,8 +33,8 @@ jobs:
         env:
           CI: true
 
-      - name: Build core packages
-        run: pnpm run build:core
+      - name: Build packages
+        run: pnpm run build:packages
         env:
           CI: true
 
@@ -55,6 +55,6 @@ jobs:
           PLAYWRIGHT_BROWSERS_PATH: 0
 
       - name: Build examples
-        run: pnpm run build:core
+        run: pnpm run build:examples
         env:
           CI: true
