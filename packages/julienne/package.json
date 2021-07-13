@@ -7,8 +7,7 @@
   "source": "src/index.ts",
   "main": "./dist/index.cjs",
   "exports": {
-    "import": "./dist/index.mjs",
-    "require": "./dist/index.cjs"
+    "import": "./dist/index.mjs"
   },
   "types": "./dist/index.d.ts",
   "author": "Wyatt Johnston",
@@ -36,6 +35,7 @@
     "@typescript-eslint/parser": "^4.26.0",
     "esbuild-node-loader": "^0.1.1",
     "eslint": "^7.28.0",
+    "is-stream": "^2.0.0",
     "jsdom": "^16.6.0",
     "preact": "^10.5.13",
     "preact-render-to-string": "^5.1.19",
@@ -46,9 +46,7 @@
     "uvu": "^0.5.1"
   },
   "dependencies": {
-    "aggregate-error": "^3.1.0",
     "fs-extra": "^10.0.0",
-    "is-stream": "^2.0.0",
     "vite": "^2.4.2"
   },
   "volta": {

@@ -139,7 +139,6 @@ importers:
       '@types/rimraf': ^3.0.0
       '@typescript-eslint/eslint-plugin': ^4.26.0
       '@typescript-eslint/parser': ^4.26.0
-      aggregate-error: ^3.1.0
       esbuild-node-loader: ^0.1.1
       eslint: ^7.28.0
       fs-extra: ^10.0.0
@@ -154,9 +153,7 @@ importers:
       uvu: ^0.5.1
       vite: ^2.4.2
     dependencies:
-      aggregate-error: 3.1.0
       fs-extra: 10.0.0
-      is-stream: 2.0.0
       vite: 2.4.2
     devDependencies:
       '@julienne/build': link:../../tools/build
@@ -168,6 +165,7 @@ importers:
       '@typescript-eslint/parser': 4.26.0_eslint@7.28.0+typescript@4.3.5
       esbuild-node-loader: 0.1.1
       eslint: 7.28.0
+      is-stream: 2.0.0
       jsdom: 16.6.0
       preact: 10.5.13
       preact-render-to-string: 5.1.19_preact@10.5.13
@@ -1141,6 +1139,7 @@ packages:
     dependencies:
       clean-stack: 2.2.0
       indent-string: 4.0.0
+    dev: true
 
   /ajv/6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -1417,6 +1416,7 @@ packages:
   /clean-stack/2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
+    dev: true
 
   /cli-boxes/1.0.0:
     resolution: {integrity: sha1-T6kXw+WclKAEzWH47lCdplFocUM=}
@@ -2487,6 +2487,7 @@ packages:
   /indent-string/4.0.0:
     resolution: {integrity: sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==}
     engines: {node: '>=8'}
+    dev: true
 
   /inflight/1.0.6:
     resolution: {integrity: sha1-Sb1jMdfQLQwJvJEKEHW6gWW1bfk=}
@@ -2596,6 +2597,7 @@ packages:
   /is-stream/2.0.0:
     resolution: {integrity: sha512-XCoy+WlUr7d1+Z8GgSuXmpuUFC9fOhRXglJMx+dwLKTkL44Cjd4W1Z5P+BQZpr+cR93aGP4S/s7Ftw6Nd/kiEw==}
     engines: {node: '>=8'}
+    dev: true
 
   /is-subdir/1.2.0:
     resolution: {integrity: sha512-2AT6j+gXe/1ueqbW6fLZJiIw3F8iXGJtt0yDrZaBhAZEG1raiTxKWU+IPqMCzQAXOUCKdA4UDMgacKH25XG2Cw==}
@@ -2721,7 +2723,6 @@ packages:
       universalify: 2.0.0
     optionalDependencies:
       graceful-fs: 4.2.6
-    dev: false
 
   /kind-of/6.0.3:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
@@ -4326,7 +4327,6 @@ packages:
   /universalify/2.0.0:
     resolution: {integrity: sha512-hAZsKq7Yy11Zu1DE0OzWjw7nnLZmJZYTDZZyEFHZdUhV8FkH5MCfoU1XMaxXovpyW5nq5scPqq0ZDP9Zyl04oQ==}
     engines: {node: '>= 10.0.0'}
-    dev: false
 
   /unpipe/1.0.0:
     resolution: {integrity: sha1-sr9O6FFKrmFltIF4KdIbLvSZBOw=}

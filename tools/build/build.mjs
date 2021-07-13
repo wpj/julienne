@@ -9,6 +9,7 @@ export async function build(getConfig = (c) => c) {
   );
 
   let external = [
+    'fsevents',
     ...builtinModules,
     ...Object.keys(pkg.dependencies || []),
     ...Object.keys(pkg.peerDependencies || []),
