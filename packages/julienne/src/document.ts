@@ -1,4 +1,4 @@
-import { Fragment, h } from 'preact';
+import { Fragment, h, JSX } from 'preact';
 import render from 'preact-render-to-string';
 import type { Attributes, DocumentProps } from './types';
 
