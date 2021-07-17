@@ -1,0 +1,11 @@
+.root {
+  font-family: 'Open Sans';
+}
+
+.even {
+  color: goldenrod;
+}
+
+.odd {
+  color: dimgray;
+}
