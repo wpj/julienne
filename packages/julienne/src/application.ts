@@ -21,7 +21,7 @@ import {
 } from './utils/index';
 
 type SharedBuildConfig = Pick<
-  Config<unknown>,
+  Config<unknown, string>,
   'base' | 'cwd' | 'templates' | 'viteConfig'
 > & { outDir: string };
 
@@ -33,14 +33,14 @@ function getJsExtensionForFormat(format: Format): 'mjs' | 'cjs' {
   return format === 'esm' ? 'mjs' : 'cjs';
 }
 
-export async function getClientManifest({
+export async function getClientManifest<Template extends string>({
   base,
   outDir,
   templates,
 }: {
   base: string;
   outDir: string;
-  templates: TemplateConfig;
+  templates: TemplateConfig<Template>;
 }): Promise<ClientManifest> {
   let manifest: ViteManifest = await fs
     .readFile(pathJoin(outDir, 'manifest.json'), 'utf-8')
@@ -67,14 +67,14 @@ export async function getClientManifest({
   );
 }
 
-async function getServerManifest({
+async function getServerManifest<Template extends string>({
   format,
   outDir,
   templates,
 }: {
   format: Format;
   outDir: string;
-  templates: TemplateConfig;
+  templates: TemplateConfig<Template>;
 }): Promise<ServerManifest> {
   const jsExtension = getJsExtensionForFormat(format);
 
@@ -85,14 +85,14 @@ async function getServerManifest({
   );
 }
 
-export async function getManifest({
+export async function getManifest<Template extends string>({
   base,
   output,
   templates,
 }: {
   base: string;
   output: Output;
-  templates: TemplateConfig;
+  templates: TemplateConfig<Template>;
 }): Promise<Manifest> {
   let client = await getClientManifest({
     base,

@@ -7,7 +7,7 @@ import { sharedOptions } from './config.js';
 let cwd = process.cwd();
 
 /**
- * @typedef {keyof typeof sharedOptions.templates} Template
+ * @typedef {import('./types/app').Template} Template
  * @typedef {import('julienne').Props} Props
  * @typedef {{ template: Template, props: Props }} PageConfig
  * @typedef {Record<string, PageConfig>} Pages

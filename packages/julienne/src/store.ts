@@ -1,6 +1,6 @@
 import isStream from 'is-stream';
 import type { Readable } from 'stream';
-import type { MaybePromise, File, Page, TemplateConfig } from './types';
+import type { File, MaybePromise, Page } from './types';
 
 /**
  * A lazy, potentially async page.
@@ -43,14 +43,12 @@ class ResourceMap<Template> extends Map<
 /**
  * Stores a site's pages and files.
  */
-export class Store<Templates extends TemplateConfig> extends ResourceMap<
-  keyof Templates
-> {
+export class Store<Template extends string> extends ResourceMap<Template> {
   /**
    * Creates a page using the given path and template configuration returned by
    * `getPage`.
    */
-  createPage(path: string, getPage: GetPage<keyof Templates>): void {
+  createPage(path: string, getPage: GetPage<Template>): void {
     validatePath(path, 'Page');
     this.set(path, {
       type: 'page',

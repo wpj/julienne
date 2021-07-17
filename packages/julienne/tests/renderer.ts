@@ -46,7 +46,7 @@ test('renders a template', async ({
     links: [{ href: '/main.css', rel: 'stylesheet', type: 'text/css' }],
   });
 
-  let renderer = new Renderer<Component, { main: string }>({
+  let renderer = new Renderer<Component, 'main'>({
     getComponent,
     getResourcesForTemplate,
     render: render,
@@ -73,7 +73,7 @@ test('renders a custom document', async ({
 
   let renderDocument = td.func<RenderDocument>();
 
-  let renderer = new Renderer<Component, { main: string }>({
+  let renderer = new Renderer<Component, 'main'>({
     getComponent,
     getResourcesForTemplate,
     render: render,
@@ -105,7 +105,7 @@ test('post-processes rendered HTML', async ({
   let postProcessHtml =
     td.func<(html: string, context?: ServerContext) => Promise<string>>();
 
-  let renderer = new Renderer<Component, { main: string }>({
+  let renderer = new Renderer<Component, 'main'>({
     getComponent,
     getResourcesForTemplate,
     render: render,
@@ -138,7 +138,7 @@ test('passes exceptions to `handleError`', async ({
     return Promise.resolve(component(props));
   }
 
-  let renderer = new Renderer<Component, { main: string }>({
+  let renderer = new Renderer<Component, 'main'>({
     getComponent,
     getResourcesForTemplate,
     handleError,

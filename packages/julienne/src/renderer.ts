@@ -4,7 +4,11 @@ import {
   ViteDevServer,
 } from 'vite';
 import { getManifest } from './application';
-import { requestContextKey } from './constants';
+import {
+  configDefaults,
+  defaultViteLogLevel,
+  requestContextKey,
+} from './constants';
 import { renderDocument as defaultRenderDocument } from './document';
 import type {
   Attributes,
@@ -12,14 +16,14 @@ import type {
   GetComponent,
   GetResourcesForComponent,
   HandleError,
-  UserConfig,
   PostProcessHtml,
   Props,
-  ServerRender,
   RenderDocument,
   Renderer as RendererInterface,
   ServerContext,
   ServerManifest,
+  ServerRender,
+  UserConfig,
   TemplateConfig,
 } from './types';
 import {
@@ -30,7 +34,6 @@ import {
   VirtualManifest,
   virtualPlugin,
 } from './utils/index';
-import { configDefaults, defaultViteLogLevel } from './constants';
 
 type NormalizedRender<Component> = (
   component: Component,
@@ -56,29 +59,26 @@ function createNormalizedRender<Component>(
   };
 }
 
-export async function createRenderer<
-  Component,
-  Templates extends TemplateConfig,
->({
+export async function createRenderer<Component, Template extends string>({
   base = configDefaults.base,
   cwd = configDefaults.cwd,
   output: outputConfig,
   render,
   templates,
-}: UserConfig<Component, Templates>): Promise<Renderer<Component, Templates>> {
+}: UserConfig<Component, Template>): Promise<Renderer<Component, Template>> {
   let output = getOutputWithDefaults({ cwd, ...outputConfig });
 
   let manifest = await getManifest({ base, output, templates });
 
-  let getComponent = createGetProdComponent<Component, Templates>(
+  let getComponent = createGetProdComponent<Component, Template>(
     manifest.server,
   );
 
-  let getResourcesForTemplate = createGetResourcesForProdComponent<Templates>(
+  let getResourcesForTemplate = createGetResourcesForProdComponent<Template>(
     manifest.client,
   );
 
-  return new Renderer<Component, Templates>({
+  return new Renderer<Component, Template>({
     getResourcesForTemplate,
     getComponent,
     render: render.server,
@@ -86,17 +86,14 @@ export async function createRenderer<
   });
 }
 
-export async function createDevRenderer<
-  Component,
-  Templates extends TemplateConfig,
->({
+export async function createDevRenderer<Component, Template extends string>({
   base = configDefaults.base,
   cwd = configDefaults.cwd,
   render,
   templates,
   viteConfig: viteUserConfig = configDefaults.viteConfig,
-}: UserConfig<Component, Templates>): Promise<
-  [Renderer<Component, Templates>, ViteDevServer]
+}: UserConfig<Component, Template>): Promise<
+  [Renderer<Component, Template>, ViteDevServer]
 > {
   let entryManifest = getTemplateManifest({
     cwd,
@@ -126,9 +123,9 @@ export async function createDevRenderer<
   });
 
   let getResourcesForTemplate =
-    createGetResourcesForDevComponent<Templates>(entryManifest);
+    createGetResourcesForDevComponent<Template>(entryManifest);
 
-  let getComponent = createGetDevComponent<Component, Templates>(
+  let getComponent = createGetDevComponent<Component, Template>(
     vite,
     templates,
   );
@@ -145,7 +142,7 @@ export async function createDevRenderer<
     throw error;
   }
 
-  let renderer = new Renderer<Component, Templates>({
+  let renderer = new Renderer<Component, Template>({
     getResourcesForTemplate,
     getComponent,
     handleError,
@@ -157,48 +154,44 @@ export async function createDevRenderer<
   return [renderer, vite];
 }
 
-function createGetProdComponent<Component, Templates extends TemplateConfig>(
+function createGetProdComponent<Component, Template extends string>(
   manifest: ServerManifest,
 ) {
-  return async function getComponent(
-    template: keyof Templates,
-  ): Promise<Component> {
-    let templatePath = manifest[template as string];
+  return async function getComponent(template: Template): Promise<Component> {
+    let templatePath = manifest[template];
     let component = await import(templatePath).then((mod) => mod.default);
 
     return component;
   };
 }
 
-function createGetResourcesForProdComponent<Templates extends TemplateConfig>(
+function createGetResourcesForProdComponent<Template extends string>(
   manifest: ClientManifest,
 ) {
-  return function getResourcesForTemplate(template: keyof Templates) {
-    let templateAssets = manifest[template as string];
+  return function getResourcesForTemplate(template: Template) {
+    let templateAssets = manifest[template];
 
     return getAssets(templateAssets);
   };
 }
 
-function createGetDevComponent<Component, Templates extends TemplateConfig>(
+function createGetDevComponent<Component, Template extends string>(
   vite: ViteDevServer,
-  templates: Templates,
+  templates: TemplateConfig<Template>,
 ) {
-  return async function getComponent(
-    template: keyof Templates,
-  ): Promise<Component> {
+  return async function getComponent(template: Template): Promise<Component> {
     let component = await vite
-      .ssrLoadModule(templates[template as string])
+      .ssrLoadModule(templates[template])
       .then((mod) => mod.default);
     return component;
   };
 }
 
-function createGetResourcesForDevComponent<Templates extends TemplateConfig>(
+function createGetResourcesForDevComponent<Template extends string>(
   entryManifest: VirtualManifest,
 ) {
-  return function getResourcesForDevTemplate(template: keyof Templates) {
-    let src = entryManifest[template as string].path;
+  return function getResourcesForDevTemplate(template: Template) {
+    let src = entryManifest[template].path;
 
     let scripts = [
       {
@@ -217,11 +210,11 @@ function defaultHandleError(error: Error) {
   throw error;
 }
 
-export class Renderer<Component, Templates extends TemplateConfig>
-  implements RendererInterface<Templates>
+export class Renderer<Component, Template extends string>
+  implements RendererInterface<Template>
 {
-  #getResourcesForTemplate: GetResourcesForComponent<Templates>;
-  #getComponent: GetComponent<Component, Templates>;
+  #getResourcesForTemplate: GetResourcesForComponent<Template>;
+  #getComponent: GetComponent<Component, Template>;
   #handleError: HandleError;
   #postProcessHtml?: PostProcessHtml;
   #render: NormalizedRender<Component>;
@@ -235,8 +228,8 @@ export class Renderer<Component, Templates extends TemplateConfig>
     render,
     renderDocument = defaultRenderDocument,
   }: {
-    getResourcesForTemplate: GetResourcesForComponent<Templates>;
-    getComponent: GetComponent<Component, Templates>;
+    getResourcesForTemplate: GetResourcesForComponent<Template>;
+    getComponent: GetComponent<Component, Template>;
     handleError?: HandleError;
     postProcessHtml?: PostProcessHtml;
     render: ServerRender<Component>;
@@ -251,7 +244,7 @@ export class Renderer<Component, Templates extends TemplateConfig>
   }
 
   async render(
-    template: keyof Templates,
+    template: Template,
     props: Props,
     context?: ServerContext,
   ): Promise<string> {
@@ -268,7 +261,7 @@ export class Renderer<Component, Templates extends TemplateConfig>
       let { head, html } = await render(component, props, context);
 
       let pageData = { props, template: template };
-      let { scripts, links } = getResourcesForTemplate(template as string);
+      let { scripts, links } = getResourcesForTemplate(template);
 
       let renderedPage = renderDocument({
         body: html,
