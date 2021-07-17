@@ -2,13 +2,10 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "@changesets/cli": "^2.16.0",
     "husky": "^6.0.0",
     "lint-staged": "^11.0.0",
     "prettier": "^2.3.1",
     "prettier-plugin-svelte": "^2.3.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
     "svelte": "^3.38.2"
   },
   "lint-staged": {
