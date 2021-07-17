@@ -1,7 +1,7 @@
 {
   "name": "julienne",
   "version": "0.2.0",
-  "description": "Small static site generator",
+  "description": "Small component-driven rendering framework",
   "repository": "wpj/julienne",
   "type": "module",
   "source": "src/index.ts",

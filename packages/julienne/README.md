@@ -1,20 +1,25 @@
 # julienne
 
+Small component-driven rendering framework.
+
 ## Usage
 
 ```typescript
 import { createRenderer, createDevRenderer } from 'julienne';
 
-function render(component, props, context) {
+function serverRender(component, props, context) {
   // render component as a string;
   let renderedResult = '...';
 
   return renderedResult;
 }
 
+// Or use createDevRenderer to set up an HMR-enabled dev server.
 let renderer = await createRenderer({
-  render,
-  runtime: '/path/to/runtime.js',
+  render: {
+    client: '/path/to/client/render.js',
+    server: serverRender,
+  },
   templates: {
     main: require.resolve('./path/to/component.js'),
   },
@@ -70,18 +75,29 @@ rendering.
 
 #### options.render
 
-Function to use when rendering components on the server. The function must
-implement the following signature:
+Type: `object`
+
+##### options.render.client
+
+Type: `string`
+
+Path to a module that exports a function that renders a component in the
+browser. The module must export a function as the default export with the
+following signature:
 
 ```typescript
-type Render<Component> = (
-  component: Component,
-  props: Record<string, unknown>,
-  context?: ServerContext,
-) => string | Promise<string>;
+function render<Component>({
+  component,
+  props,
+  target,
+}: {
+  component: Component;
+  props: Record<string, unknown>;
+  target: HTMLElement;
+}): void | Promise<void>;
 ```
 
-#### options.renderDocument (optional)
+##### options.render.document (optional)
 
 Function to use to render the document HTML. The function must implement the
 following signature:
@@ -96,21 +112,18 @@ type RenderDocument = (props: {
 }) => string;
 ```
 
-#### options.runtime
+##### options.render.server
 
-Type: `string`
-
-Path to a module to use as the runtime in the browser. The module must export a
-function as the default export with the following signature:
+Function to use when rendering components on the server. The function must
+implement the following signature:
 
 ```typescript
-function({ dev, template }: { dev: boolean, template: typeof SvelteComponent }): void | Promise<void>;
+type Render<Component> = (
+  component: Component,
+  props: Record<string, unknown>,
+  context?: ServerContext,
+) => string | Promise<string>;
 ```
-
-The runtime function should handle mounting the `template` component to the
-`#julienne-root` element.
-
-If creating a custom runtime, see [@julienne/runtime](../runtime) documentation.
 
 #### options.templates
 
@@ -126,7 +139,7 @@ Custom vite configuration.
 
 ### build(options)
 
-Compiles and writes the application's bundle, to the public output directory.
+Compiles and writes the application's bundle to the public output directory.
 
 Example usage:
 
@@ -174,21 +187,29 @@ directory structure will be created:
 will be written to. `internal` contains files internal to julienne used during
 rendering.
 
-#### options.runtime
+#### options.render
+
+Type: `object`
+
+##### options.render.client
 
 Type: `string`
 
-Path to a module to use as the runtime in the browser. The module must export a
-function as the default export with the following signature:
+Path to a module that exports a function that renders a component in the
+browser. The module must export a function as the default export with the
+following signature:
 
 ```typescript
-function({ dev, template }: { dev: boolean, template: typeof SvelteComponent }): void | Promise<void>;
+function render<Component>({
+  component,
+  props,
+  target,
+}: {
+  component: Component;
+  props: Record<string, unknown>;
+  target: HTMLElement;
+}): void | Promise<void>;
 ```
-
-The runtime function should handle mounting the `template` component to the
-`#julienne-root` element.
-
-If creating a custom runtime, see [@julienne/runtime](../runtime) documentation.
 
 #### options.templates
 
