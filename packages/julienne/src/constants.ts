@@ -5,3 +5,5 @@ export const configDefaults = {
   cwd: process.cwd(),
   viteConfig: {},
 };
+
+export const defaultViteLogLevel = 'silent' as const;

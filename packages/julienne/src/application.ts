@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import fse from 'fs-extra';
 import { join as pathJoin } from 'path';
 import vite, { Manifest as ViteManifest } from 'vite';
-import { configDefaults } from './constants';
+import { configDefaults, defaultViteLogLevel } from './constants';
 import type {
   ClientManifest,
   Config,
@@ -134,6 +134,7 @@ export async function buildClient({
   );
 
   const viteConfig = {
+    logLevel: defaultViteLogLevel,
     ...viteUserConfig,
     base,
     build: {
@@ -151,7 +152,6 @@ export async function buildClient({
         },
       },
     },
-    logLevel: viteUserConfig.logLevel ?? 'silent',
     plugins: [virtualPlugin(virtualEntries), ...(viteUserConfig.plugins ?? [])],
     resolve: {
       ...viteUserConfig.resolve,
@@ -176,6 +176,7 @@ export async function buildServer({
   const jsExtension = getJsExtensionForFormat(format);
 
   const viteConfig = {
+    logLevel: defaultViteLogLevel,
     ...viteUserConfig,
     base,
     build: {
@@ -194,7 +195,6 @@ export async function buildServer({
       },
       ssr: true,
     },
-    logLevel: viteUserConfig.logLevel ?? 'silent',
     plugins: [...(viteUserConfig.plugins ?? [])],
     resolve: {
       ...viteUserConfig.resolve,

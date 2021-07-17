@@ -30,7 +30,7 @@ import {
   VirtualManifest,
   virtualPlugin,
 } from './utils/index';
-import { configDefaults } from './constants';
+import { configDefaults, defaultViteLogLevel } from './constants';
 
 type NormalizedRender<Component> = (
   component: Component,
@@ -107,9 +107,9 @@ export async function createDevRenderer<
   let virtualEntries = getVirtualEntriesFromManifest(entryManifest);
 
   let viteConfig: ViteUserConfig = {
+    logLevel: defaultViteLogLevel,
     ...viteUserConfig,
     base,
-    logLevel: viteUserConfig.logLevel ?? 'silent',
     plugins: [virtualPlugin(virtualEntries), ...(viteUserConfig.plugins ?? [])],
     resolve: {
       ...viteUserConfig.resolve,
@@ -175,11 +175,6 @@ function createGetResourcesForProdComponent<Templates extends TemplateConfig>(
 ) {
   return function getResourcesForTemplate(template: keyof Templates) {
     let templateAssets = manifest[template as string];
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!templateAssets) {
-      throw new Error(`Render error: assets for "${template}" not found.`);
-    }
 
     return getAssets(templateAssets);
   };
