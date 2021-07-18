@@ -1,33 +1,11 @@
 import isStream from 'is-stream';
-import type { Readable } from 'stream';
-import type { File, MaybePromise, Page } from './types';
-
-/**
- * A lazy, potentially async page.
- */
-type GetPage<Template> = () => MaybePromise<Page<Template>>;
-
-/**
- * Lazy, potentially async file data.
- */
-type GetData = () => MaybePromise<string | Readable | Buffer>;
-
-/**
- * A lazy, potentially async file.
- */
-type GetFile = () => MaybePromise<File>;
-
-export type ActionFileCreate<T> = { type: 'create'; getData: T };
-export type ActionFileRemove = { type: 'remove' };
-
-export type PageAction<Template> = {
-  type: 'page';
-  action: ActionFileCreate<GetPage<Template>> | ActionFileRemove;
-};
-export type FileAction = {
-  type: 'file';
-  action: ActionFileCreate<GetFile> | ActionFileRemove;
-};
+import type {
+  FileAction,
+  GetData,
+  GetFile,
+  GetPage,
+  PageAction,
+} from './types';
 
 function validatePath(path: string, entity: string) {
   if (!path.startsWith('/')) {
@@ -43,7 +21,7 @@ class ResourceMap<Template> extends Map<
 /**
  * Stores a site's pages and files.
  */
-export class Store<Template extends string> extends ResourceMap<Template> {
+export class Site<Template extends string> extends ResourceMap<Template> {
   /**
    * Creates a page using the given path and template configuration returned by
    * `getPage`.
