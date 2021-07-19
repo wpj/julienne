@@ -1,6 +1,6 @@
 {
   "name": "@julienne/static",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Static site renderer for julienne",
   "repository": "wpj/julienne",
   "type": "module",
@@ -35,7 +35,7 @@
     "esbuild-node-loader": "^0.1.1",
     "eslint": "^7.28.0",
     "is-stream": "^2.0.0",
-    "julienne": "workspace:>=0.2",
+    "julienne": "workspace:>=0.3.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.51.1",
     "testdouble": "^3.16.1",
@@ -43,7 +43,7 @@
     "uvu": "^0.5.1"
   },
   "peerDependencies": {
-    "julienne": "workspace:>=0.2"
+    "julienne": "workspace:>=0.3.0"
   },
   "volta": {
     "node": "14.17.3",

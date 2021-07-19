@@ -1,6 +1,6 @@
 {
   "name": "julienne",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Small component-driven rendering framework",
   "repository": "wpj/julienne",
   "type": "module",
