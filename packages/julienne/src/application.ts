@@ -3,11 +3,15 @@ import fse from 'fs-extra';
 import { join as pathJoin } from 'path';
 import vite, { Manifest as ViteManifest } from 'vite';
 import { configDefaults, defaultViteLogLevel } from './constants';
+import { moduleAccumulatorPlugin } from './partial-hydration/module-accumulator-plugin';
+import { moduleRewritePlugin } from './partial-hydration/module-rewrite-plugin';
 import type {
   ClientManifest,
   Config,
+  HydratedModuleStore,
   Manifest,
   Output,
+  PartialHydrationConfig,
   ServerManifest,
   TemplateConfig,
   UserBuildConfig,
@@ -17,12 +21,13 @@ import {
   getTemplateFilename,
   getTemplateManifest,
   getVirtualEntriesFromManifest,
+  normalizePath,
   virtualPlugin,
 } from './utils/index';
 
 type SharedBuildConfig = Pick<
   Config<unknown, string>,
-  'base' | 'cwd' | 'templates' | 'viteConfig'
+  'base' | 'cwd' | 'templates' | 'viteConfig' | 'experimental'
 > & { outDir: string };
 
 type Format = 'esm' | 'cjs';
@@ -112,18 +117,32 @@ export async function getManifest<Template extends string>({
 export async function buildClient({
   base,
   cwd,
+  hydratedModuleStore,
   outDir,
   render,
   templates,
   viteConfig: viteUserConfig = {},
-}: SharedBuildConfig & { render: string }): Promise<void> {
+}: SharedBuildConfig & {
+  render: string;
+  hydratedModuleStore: HydratedModuleStore | null;
+}): Promise<void> {
   // Creates virtual entries in cwd so that relative imports of template modules
   // work correctly.
-  let entryManifest = getTemplateManifest({
-    cwd,
-    render,
-    templates,
-  });
+  let entryManifest =
+    hydratedModuleStore !== null
+      ? getTemplateManifest({
+          partialHydration: true,
+          cwd,
+          hydratedModuleStore,
+          render,
+          templates,
+        })
+      : getTemplateManifest({
+          partialHydration: false,
+          cwd,
+          render,
+          templates,
+        });
 
   let virtualEntries = getVirtualEntriesFromManifest(entryManifest);
 
@@ -170,10 +189,37 @@ export async function buildServer({
   cwd,
   format,
   outDir,
+  partialHydration,
   templates,
   viteConfig: viteUserConfig = {},
-}: SharedBuildConfig & { format: Format }): Promise<void> {
+}: SharedBuildConfig & {
+  format: Format;
+  partialHydration?: PartialHydrationConfig;
+}): Promise<HydratedModuleStore | null> {
   const jsExtension = getJsExtensionForFormat(format);
+
+  let resolvedTemplates = Object.fromEntries(
+    Object.entries(templates).map(([templateName, templatePath]) => [
+      templateName,
+      normalizePath(cwd, templatePath),
+    ]),
+  );
+
+  let moduleStore: HydratedModuleStore = {
+    byId: new Map(),
+    byTemplate: Object.fromEntries(
+      Object.values(resolvedTemplates).map((template) => [template, []]),
+    ),
+  };
+
+  let plugins = [];
+
+  if (partialHydration) {
+    plugins.push(
+      moduleAccumulatorPlugin(moduleStore, partialHydration.flags),
+      moduleRewritePlugin(moduleStore, partialHydration.wrap),
+    );
+  }
 
   const viteConfig = {
     logLevel: defaultViteLogLevel,
@@ -195,7 +241,7 @@ export async function buildServer({
       },
       ssr: true,
     },
-    plugins: [...(viteUserConfig.plugins ?? [])],
+    plugins: [...plugins, ...(viteUserConfig.plugins ?? [])],
     resolve: {
       ...viteUserConfig.resolve,
     },
@@ -206,11 +252,14 @@ export async function buildServer({
     ...viteConfig,
     configFile: false,
   });
+
+  return partialHydration ? moduleStore : null;
 }
 
 export async function build({
   base = configDefaults.base,
   cwd = configDefaults.cwd,
+  experimental,
   output: outputConfig,
   render,
   templates,
@@ -225,16 +274,20 @@ export async function build({
     viteConfig,
   };
 
-  await buildServer({
+  let hydratedModuleStore = await buildServer({
     ...sharedBuildConfig,
     format: FORMAT,
     outDir: output.server,
+    partialHydration: experimental?.partialHydration,
   });
 
   await buildClient({
     ...sharedBuildConfig,
     outDir: output.client,
     render: render.client,
+    hydratedModuleStore: experimental?.partialHydration
+      ? hydratedModuleStore
+      : null,
   });
 
   let manifestPath = pathJoin(output.client, 'manifest.json');

@@ -1,12 +1,26 @@
-import { join as pathJoin, parse as parsePath, sep as pathSep } from 'path';
+import {
+  isAbsolute,
+  join as pathJoin,
+  parse as parsePath,
+  sep as pathSep,
+} from 'path';
 import type { Plugin as VitePlugin } from 'vite';
 import { clientEntryPointTemplate } from '../code-gen';
 import type {
   Attributes,
   ClientManifest,
+  HydratedModuleStore,
   Output,
   OutputConfig,
 } from '../types';
+
+/**
+ * Resolves a possibly relative `path` against `basePath`, unless `path` is
+ * already absolute.
+ */
+export function normalizePath(basePath: string, path: string): string {
+  return isAbsolute(path) ? path : pathJoin(basePath, path);
+}
 
 /**
  * Converts a file path to a name suitable as an entry.
@@ -60,27 +74,56 @@ export function getTemplateFilename(name: string): string {
   return `___julienne_${name}___.js`;
 }
 
+type GetTempateManifestOptions<Templates> =
+  | {
+      partialHydration: false;
+      cwd: string;
+      render: string;
+      templates: Templates;
+    }
+  | {
+      partialHydration: true;
+      cwd: string;
+      hydratedModuleStore: HydratedModuleStore;
+      render: string;
+      templates: Templates;
+    };
+
 export function getTemplateManifest<Templates>({
   cwd,
-  templates,
   render,
-}: {
-  cwd: string;
-  render: string;
-  templates: Templates;
-}): VirtualManifest {
+  templates,
+  ...options
+}: GetTempateManifestOptions<Templates>): VirtualManifest {
   return Object.fromEntries(
     Object.entries(templates).map(([templateName, templatePath]) => {
       let filename = getTemplateFilename(templateName);
       let entryPath = pathJoin(cwd, filename);
 
+      let code;
+      if (options.partialHydration) {
+        let resolvedTemplatePath = normalizePath(cwd, templatePath);
+        let components =
+          options.hydratedModuleStore.byTemplate[resolvedTemplatePath];
+
+        code = clientEntryPointTemplate({
+          partialHydration: true,
+          components,
+          render,
+          templatePath,
+        });
+      } else {
+        code = clientEntryPointTemplate({
+          partialHydration: false,
+          component: templatePath,
+          render,
+        });
+      }
+
       return [
         templateName,
         {
-          code: clientEntryPointTemplate({
-            component: templatePath,
-            render,
-          }),
+          code,
           path: entryPath,
         },
       ];

@@ -190,6 +190,8 @@ importers:
       fs-extra: ^10.0.0
       is-stream: ^2.0.0
       jsdom: ^16.6.0
+      kleur: ^4.1.4
+      magic-string: ^0.25.7
       preact: ^10.5.13
       preact-render-to-string: ^5.1.19
       rimraf: ^3.0.2
@@ -214,6 +216,8 @@ importers:
       eslint: 7.28.0
       is-stream: 2.0.0
       jsdom: 16.6.0
+      kleur: 4.1.4
+      magic-string: 0.25.7
       preact: 10.5.13
       preact-render-to-string: 5.1.19_preact@10.5.13
       rimraf: 3.0.2

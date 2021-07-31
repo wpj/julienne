@@ -63,6 +63,7 @@ export async function createRenderer<Component, Template extends string>({
   base = configDefaults.base,
   cwd = configDefaults.cwd,
   output: outputConfig,
+  experimental,
   render,
   templates,
 }: UserConfig<Component, Template>): Promise<Renderer<Component, Template>> {
@@ -81,6 +82,7 @@ export async function createRenderer<Component, Template extends string>({
   return new Renderer<Component, Template>({
     getResourcesForTemplate,
     getComponent,
+    partialHydration: Boolean(experimental?.partialHydration),
     render: render.server,
     renderDocument: render.document,
   });
@@ -96,6 +98,7 @@ export async function createDevRenderer<Component, Template extends string>({
   [Renderer<Component, Template>, ViteDevServer]
 > {
   let entryManifest = getTemplateManifest({
+    partialHydration: false,
     cwd,
     render: render.client,
     templates,
@@ -146,6 +149,7 @@ export async function createDevRenderer<Component, Template extends string>({
     getResourcesForTemplate,
     getComponent,
     handleError,
+    partialHydration: false,
     postProcessHtml,
     render: render.server,
     renderDocument: render.document,
@@ -216,6 +220,7 @@ export class Renderer<Component, Template extends string>
   #getResourcesForTemplate: GetResourcesForComponent<Template>;
   #getComponent: GetComponent<Component, Template>;
   #handleError: HandleError;
+  #partialHydration: boolean;
   #postProcessHtml?: PostProcessHtml;
   #render: NormalizedRender<Component>;
   #renderDocument: RenderDocument;
@@ -224,6 +229,7 @@ export class Renderer<Component, Template extends string>
     getResourcesForTemplate,
     getComponent,
     handleError = defaultHandleError,
+    partialHydration = false,
     postProcessHtml,
     render,
     renderDocument = defaultRenderDocument,
@@ -231,6 +237,7 @@ export class Renderer<Component, Template extends string>
     getResourcesForTemplate: GetResourcesForComponent<Template>;
     getComponent: GetComponent<Component, Template>;
     handleError?: HandleError;
+    partialHydration?: boolean;
     postProcessHtml?: PostProcessHtml;
     render: ServerRender<Component>;
     renderDocument?: RenderDocument;
@@ -238,6 +245,7 @@ export class Renderer<Component, Template extends string>
     this.#getResourcesForTemplate = getResourcesForTemplate;
     this.#getComponent = getComponent;
     this.#handleError = handleError;
+    this.#partialHydration = partialHydration;
     this.#postProcessHtml = postProcessHtml;
     this.#render = createNormalizedRender(render);
     this.#renderDocument = renderDocument;
@@ -251,6 +259,7 @@ export class Renderer<Component, Template extends string>
     let getResourcesForTemplate = this.#getResourcesForTemplate;
     let getComponent = this.#getComponent;
     let handleError = this.#handleError;
+    let partialHydration = this.#partialHydration;
     let postProcessHtml = this.#postProcessHtml;
     let render = this.#render;
     let renderDocument = this.#renderDocument;
@@ -260,7 +269,7 @@ export class Renderer<Component, Template extends string>
 
       let { head, html } = await render(component, props, context);
 
-      let pageData = { props, template: template };
+      let pageData = partialHydration ? null : { props, template: template };
       let { scripts, links } = getResourcesForTemplate(template);
 
       let renderedPage = renderDocument({

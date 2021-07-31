@@ -4,6 +4,26 @@ import type { Readable } from 'stream';
 
 import { requestContextKey } from './constants';
 
+type HydratedModuleInfo = {
+  /**
+   * A hash of the module's contents used as an identifier durable across
+   * builds.
+   */
+  id: string;
+  path: string;
+};
+
+/** Used to accumulate hydrated modules for each entrypoint. */
+export type HydratedModuleStore = {
+  byId: Map<string, HydratedModuleInfo>;
+  byTemplate: Record<string, HydratedModuleInfo[]>;
+};
+
+export type HydratedModuleFlag =
+  | string
+  | RegExp
+  | ((code: string) => MaybePromise<boolean>);
+
 /**
  * A mapping of template names to file paths.
  */
@@ -107,11 +127,21 @@ export interface RenderDocument {
   (props: DocumentProps): string;
 }
 
+export type PartialHydrationConfig = {
+  wrap: string;
+  flags: HydratedModuleFlag[];
+};
+
+type ExperimentalConfig = {
+  partialHydration?: PartialHydrationConfig;
+};
+
 type ModulePath = string;
 
 export type UserBuildConfig = {
   base?: string;
   cwd?: string;
+  experimental?: ExperimentalConfig;
   output?: OutputConfig;
   render: {
     client: ModulePath;
@@ -123,6 +153,7 @@ export type UserBuildConfig = {
 export type BuildConfig = {
   base: string;
   cwd: string;
+  experimental?: ExperimentalConfig;
   output: Output;
   render: {
     client: ModulePath;
@@ -134,6 +165,7 @@ export type BuildConfig = {
 export type UserConfig<Component, Template extends string> = {
   base?: string;
   cwd?: string;
+  experimental?: ExperimentalConfig;
   output?: OutputConfig;
   render: {
     client: ModulePath;
@@ -147,6 +179,7 @@ export type UserConfig<Component, Template extends string> = {
 export type Config<Component, Template extends string> = {
   base: string;
   cwd: string;
+  experimental?: ExperimentalConfig;
   output: Output;
   render: {
     client: ModulePath;
