@@ -20,7 +20,8 @@ type ClientEntryPointTemplateOptions =
  * have side effects, like CSS and font imports.
  *
  * If `partialHydration` is enabled and no components are passed, the generated
- * module will only contain the template bare import.
+ * module will only contain bare import imports of the template and render
+ * module (so its side effects are processed.)
  */
 export function clientEntryPointTemplate(
   options: ClientEntryPointTemplateOptions,
@@ -31,7 +32,7 @@ export function clientEntryPointTemplate(
     let templateImport = `import ${JSON.stringify(options.templatePath)}`;
 
     if (options.components.length === 0) {
-      return templateImport;
+      return [templateImport, `import ${render}`].join('\n');
     }
 
     let componentImports = options.components
