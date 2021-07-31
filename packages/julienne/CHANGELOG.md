@@ -1,5 +1,12 @@
 # Change Log - julienne
 
+## 0.4.0
+
+### Minor Changes
+
+- 59d23cd: Add experimental support for partial hydration.
+- e5ac409: Serialize page data to JavaScript.
+
 ## 0.3.0
 
 ### Minor Changes
