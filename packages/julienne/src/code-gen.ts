@@ -14,8 +14,7 @@ import component from ${component};
 import render from ${render};
 
 let root = document.querySelector('#julienne-root');
-let pageDataElement = document.querySelector('#julienne-data');
-let page = JSON.parse(pageDataElement.innerHTML);
+let page = window.__JULIENNE__.page;
 
 render({ component, props: page.props, target: root });
 `;

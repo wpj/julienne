@@ -184,6 +184,7 @@ importers:
       '@types/rimraf': ^3.0.0
       '@typescript-eslint/eslint-plugin': ^4.26.0
       '@typescript-eslint/parser': ^4.26.0
+      devalue: ^2.0.1
       esbuild-node-loader: ^0.1.1
       eslint: ^7.28.0
       fs-extra: ^10.0.0
@@ -208,6 +209,7 @@ importers:
       '@types/rimraf': 3.0.0
       '@typescript-eslint/eslint-plugin': 4.26.0_b84c93de30c2ccb1b651eb26d91bd105
       '@typescript-eslint/parser': 4.26.0_eslint@7.28.0+typescript@4.3.5
+      devalue: 2.0.1
       esbuild-node-loader: 0.1.1
       eslint: 7.28.0
       is-stream: 2.0.0
@@ -1981,6 +1983,10 @@ packages:
 
   /detect-node/2.1.0:
     resolution: {integrity: sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==}
+    dev: true
+
+  /devalue/2.0.1:
+    resolution: {integrity: sha512-I2TiqT5iWBEyB8GRfTDP0hiLZ0YeDJZ+upDxjBfOC2lebO5LezQMv7QvIUTzdb64jQyAKLf1AHADtGN+jw6v8Q==}
     dev: true
 
   /diff/5.0.0:

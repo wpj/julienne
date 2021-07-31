@@ -1,6 +1,9 @@
 import { Fragment, h, JSX } from 'preact';
 import render from 'preact-render-to-string';
 import type { Attributes, DocumentProps } from './types';
+import devalue from 'devalue';
+
+let serialize = devalue;
 
 function cleanAttrs(
   attributes: Attributes,
@@ -19,6 +22,8 @@ function Document({
   pageData,
   scripts = [],
 }: DocumentProps): JSX.Element {
+  let pageDataScript = `__JULIENNE__ = { page: ${serialize(pageData)} };`;
+
   let headHtml = render(
     h(Fragment, {}, [
       h('meta', { charSet: 'UTF-8' }),
@@ -45,11 +50,13 @@ function Document({
             dangerouslySetInnerHTML: { __html: body },
           })
         : h('div', { id: 'julienne-root' }),
-      h('script', {
-        type: 'application/json',
-        id: 'julienne-data',
-        dangerouslySetInnerHTML: { __html: JSON.stringify(pageData) },
-      }),
+      pageData != null
+        ? h('script', {
+            id: 'julienne-data',
+            type: 'application/javascript',
+            dangerouslySetInnerHTML: { __html: pageDataScript },
+          })
+        : null,
 
       ...scripts.map(({ content, ...attributes }, index) => {
         const key = attributes.src ?? index;

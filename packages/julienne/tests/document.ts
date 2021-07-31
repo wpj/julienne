@@ -1,7 +1,8 @@
+import devalue from 'devalue';
+import { JSDOM } from 'jsdom';
 import { suite } from 'uvu';
 import * as assert from 'uvu/assert';
 import { renderDocument } from '../src/document';
-import { JSDOM } from 'jsdom';
 
 type Attributes = Record<string, string | boolean | undefined>;
 
@@ -41,11 +42,9 @@ test('includes page data in the rendered document', () => {
   let document = getDocument({ pageData });
 
   assert.equal(
-    JSON.parse(
-      document.querySelector<HTMLScriptElement>('script#julienne-data')!
-        .innerHTML,
-    ),
-    pageData,
+    document.querySelector<HTMLScriptElement>('script#julienne-data')!
+      .innerHTML,
+    `__JULIENNE__ = { page: ${devalue(pageData)} };`,
   );
 });
 

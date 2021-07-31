@@ -33,6 +33,7 @@
     "@types/rimraf": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^4.26.0",
     "@typescript-eslint/parser": "^4.26.0",
+    "devalue": "^2.0.1",
     "esbuild-node-loader": "^0.1.1",
     "eslint": "^7.28.0",
     "is-stream": "^2.0.0",
