@@ -1,5 +1,12 @@
 # Change Log - julienne
 
+## 0.4.1
+
+### Patch Changes
+
+- 8882e1b: Bare import `render` when no components are hydrated during partial
+  hydration.
+
 ## 0.4.0
 
 ### Minor Changes
