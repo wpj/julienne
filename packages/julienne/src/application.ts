@@ -103,7 +103,7 @@ export async function getClientManifest<Template extends string>({
       return [
         entryName,
         {
-          css: Array.from(resources.css).map(makePublic),
+          css: Array.from(resources.css).map(makePublic).reverse(),
           modules: Array.from(resources.modules).map(makePublic),
           modulePreloads: Array.from(resources.modulePreloads).map(makePublic),
         },
