@@ -12,7 +12,6 @@ import type {
   Manifest,
   Output,
   PartialHydrationConfig,
-  TemplateResources,
   ServerManifest,
   TemplateConfig,
   UserBuildConfig,
@@ -46,16 +45,22 @@ function getJsExtensionForFormat(format: Format): 'mjs' | 'cjs' {
 function processChunk(
   { isEntry, imports, css, file }: ManifestChunk,
   manifest: ViteManifest,
-  resources: TemplateResources,
+  resources: {
+    modules: Set<string>;
+    modulePreloads: Set<string>;
+    css: Set<string>;
+  },
 ) {
   if (isEntry) {
-    resources.modules.push(file);
+    resources.modules.add(file);
   } else {
-    resources.modulePreloads.push(file);
+    resources.modulePreloads.add(file);
   }
 
   if (css) {
-    resources.css.push(...css);
+    css.forEach((cssFile) => {
+      resources.css.add(cssFile);
+    });
   }
 
   if (imports) {
@@ -84,10 +89,10 @@ export async function getClientManifest<Template extends string>({
 
   return Object.fromEntries(
     Object.keys(templates).map((entryName) => {
-      let resources: TemplateResources = {
-        css: [],
-        modules: [],
-        modulePreloads: [],
+      let resources = {
+        css: new Set<string>(),
+        modules: new Set<string>(),
+        modulePreloads: new Set<string>(),
       };
 
       let entryFileName = getTemplateFilename(entryName);
@@ -95,11 +100,14 @@ export async function getClientManifest<Template extends string>({
 
       processChunk(manifestEntry, manifest, resources);
 
-      resources.modules = resources.modules.map(makePublic);
-      resources.modulePreloads = resources.modulePreloads.map(makePublic);
-      resources.css = resources.css.map(makePublic);
-
-      return [entryName, resources];
+      return [
+        entryName,
+        {
+          css: Array.from(resources.css).map(makePublic),
+          modules: Array.from(resources.modules).map(makePublic),
+          modulePreloads: Array.from(resources.modulePreloads).map(makePublic),
+        },
+      ];
     }),
   );
 }
