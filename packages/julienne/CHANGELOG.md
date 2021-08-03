@@ -1,5 +1,12 @@
 # Change Log - julienne
 
+## 0.4.3
+
+### Patch Changes
+
+- 8baf5c6: Sequence stylesheets so that overrides work correctly.
+- b595e96: Deduplicate template resources.
+
 ## 0.4.2
 
 ### Patch Changes
