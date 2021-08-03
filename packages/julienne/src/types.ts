@@ -78,7 +78,12 @@ export type Stream = {
  */
 export type File = Copy | Generated | Stream;
 
-export type ClientManifest = Record<string, string[]>;
+export type TemplateResources = Record<
+  'css' | 'modules' | 'modulePreloads',
+  string[]
+>;
+
+export type ClientManifest = Record<string, TemplateResources>;
 export type ServerManifest = Record<string, string>;
 
 export type Manifest = {

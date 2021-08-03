@@ -8,10 +8,10 @@ import type { Plugin as VitePlugin } from 'vite';
 import { clientEntryPointTemplate } from '../code-gen';
 import type {
   Attributes,
-  ClientManifest,
   HydratedModuleStore,
   Output,
   OutputConfig,
+  TemplateResources,
 } from '../types';
 
 /**
@@ -44,21 +44,20 @@ export function identity<T>(val: T): T {
   return val;
 }
 
-export function getAssets(templateAssets: string[]): {
+export function getAssets({
+  modules,
+  modulePreloads,
+  css,
+}: TemplateResources): {
   links: Attributes[];
   scripts: Attributes[];
 } {
-  let scripts = templateAssets
-    .filter((asset: string) => asset.endsWith('.js'))
-    .map((src) => {
-      return { type: 'module', src };
-    });
+  let scripts = modules.map((src) => ({ type: 'module', src }));
 
-  let links = templateAssets
-    .filter((asset: string) => asset.endsWith('.css'))
-    .map((href) => {
-      return { href, type: 'text/css', rel: 'stylesheet' };
-    });
+  let links = [
+    ...css.map((href) => ({ href, type: 'text/css', rel: 'stylesheet' })),
+    ...modulePreloads.map((href) => ({ href, rel: 'modulepreload' })),
+  ];
 
   return { links, scripts };
 }
@@ -157,21 +156,6 @@ export function virtualPlugin(virtualEntries: {
       }
     },
   };
-}
-
-/**
- * Prepends the public path onto the path of each asset in the entry.
- */
-export function makeClientAssets(
-  clientManifest: ClientManifest,
-  publicPath: string,
-): ClientManifest {
-  return Object.fromEntries(
-    Object.entries(clientManifest).map(([name, assets]) => [
-      name,
-      assets.map((asset) => pathJoin(publicPath, asset)),
-    ]),
-  );
 }
 
 export function getOutputWithDefaults({

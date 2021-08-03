@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import fse from 'fs-extra';
 import { join as pathJoin } from 'path';
-import vite, { Manifest as ViteManifest } from 'vite';
+import vite, { Manifest as ViteManifest, ManifestChunk } from 'vite';
 import { configDefaults, defaultViteLogLevel } from './constants';
 import { moduleAccumulatorPlugin } from './partial-hydration/module-accumulator-plugin';
 import { moduleRewritePlugin } from './partial-hydration/module-rewrite-plugin';
@@ -12,6 +12,7 @@ import type {
   Manifest,
   Output,
   PartialHydrationConfig,
+  TemplateResources,
   ServerManifest,
   TemplateConfig,
   UserBuildConfig,
@@ -38,6 +39,32 @@ function getJsExtensionForFormat(format: Format): 'mjs' | 'cjs' {
   return format === 'esm' ? 'mjs' : 'cjs';
 }
 
+/**
+ * Recursively crawl the manifest, accumulating modules, preloads, and css for a
+ * chunk.
+ */
+function processChunk(
+  { isEntry, imports, css, file }: ManifestChunk,
+  manifest: ViteManifest,
+  resources: TemplateResources,
+) {
+  if (isEntry) {
+    resources.modules.push(file);
+  } else {
+    resources.modulePreloads.push(file);
+  }
+
+  if (css) {
+    resources.css.push(...css);
+  }
+
+  if (imports) {
+    imports.forEach((chunk) => {
+      processChunk(manifest[chunk], manifest, resources);
+    });
+  }
+}
+
 export async function getClientManifest<Template extends string>({
   base,
   outDir,
@@ -51,23 +78,28 @@ export async function getClientManifest<Template extends string>({
     .readFile(pathJoin(outDir, 'manifest.json'), 'utf-8')
     .then(JSON.parse);
 
+  function makePublic(path: string) {
+    return pathJoin(base, path);
+  }
+
   return Object.fromEntries(
     Object.keys(templates).map((entryName) => {
-      let assets = [];
+      let resources: TemplateResources = {
+        css: [],
+        modules: [],
+        modulePreloads: [],
+      };
 
       let entryFileName = getTemplateFilename(entryName);
       let manifestEntry = manifest[entryFileName];
-      let publicEntryPath = pathJoin(base, manifestEntry.file);
-      assets.push(publicEntryPath);
 
-      if (manifestEntry.css) {
-        manifestEntry.css.forEach((css) => {
-          let publicCssPath = pathJoin(base, css);
-          assets.push(publicCssPath);
-        });
-      }
+      processChunk(manifestEntry, manifest, resources);
 
-      return [entryName, assets];
+      resources.modules = resources.modules.map(makePublic);
+      resources.modulePreloads = resources.modulePreloads.map(makePublic);
+      resources.css = resources.css.map(makePublic);
+
+      return [entryName, resources];
     }),
   );
 }
