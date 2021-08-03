@@ -1,5 +1,11 @@
 # Change Log - julienne
 
+## 0.4.2
+
+### Patch Changes
+
+- 213de1d: Include CSS and modulepreloads for dependent chunks.
+
 ## 0.4.1
 
 ### Patch Changes
